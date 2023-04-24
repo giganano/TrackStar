@@ -1,8 +1,13 @@
+# This file is part of the trackfitting package.
+# Copyright (C) 2023 James W. Johnson (giganano9@gmail.com)
+# License: MIT License. See LICENSE in top-level directory
+# at: https://github.com/giganano/trackfitting.git.
 
 SOURCES 	:= $(wildcard *.c)
 OBJECTS 	:= $(SOURCES:.c=.o)
 CC 			:= gcc
 CFLAGS		:= -fPIC -Wsign-conversion -Wsign-compare -Wunreachable-code
+SUBDIRS 	:= $(filter-out __pycache__, $(wildcard */))
 
 all: print_message $(OBJECTS)
 
@@ -12,15 +17,19 @@ print_message:
 	@ echo "Compiler flags: "$(CFLAGS)
 
 %.o: %.c *.h
-	@ echo "Compiling: track-fitting/core/src/"$<
+	@ echo "Compiling: trackfitting/core/src/"$<
 	@ $(CC) $(CFLAGS) -c $< -o $@
 
 .PHONY: clean
 clean:
+	@ echo "Cleaning trackfitting/core/src"
 	@ if [ -d "__pycache__" ] ; then \
 		rm -rf __pycache__ ; \
 	fi
 	@ for i in $(OBJECTS) ; do \
 		rm -f $$i ; \
+	done
+	@ for i in $(SUBDIRS) ; do \
+		$(MAKE) -C $$i clean ; \
 	done
 

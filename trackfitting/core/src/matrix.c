@@ -1,8 +1,8 @@
 /*
-This file is part of the track-fitting package.
+This file is part of the trackfitting package.
 Copyright (C) 2023 James W. Johnson (giganano9@gmail.com)
 License: MIT License. See LICENSE in top-level directory
-at: https://github.com/giganano/track-fitting.git.
+at: https://github.com/giganano/trackfitting.git.
 */
 
 #include <stdlib.h>
