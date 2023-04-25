@@ -4,7 +4,7 @@
 *.so
 *.egg-info/
 */__pycache__/
-trackstar/version_breakdown.dat
+trackstar/version_breakdown.py
 docs/src/_build/
 build/
 local/

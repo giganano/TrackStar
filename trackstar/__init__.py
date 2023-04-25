@@ -15,7 +15,6 @@ Copyright (C) 2023 James W. Johnson.
 
 __all__ = ["version"]
 __author__ = "James W. Johnson"
-from .version import version
 import warnings
 
 try:
@@ -25,7 +24,7 @@ except NameError:
 
 if not __TRACKSTAR_SETUP__:
 
-	version = version._fromfile()
+	from .version import version
 	if not version.isreleased:
 		warnings.warn("Using un-released version of TrackStar", UserWarning)
 	else:

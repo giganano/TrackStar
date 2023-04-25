@@ -6,43 +6,15 @@
 # at: https://github.com/giganano/trackstar.git.
 
 import sys
-import os
-PATH = os.path.dirname(os.path.abspath(__file__))
+from . import version_breakdown
+if sys.version_info[:3] < tuple(
+	[int(_) for _ in version_breakdown.minpython.split('.')]):
+	raise RuntimeError("""\
+Python version %s is required. Current version: %d.%d.%d""" % (
+	version_breakdown.minpython, sys.version_info.major,
+	sys.version_info.minor, sys.version_info.micro))
 
 class version:
-
-	def __init__(self, major = 0, minor = 0, micro = 0,
-		alpha = None, beta = None, rc = None,
-		dev = 0, post = None, isreleased = False):
-		for _ in [major, minor, micro]:
-			assert isinstance(_, int), "Invalid version information"
-			assert _ >= 0, "Invalid version information"
-		prerelease = 0
-		for _ in [alpha, beta, rc]:
-			if _ is not None:
-				assert isinstance(_, int), "Invalid version information"
-				assert _ >= 0, "Invalid version information"
-				prerelease += 1
-			else: pass
-		assert prerelease in [0, 1], "Invalid version information"
-		devorpost = 0
-		for _ in [dev, post]:
-			if _ is not None:
-				assert isinstance(_, int), "Invalid version information"
-				assert _ >= 0, "Invalid version information"
-				devorpost += 1
-			else: pass
-		assert devorpost in [0, 1], "Invalid version information"
-		assert isinstance(isreleased, bool), "Invalid version information"
-		self._major = major
-		self._minor = minor
-		self._micro = micro
-		self._alpha = alpha
-		self._beta = beta
-		self._rc = rc
-		self._dev = dev
-		self._post = post
-		self._isreleased = isreleased
 
 	def __repr__(self):
 		rep = "%d.%d.%d" % (self.major, self.minor, self.micro)
@@ -62,27 +34,10 @@ class version:
 		yield self.rc
 		yield self.post
 		yield self.dev
+		yield self.isreleased
 
 	def __getitem__(self, key):
 		return tuple(self).__getitem__(key)
-
-	@classmethod
-	def _fromfile(cls, filename = "%s/version_breakdown.dat" % (PATH)):
-		with open(filename, 'r') as f:
-			kwargs = {}
-			while True:
-				line = f.readline()
-				if line == "": break
-				if line[0] == "#": continue
-				line = line.split()
-				if line[0] == "isreleased":
-					kwargs["isreleased"] = line[1] == "True"
-				elif line[1] == "None":
-					kwargs[line[0]] = None
-				else:
-					kwargs[line[0]] = int(line[1])
-			f.close()
-		return cls(**kwargs)
 
 	def todict(self):
 		r"""
@@ -96,7 +51,8 @@ class version:
 			"beta": 		self.beta,
 			"rc": 			self.rc,
 			"post": 		self.post,
-			"dev": 			self.dev
+			"dev": 			self.dev,
+			"isreleased": 	self.isreleased
 		}
 
 	@property
@@ -106,7 +62,7 @@ class version:
 
 		The major version number.
 		"""
-		return self._major
+		return version_breakdown.major
 
 	@property
 	def minor(self):
@@ -115,7 +71,7 @@ class version:
 
 		The minor version number.
 		"""
-		return self._minor
+		return version_breakdown.minor
 
 	@property
 	def micro(self):
@@ -124,7 +80,7 @@ class version:
 
 		The micro version number.
 		"""
-		return self._micro
+		return version_breakdown.micro
 
 	@property
 	def alpha(self):
@@ -133,7 +89,7 @@ class version:
 
 		The alpha release version number.
 		"""
-		return self._alpha
+		return version_breakdown.alpha
 
 	@property
 	def beta(self):
@@ -142,7 +98,7 @@ class version:
 
 		The beta release version number.
 		"""
-		return self._beta
+		return version_breakdown.beta
 
 	@property
 	def rc(self):
@@ -151,7 +107,7 @@ class version:
 
 		The release candidate version number.
 		"""
-		return self._rc
+		return version_breakdown.rc
 
 	@property
 	def dev(self):
@@ -160,7 +116,7 @@ class version:
 
 		The development release version number.
 		"""
-		return self._dev
+		return version_breakdown.dev
 
 	@property
 	def post(self):
@@ -169,7 +125,7 @@ class version:
 
 		The post release version number.
 		"""
-		return self._post
+		return version_breakdown.post
 
 	@property
 	def isreleased(self):
@@ -178,5 +134,18 @@ class version:
 
 		Whether or not this version has been tagged and released.
 		"""
-		return self._isreleased
+		return version_breakdown.isreleased
+
+	@property
+	def python_requires(self):
+		r"""
+		Type : ``str``
+
+		The version string of the minimum python version required for this
+		version of TrackStar.
+		"""
+		return version_breakdown.minpython
+
+
+version = version()
 
