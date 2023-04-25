@@ -5,10 +5,11 @@
 # License: MIT License. See LICENSE in top-level directory
 # at: https://github.com/giganano/trackstar.git.
 r"""
-TrackStar
-=============
+Welcome to TrackStar!
 
-This software is in early development and does not yet have an official name.
+Package Contents
+----------------
+.. class:: matrix
 
 Copyright (C) 2023 James W. Johnson.
 """
@@ -37,6 +38,35 @@ if not __TRACKSTAR_SETUP__:
 			else: continue
 	__version__ = str(version)
 	__all__.append("__version__")
+
+	def dummy(x, y):
+		r"""
+		.. function:: trackstar.dummy(x, y)
+
+		This is a dummy function with a dummy docstring for the purposes of
+		setting up documentation.
+
+		Parameters
+		----------
+		x : ``real number``
+			The first parameter.
+		y : `real number`
+			The second parameter.
+
+		Returns
+		-------
+		z : real number
+			The sum of x and y.
+
+		Example Code
+		------------
+		>>> import trackstar
+		>>> trackstar.dummy(2, 3)
+		5
+		>>> trackstar.dummy(1, 7)
+		8
+		"""
+		return x + y
 
 else: pass
 

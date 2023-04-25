@@ -22,6 +22,11 @@ help:
 %:
 	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 
+.PHONY: api
+api:
+	@ python -m trackstar.docs ./api
+
 .PHONY: clean
 clean:
 	@ rm -rf _build
+	@ $(MAKE) -C api/ clean

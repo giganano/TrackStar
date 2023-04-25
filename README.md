@@ -1,6 +1,5 @@
-# Track-Fitting
+# TrackStar
 
-This software is in early development and does not yet have an official name.
 The goals and features of this code are:
 
 <ol>

@@ -19,11 +19,22 @@ space of observed quantities.
 In this context, a model can be said to predict a track if in the absence of
 measurement uncertainties, every datum would fall perfectly along this
 trajectory with some arbitrary distribution.
-See TrackStar's :ref:`statistical justification <statistical_justification>`
-for mathematical details on its backend and implementation.
+
+:doc:`science-documentation`
+	Mathematical details on TrackStar's backend and implementation.
+
+:doc:`api/index`
+	User's guide on each of the functions and objects provided by TrackStar.
+
+:doc:`developers/index`
+	Submit a bug report; license; list of contributors.
+
+.. Hidden TOCs
 
 .. toctree::
-	:maxdepth: 2
+	:maxdepth: 1
+	:hidden:
 
-	statistical-justification
-	developers/index.rst
+	science-documentation
+	api/index
+	developers/index
