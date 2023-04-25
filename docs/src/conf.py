@@ -1,9 +1,10 @@
-r"""
-This file is part of the trackfitting package.
-Copyright (C) 2023 James W. Johnson (giganano9@gmail.com)
-License: MIT License. See LICENSE in top-level directory
-at: https://github.com/giganano/trackfitting.git.
-"""
+#!/usr/bin/env python
+#
+# This file is part of the TrackStar package.
+# Copyright (C) 2023 James W. Johnson (giganano9@gmail.com)
+# License: MIT License. See LICENSE in top-level directory
+# at: https://github.com/giganano/trackstar.git.
+#
 # Configuration file for sphinx documentation builder.
 
 import sys
@@ -19,16 +20,16 @@ if tuple([int(_) for _ in sphinx.__version__.split('.')[:2]]) < (2, 0):
 Current version: %s""" % (sphinx.__version__))
 else: pass
 try:
-	import trackfitting
+	import trackstar
 except (ModuleNotFoundError, ImportError):
-	raise RuntimeError("""trackfitting must be installed before its \
+	raise RuntimeError("""trackstar must be installed before its \
 documentation can be compiled.""")
 
 # -- Project information -----------------------------------------------------
-project = "trackfitting"
+project = "trackstar"
 copyright = "2023, James W. Johnson"
-author = trackfitting.__author__
-release = trackfitting.__version__
+author = trackstar.__author__
+release = trackstar.__version__
 
 
 # -- General configuration ---------------------------------------------------

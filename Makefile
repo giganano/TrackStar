@@ -1,6 +1,6 @@
 
 .PHONY: clean
 clean:
-	@ $(MAKE) -C trackfitting/ clean
+	@ $(MAKE) -C trackstar/ clean
 	@ rm -rf build
-	@ rm -rf trackfitting.egg-info
+	@ rm -rf trackstar.egg-info

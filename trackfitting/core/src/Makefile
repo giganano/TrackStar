@@ -1,7 +1,7 @@
-# This file is part of the trackfitting package.
+# This file is part of the TrackStar package.
 # Copyright (C) 2023 James W. Johnson (giganano9@gmail.com)
 # License: MIT License. See LICENSE in top-level directory
-# at: https://github.com/giganano/trackfitting.git.
+# at: https://github.com/giganano/trackstar.git.
 
 SOURCES 	:= $(wildcard *.c)
 OBJECTS 	:= $(SOURCES:.c=.o)
@@ -17,12 +17,12 @@ print_message:
 	@ echo "Compiler flags: "$(CFLAGS)
 
 %.o: %.c *.h
-	@ echo "Compiling: trackfitting/core/src/"$<
+	@ echo "Compiling: trackstar/core/src/"$<
 	@ $(CC) $(CFLAGS) -c $< -o $@
 
 .PHONY: clean
 clean:
-	@ echo "Cleaning trackfitting/core/src"
+	@ echo "Cleaning trackstar/core/src"
 	@ if [ -d "__pycache__" ] ; then \
 		rm -rf __pycache__ ; \
 	fi

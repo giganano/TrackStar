@@ -1,8 +1,8 @@
 /*
-This file is part of the trackfitting package.
+This file is part of the TrackStar package.
 Copyright (C) 2023 James W. Johnson (giganano9@gmail.com)
 License: MIT License. See LICENSE in top-level directory
-at: https://github.com/giganano/trackfitting.git.
+at: https://github.com/giganano/trackstar.git.
 */
 
 #ifndef MATRIX_H
@@ -37,7 +37,7 @@ typedef struct covariance_matrix {
 	/*
 	This struct holds the data associated with a covariance matrix and is a
 	pointer type compatible with MATRIX. In practice, n_rows and n_cols
-	must be equal, and trackfitting's python API enforces this.
+	must be equal, and TrackStar's python API enforces this.
 	
 	matrix : ``double **``
 		The covariance matrix itself.

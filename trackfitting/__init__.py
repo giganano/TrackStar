@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 #
-# This file is part of the trackfitting package.
+# This file is part of the TrackStar package.
 # Copyright (C) 2023 James W. Johnson (giganano9@gmail.com)
 # License: MIT License. See LICENSE in top-level directory
-# at: https://github.com/giganano/trackfitting.git.
+# at: https://github.com/giganano/trackstar.git.
 r"""
-TrackFitting
+TrackStar
 =============
 
 This software is in early development and does not yet have an official name.
@@ -19,21 +19,21 @@ from .version import version
 import warnings
 
 try:
-	__TRACKFITTING_SETUP__
+	__TRACKSTAR_SETUP__
 except NameError:
 	__TRACKFITTING_SETUP__ = False
 
-if not __TRACKFITTING_SETUP__:
+if not __TRACKSTAR_SETUP__:
 
 	version = version._fromfile()
 	if not version.isreleased:
-		warnings.warn("Using un-released version of trackfitting", UserWarning)
+		warnings.warn("Using un-released version of TrackStar", UserWarning)
 	else:
 		prelease = False
 		for item in [version.dev, version.alpha, version.beta, version.rc]:
 			prerelease |= item is not None
 			if prerelease:
-				warnings.warn("Using a pre-release of trackfitting", UserWarning)
+				warnings.warn("Using a pre-release of TrackStar", UserWarning)
 				break
 			else: continue
 	__version__ = str(version)

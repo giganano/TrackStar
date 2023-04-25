@@ -3,7 +3,7 @@ SUBDIRS := $(filter-out __pycache__, $(wildcard */))
 
 .PHONY: clean
 clean:
-	@ echo "Cleaning trackfitting"
+	@ echo "Cleaning trackstar"
 	@ if [ -d "__pycache__" ] ; then \
 		rm -rf __pycache__ ; \
 	fi
