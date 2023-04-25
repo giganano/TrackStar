@@ -21,7 +21,7 @@ import warnings
 try:
 	__TRACKSTAR_SETUP__
 except NameError:
-	__TRACKFITTING_SETUP__ = False
+	__TRACKSTAR_SETUP__ = False
 
 if not __TRACKSTAR_SETUP__:
 

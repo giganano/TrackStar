@@ -3,8 +3,11 @@
 *.sublime-project
 *.so
 *.egg-info/
-build/
 */__pycache__/
+trackstar/version_breakdown.dat
+docs/src/_build/
+build/
 local/
+
 
 
