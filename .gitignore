@@ -3,5 +3,6 @@
 *.sublime-project
 *.so
 *.egg-info/
-
+build/
+*/__pycache__/
 

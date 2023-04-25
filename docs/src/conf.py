@@ -19,7 +19,7 @@ if tuple([int(_) for _ in sphinx.__version__.split('.')[:2]]) < (2, 0):
 Current version: %s""" % (sphinx.__version__))
 else: pass
 try:
-	import track_fitting
+	import trackfitting
 except (ModuleNotFoundError, ImportError):
 	raise RuntimeError("""trackfitting must be installed before its \
 documentation can be compiled.""")
@@ -27,8 +27,8 @@ documentation can be compiled.""")
 # -- Project information -----------------------------------------------------
 project = "trackfitting"
 copyright = "2023, James W. Johnson"
-author = track_fitting.__author__
-release = track_fitting.__version__
+author = trackfitting.__author__
+release = trackfitting.__version__
 
 
 # -- General configuration ---------------------------------------------------
@@ -44,7 +44,7 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 
 
 # -- Options for HTML output -------------------------------------------------
-html_theme = "nature"
+html_theme = "sphinx_rtd_theme"
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
