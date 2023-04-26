@@ -7,7 +7,7 @@ SOURCES 	:= $(wildcard *.c)
 OBJECTS 	:= $(SOURCES:.c=.o)
 CC 			:= gcc
 CFLAGS		:= -fPIC -Wsign-conversion -Wsign-compare -Wunreachable-code
-SUBDIRS 	:= $(filter-out __pycache__, $(wildcard */))
+SUBDIRS 	:= $(filter-out __pycache__/, $(wildcard */))
 
 all: print_message $(OBJECTS)
 

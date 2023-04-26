@@ -16,6 +16,16 @@ Contents
 	Free up the memory stored by a MATRIX object.
 .. cpp:function:: MATRIX *matrix_add
 	The addition operation for two similarly-sized matrices.
+.. cpp:function:: MATRIX *matrix_subtract
+	The subtraction operation for two similarly-sized matrices.
+.. cpp:function:: MATRIX *matrix_multiply
+	The multiplication operation for two compatibly-sized matrices.
+.. cpp:function:: MATRIX *matrix_invert
+	Compute the inverse of a square matrix.
+.. cpp:function:: MATRIX *matrix_transpose
+	Compute the transpose of any matrix.
+.. cpp:function:: MATRIX *matrix_determinant
+	Compute the determinant of a square matrix.
 
 Source: ``trackstar/core/src/matrix.c``
 */
@@ -138,6 +148,141 @@ If a pointer is provided for ``result`` as an argument to this function, the
 return value will be the same memory address.
 */
 extern MATRIX *matrix_add(MATRIX m1, MATRIX m2, MATRIX *result);
+
+/*
+.. cpp:function:: extern MATRIX *matrix_subtract(MATRIX m1, MATRIX m2,
+	MATRIX *result);
+
+Subtract two matrices.
+
+Parameters
+----------
+m1 : ``MATRIX``
+	The first matrix in the subtraction operation.
+m2 : ``MATRIX``
+	The second matrix in the subtraction operation.
+result : ``MATRIX *``
+	A pointer to an already-initialized ``MATRIX`` object to store the
+	resultant matrix, if applicable. If ``NULL``, memory will be allocated
+	automatically.
+
+Returns
+-------
+result : ``MATRIX *``
+	The matrix :math:`m` defined by :math:`m_{ij} = m1_{ij} - m2_{ij}`.
+
+.. note::
+
+	If a pointer is provided for ``result`` as an argument to this function,
+	the return value will be the same memory address.
+*/
+extern MATRIX *matrix_subtract(MATRIX m1, MATRIX m2, MATRIX *result);
+
+/*
+.. cpp:function:: extern MATRIX *matrix_multiply(MATRIX m2, MATRIX m2,
+	MATRIX *result);
+
+Multiply two matrices.
+
+Parameters
+----------
+m1 : ``MATRIX``
+	The first matrix in the multiplication operation.
+m2 : ``MATRIX``
+	The second matrix in the multiplication operation.
+result : ``MATRIX``
+	A pointer to an already-initialized ``MATRIX`` object to store the
+	resultant matrix, if applicable. if ``NULL``, memory will be allocated
+	automatically.
+
+Returns
+-------
+``result``: ``MATRIX *``
+	The product of the two matrices :math:`c`, defined such that
+	:math:`c_{ij} = \sum_k m1_{ik} * m2_{kj}`.
+
+.. note::
+
+	If a pointer is provided for ``result`` as an argument to this function,
+	the return value will be the same memory address.
+*/
+extern MATRIX *matrix_multiply(MATRIX m1, MATRIX m2, MATRIX *result);
+
+/*
+.. cpp:function:: extern MATRIX *matrix_invert(MATRIX m, MATRIX *result);
+
+Invert a square matrix.
+
+Parameters
+----------
+m : ``MATRIX``
+	The input matrix.
+result : ``MATRIX *``
+	A pointer to an already-initialized ``MATRIX`` object to store the inverse
+	matrix, if applicable., if ``NULL``, memory will be allocated automatically.
+
+Returns
+-------
+result : ``MATRIX *``
+	The inverse :math:`m^{-1}` of the input matrix, defined such that
+	:math:`m^{-1}m = mm^{-1} = I`, where :math:`I` is the identity matrix of
+	the same size as :math:`m`. A return value of ``NULL`` is returned when
+	:math:`det(m) = 0`; in these cases, the matrix is not invertible.
+
+.. note::
+
+	If a pointer is provided for ``result`` as an argument to this function,
+	the return value will be the same memory address, unless the determinant is
+	zero.
+*/
+extern MATRIX *matrix_invert(MATRIX m, MATRIX *result);
+
+/*
+.. cpp:function:: extern MATRIX *matrix_transpose(MATRIX m, MATRIX *result);
+
+Transpose a matrix.
+
+Parameters
+----------
+m : ``MATRIX``
+	The input matrix.
+result : ``MATRIX *``
+	A pointer to an already-initialized ``MATRIX`` object to store the
+	transpose, if applicable. if ``NULL``, memory will be allocated
+	automatically.
+
+Returns
+-------
+result : ``MATRIX *``
+	The transpose, defined as :math:`m_{ij}^T = m_{ji}`.
+
+.. note::
+
+	If a pointer is provided for ``result`` as an argument to this function,
+	the return value will be the same memory address.
+*/
+extern MATRIX *matrix_transpose(MATRIX m, MATRIX *result);
+
+/*
+.. cpp:function:: extern double matrix_determinant(MATRIX m);
+
+Compute the determinant of a square matrix.
+
+Parameters
+----------
+m : ``MATRIX``
+	The matrix itself.
+
+Returns
+-------
+det : ``double``
+	:math:`det(m)`, compute via expansion by minors in the first row of the
+	matrix. The expansion by minors is handled recursively within an iterative
+	sum, with the solution for a 2x2 matrix implemented as the base case.
+	As a failsafe, the obvious solution for a 1x1 matrix is implemented as an
+	additional base case.
+*/
+extern double matrix_determinant(MATRIX m);
 
 #ifdef __cplusplus
 }

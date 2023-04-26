@@ -53,8 +53,13 @@ maximum portability.
 #define TRACE 2u
 #define DEBUG 3u
 
+/* for printing errors and warning messages in red. */
+#define RED "\033[0m"
+#define BOLDRED "\033[1m\033[31m"
+#define RESET "\033[0m"
+
 /*
-.. cpp:function:: logging_level()
+.. cpp:function:: logging_level();
 
 Determine the depth of TrackStar's verbose logging by obtaining the integer
 value of the environment variable ``TRACKSTAR_LOGGING_LEVEL``: 1 for *info*,
@@ -69,7 +74,7 @@ value of the environment variable ``TRACKSTAR_LOGGING_LEVEL``: 1 for *info*,
 
 
 /*
-.. cpp:function:: info_print(fmt, ...)
+.. cpp:function:: info_print(fmt, ...);
 
 Prints a statement to ``stderr`` if and only if the logging level is equal to
 1 (*info*).
@@ -81,9 +86,9 @@ Parameters
 fmt : ``char *``
 	A string formatter.
 ... : ``char *``
-	Substrings for formatting into fmt.
+	Substrings for formatting into ``fmt``.
 
-Usage: info_print("%s\n", "Some message to print.");
+Usage: ``info_print("%s\n", "Some message to print.");``
 */
 #define info_print(fmt, ...) \
 	do { \
@@ -93,13 +98,110 @@ Usage: info_print("%s\n", "Some message to print.");
 	} while (0)
 
 
-/* for printing errors and warning messages in red. */
-#define RED "\033[0m"
-#define BOLDRED "\033[1m\033[31m"
-#define RESET "\033[0m"
+/*
+.. cpp:function:: trace_print()
+
+Prints the name of the file and function that is being executed to stderr if
+and only if the logging level is equal to 2 (*trace*).
+
+.. note:: Thsi function is ``#define``'d as a compile-time macro.
+
+Usage: ``trace_print();``
+*/
+#define trace_print() \
+	do { \
+		if (logging_level() == TRACE) { \
+			fprintf(stderr, "%s:%d:%s()\n", __FILE__, __LINE__, __func__); \
+		} else {} \
+	} while (0)
+
 
 /*
-.. cpp:function:: fatal_print(fmt, ...)
+Print the value of variables to stderr if and only if the logging level is
+equal to 3 (*debug*).
+
+.. note:: This function is ``#define``'d as a compile-time macro.
+
+Parameters
+----------
+fmt : ``char *``
+	A string formatter.
+... : ``char *``
+	Substrings for formatting into ``fmt``.
+
+Usage: ``debug_print("x = %e ; y = %e\n", x, y);``
+*/
+#define debug_print(fmt, ...) \
+	do { \
+		if (logging_level() == DEBUG) { \
+			fprintf(stderr, "%s:%d:%s(): " fmt, __FILE__, __LINE__, \
+				__func__, __VA_ARGS__); \
+		} else {} \
+	} while (0)
+
+
+/*
+.. cpp:function:: warning_print(fmt, ...);
+
+Prints a warning message to the console and exits the current process, quitting
+the Python interpreter. This runs regardless of the logging level and whether
+or not the user has turned off Python warnings.
+
+.. note:: This function is ``#define``'d as a compile-time macro.
+
+.. attention::
+
+	This message is intended for developers, so if this is raised in an end
+	user's system, it should be interpreted as an issue within TrackStar.
+
+Parameters
+----------
+fmt : ``char *``
+	A string formatter.
+... : ``char *``
+	Substrings for formatting into ``fmt``.
+
+Usage: ``warning_print("%s\n", "Some message to print.");``
+*/
+#define warning_print(fmt, ...) \
+	do { \
+		fprintf(stderr, RED"Warning: "RESET fmt, __VA_ARGS__); \
+	} while (0)
+
+
+/*
+.. cpp:function:: error_print(fmt, ...);
+
+Prints an error message to the console and exits the current process, quitting
+the Python interpreter. This runs regardless of the logging level and whether
+or not the user has turned off Python warnings.
+
+.. note:: This function is ``#define``'d as a compile-time macro.
+
+.. attention::
+
+	This message is intended for developers, so if this is raised in an end
+	user's system, it should be interpreted as an issue within TrackStar.
+
+Parameters
+----------
+fmt : ``char *``
+	A string formatter.
+... : ``char *``
+	Substrings for formatting into ``fmt``.
+
+Usage: ``error_print("%s\n", "Some message to print.");``
+*/
+#define error_print(fmt, ...) \
+	do { \
+		fprintf(stderr, BOLDRED"Error!"RESET" %s:%d:%s(): " fmt, \
+			__FILE__, __LINE__, __func__, __VA_ARGS__); \
+		exit(1); \
+	} while (0)
+
+
+/*
+.. cpp:function:: fatal_print(fmt, ...);
 
 Prints a fatal message to the console and exits the current process, quitting
 the Python interpreter. This runs regardless of the logging level and whether
@@ -117,51 +219,15 @@ Parameters
 fmt : ``char *``
 	A string formatter.
 ... : ``char *``
-	Substrings for formatting into fmt.
+	Substrings for formatting into ``fmt``.
 
-Usage: fatal_print("%s\n", "Some message to print.");
+Usage: ``fatal_print("%s\n", "Some message to print.");``
 */
 #define fatal_print(fmt, ...) \
 	do { \
 		fprintf(stderr, BOLDRED"Fatal!"RESET" %s:%d:%s(): " fmt, \
 			__FILE__, __LINE__, __func__, __VA_ARGS__); \
+		exit(1); \
 	} while (0)
 
-
-
-
 #endif /* DEBUG_H */
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
