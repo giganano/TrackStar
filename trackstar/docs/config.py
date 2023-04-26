@@ -10,10 +10,18 @@ import trackstar
 _CONFIG_ = {
 	trackstar: {
 		"header": "trackstar",
-		"subs": [trackstar.version, trackstar.dummy]
+		"subs": [
+			trackstar.version,
+			trackstar.matrix,
+			trackstar.dummy
+		]
 	},
 	trackstar.version: {
 		"header": "trackstar.version",
+		"subs": []
+	},
+	trackstar.matrix: {
+		"header": "trackstar.matrix",
 		"subs": []
 	},
 	trackstar.dummy: {

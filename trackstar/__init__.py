@@ -7,10 +7,6 @@
 r"""
 Welcome to TrackStar!
 
-Package Contents
-----------------
-.. class:: matrix
-
 Copyright (C) 2023 James W. Johnson.
 """
 
@@ -38,6 +34,8 @@ if not __TRACKSTAR_SETUP__:
 			else: continue
 	__version__ = str(version)
 	__all__.append("__version__")
+	from .core import *
+	__all__.extend(core.__all__)
 
 	def dummy(x, y):
 		r"""

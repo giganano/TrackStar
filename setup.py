@@ -65,6 +65,7 @@ VERSION = {
 	"minpython": 	_MIN_PYTHON_VERSION_
 }
 
+
 def write_version_info(filename = "./trackstar/version_breakdown.py"):
 	r"""
 	Writes the current version info to disk within the source tree.
@@ -119,6 +120,27 @@ def write_version_info(filename = "./trackstar/version_breakdown.py"):
 		f.close()
 
 
+def find_extensions(path = "./trackstar"):
+	extensions = []
+	for root, dirs, files in os.walk(path):
+		for file in files:
+			if file.endswith(".pyx"):
+				name = "%s.%s" % (root[2:].replace('/', '.'),
+					file.split('.')[0])
+				src_files = ["%s/%s" % (root[2:], file)]
+				src_files += ["./trackstar/core/src/matrix.c"]
+				extensions.append(Extension(name, src_files))
+			else: continue
+	return extensions
+
+
+def find_packages(path = "./trackstar"):
+	packages = []
+	for root, dirs, files in os.walk(path):
+		if "__init__.py" in files: packages.append(root[2:].replace('/', '.'))
+	return packages
+
+
 # --------------------------- CALL TO SETUPTOOLS --------------------------- #
 def setup_package():
 	r"""
@@ -159,6 +181,8 @@ def setup_package():
 		license = "MIT",
 		platforms = ["Linux, Mac OS X", "Unix"],
 		provides = [package_name],
+		packages = find_packages(),
+		ext_modules = find_extensions(),
 		include_dirs = include_dirs,
 		setup_requires = [
 			"setuptools>=18.0", #automatically handles Cython extensions

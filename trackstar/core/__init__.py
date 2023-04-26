@@ -3,11 +3,14 @@
 # License: MIT License. See LICENSE in top-level directory
 # at: https://github.com/giganano/trackstar.git.
 
-.PHONY: clean
-clean:
-	@ $(MAKE) -C trackstar/ clean
+try:
+	__TRACKSTAR_SETUP__
+except NameError:
+	__TRACKSTAR_SETUP__ = False
 
-.PHONY: distclean
-distclean:
-	@ rm -rf build/
-	@ rm -rf trackstar.egg-info/
+if not __TRACKSTAR_SETUP__:
+
+	__all__ = ["matrix"]
+	from .matrix import matrix
+
+else: pass
