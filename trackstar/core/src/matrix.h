@@ -65,7 +65,7 @@ typedef struct covariance_matrix {
 	/*
 	.. cpp:type:: COVARIANCE_MATRIX
 
-	An arbitrary covariance matrix, a pointer type compatible with MATRIX.
+	An arbitrary covariance matrix, a pointer type compatible with ``MATRIX``.
 	In practice, ``n_rows`` and ``n_cols`` must be equal, and TrackStar's
 	python API enforces this.
 	

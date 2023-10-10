@@ -111,7 +111,6 @@ extern void matrix_free(MATRIX *m) {
 			}
 			free(m -> matrix);
 		} else {}
-
 		free(m);
 
 	} else {}

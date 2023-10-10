@@ -104,7 +104,7 @@ Usage: ``info_print("%s\n", "Some message to print.");``
 Prints the name of the file and function that is being executed to stderr if
 and only if the logging level is equal to 2 (*trace*).
 
-.. note:: Thsi function is ``#define``'d as a compile-time macro.
+.. note:: This function is ``#define``'d as a compile-time macro.
 
 Usage: ``trace_print();``
 */

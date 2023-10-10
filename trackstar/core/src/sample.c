@@ -2,40 +2,15 @@
 This file is part of the TrackStar package.
 Copyright (C) 2023 James W. Johnson (giganano9@gmail.com)
 License: MIT License. See LICENSE in top-level directory
-at: https://github.com/giganano/TrackStar.git
+at: https://github.com/giganano/TrackStar.git.
 */
 
-#ifndef SAMPLE_H
-#define SAMPLE_H
+#if defined(_OPENMP)
+	#include <omp.h>
+#endif /* _OPENMP */
+#include <stdlib.h>
+#include "sample.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif /* __cplusplus */
-
-#include "matrix.h"
-#include "datum.h"
-
-typedef struct sample {
-
-	/*
-	.. cpp:type:: SAMPLE
-
-	A collection of data vectors in some observed space. Some vectors may be
-	missing measurements for certain quantities.
-
-	Attributes
-	----------
-	data : ``DATUM **``
-		The collection of vectors themselves, each stored as a pointer to a
-		``DATUM`` object.
-	n_vectors : ``unsigned long``
-		The number of vectors in ``data`` (i.e., the sample size).
-	*/
-
-	DATUM **data;
-	unsigned long n_vectors;
-
-} SAMPLE;
 
 /*
 .. cpp:function:: extern SAMPLE *sample_initialize(unsigned long sample_size);
@@ -57,7 +32,15 @@ Returns
 s : ``SAMPLE *``
 	The newly constructed sample, ready to have its vectors initialized.
 */
-extern SAMPLE *sample_initialize(unsigned long sample_size);
+extern SAMPLE *sample_initialize(unsigned long sample_size) {
+
+	SAMPLE *s = (SAMPLE *) malloc (sizeof(SAMPLE));
+	s -> n_vectors = sample_size;
+	s -> data = (DATUM **) malloc ((*s).n_vectors * sizeof(DATUM *));
+	return s;
+
+}
+
 
 /*
 .. cpp:function:: extern void sample_free(SAMPLE *s);
@@ -69,10 +52,17 @@ Parameters
 s : ``SAMPLE *``
 	The sample to be freed.
 */
-extern void sample_free(SAMPLE *s);
+extern void sample_free(SAMPLE *s) {
 
-#ifdef __cplusplus
+	if (s != NULL) {
+
+		if ((*s).data != NULL) {
+			unsigned long i;
+			for (i = 0ul; i < (*s).n_vectors; i++) datum_free(s -> data[i]);
+			free(s -> data);
+		} else {}
+		free(s);
+
+	} else {}
+
 }
-#endif /* __cplusplus */
-
-#endif /* SAMPLE_H */
