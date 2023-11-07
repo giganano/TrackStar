@@ -323,7 +323,7 @@ extern MATRIX *matrix_multiply(MATRIX m1, MATRIX m2, MATRIX *result) {
 		return result;
 
 	} else {
-		fatal_print("%s: (%dx%d), (%dx%d)\n",
+		fatal_print("%s: (%ux%u), (%ux%u)\n",
 			"Incompatible matrix dimensions for multiplication",
 			m1.n_rows, m1.n_cols, m2.n_rows, m2.n_cols);
 	}

@@ -50,6 +50,9 @@ typedef struct track {
 	unsigned short n_cols;
 	char **labels;
 	double *weights;
+	unsigned short use_line_segment_corrections;
+	double line_segment_correction_tolerance;
+	unsigned short line_segment_correction_flag;
 
 } TRACK;
 

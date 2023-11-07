@@ -30,10 +30,13 @@ typedef struct sample {
 		``DATUM`` object.
 	n_vectors : ``unsigned long``
 		The number of vectors in ``data`` (i.e., the sample size).
+	n_threads : ``unsigned short``
+		The number of threads to use in looping over the sample.
 	*/
 
 	DATUM **data;
 	unsigned long n_vectors;
+	unsigned short n_threads;
 
 } SAMPLE;
 
@@ -70,6 +73,23 @@ s : ``SAMPLE *``
 	The sample to be freed.
 */
 extern void sample_free(SAMPLE *s);
+
+/*
+.. cpp:function:: extern unsigned short invert_covariance_matrices(SAMPLE *s);
+
+Invert all covariance matrices stored within a ``SAMPLE`` object.
+
+Parameters
+----------
+s : ``SAMPLE *``
+	The sample, containing some number of data vectors, whose covariance
+	matrices are to be inverted.
+
+Returns
+-------
+0 on success. 1 if one or more covariance matrices is not invertible.
+*/
+extern unsigned short invert_covariance_matrices(SAMPLE *s);
 
 #ifdef __cplusplus
 }

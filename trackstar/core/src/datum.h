@@ -16,7 +16,7 @@ extern "C" {
 
 /* maximum number of characters for a quantity's label in a datum */
 #ifndef MAX_LABEL_SIZE
-#define MAX_LABEL_SIZE 100U
+#define MAX_LABEL_SIZE 100u
 #endif /* MAX_LABEL_SIZE */
 
 typedef struct datum {

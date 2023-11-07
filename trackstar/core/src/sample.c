@@ -36,6 +36,7 @@ extern SAMPLE *sample_initialize(unsigned long sample_size) {
 
 	SAMPLE *s = (SAMPLE *) malloc (sizeof(SAMPLE));
 	s -> n_vectors = sample_size;
+	s -> n_threads = 1u;
 	s -> data = (DATUM **) malloc ((*s).n_vectors * sizeof(DATUM *));
 	return s;
 
@@ -64,5 +65,37 @@ extern void sample_free(SAMPLE *s) {
 		free(s);
 
 	} else {}
+
+}
+
+
+/*
+.. cpp:function:: extern unsigned short invert_covariance_matrices(SAMPLE *s);
+
+Invert all covariance matrices stored within a ``SAMPLE`` object.
+
+Parameters
+----------
+s : ``SAMPLE *``
+	The sample, containing some number of data vectors, whose covariance
+	matrices are to be inverted.
+
+Returns
+-------
+0 on success. 1 if one or more covariance matrices is not invertible.
+*/
+extern unsigned short invert_covariance_matrices(SAMPLE *s) {
+
+	unsigned short flag = 0u;
+	#if defined(_OPENMP)
+		#pragma omp parallel for num_threads((*s).n_threads)
+	#endif
+	for (unsigned long i = 0ul; i < (*s).n_vectors; i++) {
+		MATRIX *inv = s -> data[i] -> cov -> inv;
+		if (inv != NULL) matrix_free(inv);
+		inv = matrix_invert( *((MATRIX *) s -> data[i] -> cov), inv);
+		flag |= inv != NULL;
+	}
+	return flag;
 
 }
