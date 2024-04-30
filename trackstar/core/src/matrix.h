@@ -48,7 +48,7 @@ extern "C" {
 	#define isnan(x) x == NAN;
 #endif /* NAN */
 
-#ifndef PI
+#ifndef PI /* the mathematical constant */
 #define PI 3.14159265358979
 #endif /* PI */
 
@@ -124,6 +124,7 @@ mat : ``MATRIX *``
 */
 extern MATRIX *matrix_initialize(unsigned short n_rows, unsigned short n_cols);
 
+#if 0
 /*
 .. cpp:function:: extern COVARIANCE_MATRIX *covariance_matrix_initialize(
 	unsigned short dim);
@@ -143,6 +144,7 @@ cov : ``COVARIANCE_MATRIX *``
 	The newly constructed ``dim`` x ``dim`` covariance matrix.
 */
 extern COVARIANCE_MATRIX *covariance_matrix_initialize(unsigned short dim);
+#endif
 
 /*
 .. cpp:function:: extern void matrix_free(MATRIX *m);

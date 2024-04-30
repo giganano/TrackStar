@@ -369,6 +369,110 @@ Matrix or vector must contain only numerical values.""")
 		return rep
 
 
+	def __getitem__(self, indices):
+		self._check_indices(indices)
+		return self._m[0].matrix[indices[0]][indices[1]]
+
+
+	def __setitem__(self, indices, value):
+		self._check_indices(indices)
+		if isinstance(value, numbers.Number):
+			self._m[0].matrix[indices[0]][indices[1]] = <double> value
+		else:
+			raise TypeError("""\
+Item assignment requires a real number. Got: %s""" % (type(value)))
+
+
+	def _check_indices(self, indices):
+		r"""Conducts all error-handling on matrix indexing."""
+		if isinstance(indices, tuple):
+			if len(indices) == 2:
+				self._check_index(indices[0], self.n_rows, "row")
+				self._check_index(indices[1], self.n_cols, "column")
+				return
+			elif len(indices) < 2:
+				raise IndexError("""\
+Too few indices for matrix: accepts 2, but %d were given.""" % (len(indices)))
+			elif len(indices) > 2:
+				raise IndexError("""\
+Too many indices for matrix: accepts 2, but %d were given.""" % (len(indices)))
+		elif isinstance(indices, numbers.Number) and indices % 1 == 0:
+			raise IndexError("""\
+Too few indices for matrix: accepts 2, but 1 was given. If you have indexed \
+according to the rule `matrix[row][column]`, note that indexing instead \
+proceeds according to `matrix[row, column]`.""")
+		else:
+			raise IndexError("""\
+Matrix must be indexed with two integers. Got: %s""" % (type(indices)))
+
+
+	@staticmethod
+	def _check_index(value, maximum, row_or_column):
+		r"""
+		Determines if an array index is an integer and within the allowed
+		range dictated by the size of the matrix.
+		"""
+		if not isinstance(value, numbers.Number):
+			raise IndexError("Index must be an integer. Got: %s" % (
+				type(value)))
+		elif value % 1:
+			raise IndexError("Index must be an integer, not float.")
+		elif not 0 <= value < maximum:
+			raise IndexError("""\
+Index %d is out of range for matrix with %d %ss""" % (
+				value, maximum, row_or_column))
+		else: pass
+
+
+	def __eq__(self, matrix other):
+		if self.n_rows == other.n_rows and self.n_cols == other.n_cols:
+			eq = True
+			for i in range(self.n_rows):
+				for j in range(self.n_cols):
+					eq &= self[i, j] == other[i, j]
+					if not eq: break
+				if not eq: break
+			return eq
+		else:
+			return False
+
+
+	def __add__(self, matrix other):
+		cdef matrix result
+		if self.n_rows == other.n_rows and self.n_cols == other.n_cols:
+			result = matrix.zeroes(self.n_rows, self.n_cols)
+			matrix_add(self._m[0], other._m[0], result._m)
+			return result
+		else:
+			raise ValueError("""\
+Matrix dimensions must be equal for addition. Got: %dx%d and %dx%d.""" % (
+				self.n_rows, self.n_cols, other.n_rows, other.n_cols))
+
+
+	def __sub__(self, matrix other):
+		cdef matrix result
+		if self.n_rows == other.n_rows and self.n_cols == other.n_cols:
+			result = matrix.zeroes(self.n_rows, self.n_cols)
+			matrix_subtract(self._m[0], other._m[0], result._m)
+			return result
+		else:
+			raise ValueError("""\
+Matrix dimensions must be equal for subtraction. Got: %dx%d and %dx%d.""" % (
+				self.n_rows, self.n_cols, other.n_rows, other.n_cols))
+
+
+	def __mul__(self, matrix other):
+		cdef matrix result
+		if self.n_cols == other.n_rows:
+			result = matrix.zeroes(self.n_rows, other.n_cols)
+			matrix_multiply(self._m[0], other._m[0], result._m)
+			return result
+		else:
+			raise ValueError("""\
+Matrix dimensions incompatible for multiplication: %dx%d and %dx%d.""" % (
+				self.n_rows, self.n_cols, other.n_rows, other.n_cols))
+
+
 	@property
 	def n_rows(self):
 		r"""
@@ -428,26 +532,81 @@ Matrix or vector must contain only numerical values.""")
 		return self._m[0].n_cols
 
 
+	@classmethod
+	def zeroes(cls, n_rows, n_cols):
+		r"""
+		.. classmethod:: trackstar.matrix.zeroes(n_rows, n_cols)
+
+		Obtain an ``n_rows x n_cols`` matrix in which each element is set to
+		zero.
+		"""
+		return cls(cls._zeroes_from_size(n_rows, n_cols))
 
 
+	@classmethod
+	def identity(cls, size):
+		r"""
+		.. classmethod:: trackstar.matrix.identity(size)
+
+		Obtain and NxN identity matrix, defined as having 1's along the
+		diagonal and 0's off of it (:math:`I_{ij} = 1` for ``i == j`` and
+		:math:`I_{ij} = 0` for ``i != j``).
+		"""
+		arr = cls._zeroes_from_size(size, size)
+		for i in range(size): arr[i][i] = 1
+		return cls(arr)
 
 
+	@staticmethod
+	def _zeroes_from_size(n_rows, n_cols):
+		def _check_value(value, name):
+			r"""
+			Determines if n_rows or n_cols is an integer, and raises the
+			appropriate error if not.
+			"""
+			if not isinstance(value, numbers.Number):
+				raise TypeError("%s must be an integer. Got: %s" % (name,
+					type(value)))
+			elif value % 1:
+				raise TypeError("%s must be an integer, not float." % (name))
+			else: pass
+		_check_value(n_rows, "n_rows")
+		_check_value(n_cols, "n_cols")
+		n_rows = int(n_rows)
+		n_cols = int(n_cols)
+		arr = n_rows * [None]
+		for i in range(n_rows): arr[i] = n_cols * [0]
+		return arr
 
 
+	def invert(self):
+		r"""Compute the inverse if the matrix is square."""
+		cdef matrix result
+		if self.n_rows == self.n_cols:
+			result = matrix.zeroes(self.n_rows, self.n_cols)
+			matrix_invert(self._m[0], result._m)
+			return result
+		else:
+			raise ValueError("""\
+While some non-square matrices have left- and right-inverses, TrackStar only \
+supports inversion of square matrices. Dimensions: %dx%d""" % (
+				self.n_rows, self.n_cols))
 
 
+	def determinant(self):
+		r"""Compute the determinant if the matrix is square."""
+		if self.n_rows == self.n_cols:
+			return matrix_determinant(self._m[0])
+		else:
+			raise ValueError("""\
+Cannot compute the determinant of a non-square matrix. Dimensions: %dx%d""" % (
+				self.n_rows, self.n_cols))
 
 
-
-
-
-
-
-
-
-
-
-
-
-
+	def transpose(self):
+		r"""Compute the transpose of the matrix."""
+		cdef matrix result
+		result = matrix.zeroes(self.n_cols, self.n_rows)
+		matrix_transpose(self._m[0], result._m)
+		return result
 

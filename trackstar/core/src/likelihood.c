@@ -58,25 +58,26 @@ extern double loglikelihood_sample(SAMPLE *s, TRACK *t) {
 	double logl = 0.0;
 	#if defined(_OPENMP)
 		/*
-		Parallelized likelihood calculation is done for each individual datum
-		as an iterative sum is not thread-safe. The individual likelihoods are
-		then added up at the end.
+		Parallelized likelihood calculation is done separately for each
+		individual thread, because an iterative sum is not thread-safe. Total
+		is then added up at the end, after the threads have closed.
 		*/
-		double *by_datum = (double *) malloc ((*s).n_vectors * sizeof(double));
+		double *by_thread = (double *) malloc ((*s).n_threads * sizeof(double));
 		#pragma omp parallel for num_threads((*s).n_threads)
 	#endif
 	for (unsigned long i = 0ul; i < (*s).n_vectors; i++) {
 		#if defined(_OPENMP)
-			by_datum[i] = loglikelihood_datum(s -> data[i], t);
+			by_thread[omp_get_thread_num()] += loglikelihood_datum(
+				s -> data[i], t);
 		#else
 			logl += loglikelihood_datum(s -> data[i], t);
 		#endif
 	}
 	#if defined(_OPENMP)
-		for (unsigned long i = 0ul; i < (*s).n_vectors; i++) {
-			logl += by_datum[i];
+		for (unsigned long i = 0ul; i < (*s).n_threads; i++) {
+			logl += by_thread[i];
 		}
-		free(by_datum);
+		free(by_thread);
 	#endif
 	return logl;
 

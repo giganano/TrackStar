@@ -10,7 +10,8 @@ except NameError:
 
 if not __TRACKSTAR_SETUP__:
 
-	__all__ = ["matrix"]
+	__all__ = ["matrix", "covariance_matrix"]
 	from .matrix import matrix
+	from .covariance_matrix import covariance_matrix
 
 else: pass

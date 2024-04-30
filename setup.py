@@ -5,8 +5,8 @@
 # License: MIT License. See LICENSE in top-level directory
 # at: https://github.com/giganano/trackstar.git.
 
-# This version of TrackStar requires python >= 3.7.0
-_MIN_PYTHON_VERSION_ = "3.7.0"
+# This version of TrackStar requires python >= 3.8.0
+_MIN_PYTHON_VERSION_ = "3.8.0"
 import builtins
 builtins.__TRACKSTAR_SETUP__ = True
 import trackstar
@@ -39,11 +39,11 @@ Programming Language :: C
 Programming Language :: Cython
 Programming Language :: Python
 Programming Language :: Python :: 3
-Programming Language :: Python :: 3.7
 Programming Language :: Python :: 3.8
 Programming Language :: Python :: 3.9
 Programming Language :: Python :: 3.10
 Programming Language :: Python :: 3.11
+Programming Language :: Python :: 3.12
 Programming Language :: Python :: 3 :: Only
 Programming Language :: Python :: Implementation :: CPython
 Topic :: Scientific/Engineering
@@ -188,7 +188,7 @@ def setup_package():
 			"setuptools>=18.0", #automatically handles Cython extensions
 			"Cython>=0.29.0"
 		],
-		python_requires=">=3.7.*,<4",
+		python_requires=">=3.8,<4",
 		zip_safe = False,
 		verbose = "-q" not in sys.argv and "--quiet" not in sys.argv
 	)

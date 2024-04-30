@@ -56,6 +56,7 @@ extern MATRIX *matrix_initialize(unsigned short n_rows, unsigned short n_cols) {
 }
 
 
+#if 0
 /*
 .. cpp:function:: extern COVARIANCE_MATRIX *covariance_matrix_initialize(
 	unsigned short dim);
@@ -77,6 +78,7 @@ cov : ``COVARIANCE_MATRIX *``
 extern COVARIANCE_MATRIX *covariance_matrix_initialize(unsigned short dim) {
 
 	COVARIANCE_MATRIX *cov = (COVARIANCE_MATRIX *) matrix_initialize(dim, dim);
+	cov = (COVARIANCE_MATRIX *) realloc (cov, sizeof(COVARIANCE_MATRIX));
 	cov -> inv = (MATRIX *) matrix_initialize(dim, dim);
 
 	unsigned short i;
@@ -88,6 +90,7 @@ extern COVARIANCE_MATRIX *covariance_matrix_initialize(unsigned short dim) {
 	return cov;
 
 }
+#endif
 
 
 /*
@@ -132,8 +135,14 @@ extern void covariance_matrix_free(COVARIANCE_MATRIX *cov) {
 
 	if (cov != NULL) {
 
+		/*
+		Do not call matrix_free( (MATRIX *) cov) here, because cython witll
+		automatically call covariance_matrix.__dealloc__ followed by
+		matrix.__dealloc__, so Cython will do that anyway. Calling
+		matrix_free( (MATRIX *) cov) here causes a seg fault as a result of
+		that behavior by Cython.
+		*/
 		if ((*cov).inv != NULL) matrix_free(cov -> inv);
-		matrix_free( (MATRIX *) cov);
 
 	} else {}
 
@@ -222,7 +231,10 @@ result : ``MATRIX *``
 */
 extern MATRIX *matrix_subtract(MATRIX m1, MATRIX m2, MATRIX *result) {
 
-	return matrix_add(m1, *matrix_unary_minus(m2, result), result);
+	MATRIX *minus_m2 = matrix_unary_minus(m2, NULL);
+	matrix_add(m1, *minus_m2, result);
+	matrix_free(minus_m2);
+	return result;
 
 }
 
@@ -259,6 +271,7 @@ static MATRIX *matrix_unary_minus(MATRIX m, MATRIX *result) {
 	} else {
 		result -> n_rows = m.n_rows;
 		result -> n_cols = m.n_cols;
+		matrix_reset(result);
 	}
 	unsigned short i;
 	for (i = 0u; i < m.n_rows; i++) {
