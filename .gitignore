@@ -5,6 +5,8 @@
 *.egg-info/
 */__pycache__/
 trackstar/version_breakdown.py
+trackstar/core/*.c # Cython compiler outputs
+trackstar/core/src/*.o # C compiler outputs
 docs/src/_build/
 build/
 local/
