@@ -1,0 +1,50 @@
+#!/usr/bin/env python
+#
+# This file is part of the TrackStar package.
+# Copyright (C) 2023 James W. Johnson (giganano9@gmail.com)
+# License: MIT License. See LICENSE in top-level directory
+# at: https://github.com/giganano/trackstar.git.
+
+[build-system]
+requires = ["setuptools >= 18.0", "Cython >= 3.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "trackstar"
+version = "0.0.0.dev0"
+requires-python = ">=3.8"
+readme = "README.md"
+authors = [{name = "James W. Johnson", email = "giganano9@gmail.com"}]
+maintainers = [{name = "James W. Johnson", email = "giganano9@gmail.com"}]
+license = {file = "LICENSE"}
+description = "Bayesian likelihood estimates for curves in data space"
+classifiers = [
+	"Development Status :: 1 - Planning",
+	"Intended Audience :: Science/Research",
+	"License :: OSI Approved :: MIT License",
+	"Natural Language :: English",
+	"Operating System :: MacOS",
+	"Operating System :: POSIX",
+	"Operating System :: Unix",
+	"Programming Language :: C",
+	"Programming Language :: Cython",
+	"Programming Language :: Python",
+	"Programming Language :: Python :: 3",
+	"Programming Language :: Python :: 3.8",
+	"Programming Language :: Python :: 3.9",
+	"Programming Language :: Python :: 3.10",
+	"Programming Language :: Python :: 3.11",
+	"Programming Language :: Python :: 3.12",
+	"Programming Language :: Python :: 3 :: Only",
+	"Programming Language :: Python :: Implementation :: CPython",
+	"Topic :: Scientific/Engineering",
+	"Topic :: Scientific/Engineering :: Astronomy",
+	"Topic :: Scientific/Engineering :: Physics"
+]
+
+[project.urls]
+Repository = "https://github.com/giganano/TrackStar"
+Issues = "https://github.com/giganano/TrackStar/issues"
+
+# [tool.setuptools.cmdclass]
+# build_ext = "setup.build_ext"

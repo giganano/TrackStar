@@ -5,14 +5,8 @@
 # License: MIT License. See LICENSE in top-level directory
 # at: https://github.com/giganano/trackstar.git.
 
-import sys
-from . import version_breakdown
-if sys.version_info[:3] < tuple(
-	[int(_) for _ in version_breakdown.minpython.split('.')]):
-	raise RuntimeError("""\
-Python version %s is required. Current version: %d.%d.%d""" % (
-	version_breakdown.minpython, sys.version_info.major,
-	sys.version_info.minor, sys.version_info.micro))
+import importlib.metadata
+__ISRELEASED__ = False
 
 class version:
 
@@ -70,6 +64,54 @@ class version:
 	.. [1] https://peps.python.org/pep-0440/
 	"""
 
+	def __init__(self):
+		_version = importlib.metadata.version(__name__.split('.')[0])
+		_version = _version.split('.')
+		msg = "Invalid version information"
+		assert len(_version) in [3, 4], msg
+		for i in range(2): assert _version[i].isdigit(), msg
+		self._major = int(_version[0])
+		self._minor = int(_version[1])
+		if len(_version) == 3:
+			if "a" in _version[2]:
+				micro, alpha = _version[2].split('a')
+				assert alpha.isdigit(), msg
+				self._alpha = int(alpha)
+			elif "b" in _version[2]:
+				micro, beta = _version[2].split('b')
+				assert beta.isdigit(), msg
+				self._beta = int(beta)
+			elif "rc":
+				micro, rc = _version[2].split("rc")
+				assert rc.isdigit(), msg
+				self._rc = int(rc)
+			else:
+				micro = _version[2]
+			assert micro.isdigit(), msg
+			self._micro = int(micro)
+		else: # must be 4 based on prior assertion
+			assert _version[2].isdigit(), msg
+			self._micro = int(_version[2])
+			if "post" in _version[3]:
+				post = _version[3][4:]
+				assert post.isdigit(), msg
+				self._post = int(post)
+			elif "dev" in _version[3]:
+				dev = _version[3][3:]
+				assert dev.isdigit(), msg
+				self._dev = int(dev)
+			else: pass
+		assert isinstance(__ISRELEASED__, bool), msg
+		self._isreleased = __ISRELEASED__
+		if not hasattr(self, "alpha"): self._alpha = None
+		if not hasattr(self, "beta"): self._beta = None
+		if not hasattr(self, "rc"): self._rc = None
+		if not hasattr(self, "post"): self._post = None
+		if not hasattr(self, "dev"): self._dev = None
+		assert self.__repr__() == '.'.join(_version), """\
+Internal version string does not match package metadata."""
+
+
 	def __repr__(self):
 		r"""The X.Y.Z version string."""
 		rep = "%d.%d.%d" % (self.major, self.minor, self.micro)
@@ -79,6 +121,7 @@ class version:
 		if self.post is not None: rep += ".post%d" % (self.post)
 		if self.dev is not None: rep += ".dev%d" % (self.dev)
 		return rep
+
 
 	def __iter__(self):
 		r"""
@@ -94,9 +137,11 @@ class version:
 		yield self.dev
 		yield self.isreleased
 
+
 	def __getitem__(self, key):
 		r"""Type-casts to a tuple and uses its ``__getitem__`` method."""
 		return tuple(self).__getitem__(key)
+
 
 	def todict(self):
 		r"""
@@ -114,6 +159,7 @@ class version:
 			"isreleased": 	self.isreleased
 		}
 
+
 	@property
 	def major(self):
 		r"""
@@ -121,7 +167,7 @@ class version:
 
 		The major version number.
 		"""
-		return version_breakdown.major
+		return self._major
 
 	@property
 	def minor(self):
@@ -130,7 +176,7 @@ class version:
 
 		The minor version number.
 		"""
-		return version_breakdown.minor
+		return self._minor
 
 	@property
 	def micro(self):
@@ -139,7 +185,7 @@ class version:
 
 		The micro version number.
 		"""
-		return version_breakdown.micro
+		return self._micro
 
 	@property
 	def alpha(self):
@@ -148,7 +194,7 @@ class version:
 
 		The alpha release version number.
 		"""
-		return version_breakdown.alpha
+		return self._alpha
 
 	@property
 	def beta(self):
@@ -157,7 +203,7 @@ class version:
 
 		The beta release version number.
 		"""
-		return version_breakdown.beta
+		return self._beta
 
 	@property
 	def rc(self):
@@ -166,7 +212,7 @@ class version:
 
 		The release candidate version number.
 		"""
-		return version_breakdown.rc
+		return self._rc
 
 	@property
 	def dev(self):
@@ -175,7 +221,7 @@ class version:
 
 		The development release version number.
 		"""
-		return version_breakdown.dev
+		return self._dev
 
 	@property
 	def post(self):
@@ -184,7 +230,7 @@ class version:
 
 		The post release version number.
 		"""
-		return version_breakdown.post
+		return self._post
 
 	@property
 	def isreleased(self):
@@ -193,17 +239,7 @@ class version:
 
 		Whether or not this version has been tagged and released.
 		"""
-		return version_breakdown.isreleased
-
-	@property
-	def python_requires(self):
-		r"""
-		Type : ``str``
-
-		The version string of the minimum python version required for this
-		version of TrackStar.
-		"""
-		return version_breakdown.minpython
+		return self._isreleased
 
 
 version = version()
