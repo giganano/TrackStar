@@ -1,9 +1,10 @@
 
+
 *.sublime-workspace
 *.sublime-project
 *.so
 *.egg-info/
-*/__pycache__/
+**/__pycache__/
 trackstar/version_breakdown.py
 # Cython compiler outputs
 trackstar/core/*.c
