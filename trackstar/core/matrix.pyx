@@ -563,7 +563,7 @@ Matrix dimensions incompatible for multiplication: %dx%d and %dx%d.""" % (
 			if value % 1 == 0:
 				if value > 0:
 					value = int(value)
-					if multithreading_enabled() and value != 1:
+					if value == 1 or multithreading_enabled():
 						self._m[0].n_threads = value
 					else:
 						raise RuntimeError("""\

@@ -31,7 +31,7 @@ cdef class covariance_matrix(matrix):
 		covariance matrices already attached to individual data vectors.
 	"""
 
-	def __cinit__(self, arr):
+	def __cinit__(self, arr, n_threads = 1):
 		self._cov = <COVARIANCE_MATRIX *> realloc (self._m,
 			sizeof(COVARIANCE_MATRIX))
 
