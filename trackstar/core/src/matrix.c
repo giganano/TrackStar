@@ -7,6 +7,7 @@ at: https://github.com/giganano/trackstar.git.
 
 #include <stdlib.h>
 #include <math.h>
+#include "multithread.h"
 #include "matrix.h"
 #include "debug.h"
 
@@ -51,6 +52,7 @@ extern MATRIX *matrix_initialize(unsigned short n_rows, unsigned short n_cols) {
 
 	m -> n_rows = n_rows;
 	m -> n_cols = n_cols;
+	m -> n_threads = 1u; /* modified in Python to user specification */
 	return m;
 
 }
@@ -136,11 +138,12 @@ extern void covariance_matrix_free(COVARIANCE_MATRIX *cov) {
 	if (cov != NULL) {
 
 		/*
-		Do not call matrix_free( (MATRIX *) cov) here, because cython witll
+		Do not call matrix_free( (MATRIX *) cov) here, because Cython witll
 		automatically call covariance_matrix.__dealloc__ followed by
-		matrix.__dealloc__, so Cython will do that anyway. Calling
-		matrix_free( (MATRIX *) cov) here causes a seg fault as a result of
-		that behavior by Cython.
+		matrix.__dealloc__, so that function freeing the memory will be called
+		anyway. Calling matrix_free( (MATRIX *) cov) here causes a seg fault as
+		a result of that behavior by Cython upon quitting the Python
+		interpreter.
 		*/
 		if ((*cov).inv != NULL) matrix_free(cov -> inv);
 
@@ -186,10 +189,11 @@ extern MATRIX *matrix_add(MATRIX m1, MATRIX m2, MATRIX *result) {
 			result -> n_cols = m1.n_cols;
 			matrix_reset(result);
 		}
-		unsigned short i;
-		for (i = 0u; i < m1.n_rows; i++) {
-			unsigned short j;
-			for (j = 0u; j < m1.n_cols; j++) {
+		#if defined(_OPENMP)
+			#pragma omp parallel for num_threads(m1.n_threads)
+		#endif
+		for (unsigned short i = 0u; i < m1.n_rows; i++) {
+			for (unsigned short j = 0u; j < m1.n_cols; j++) {
 				result -> matrix[i][j] = m1.matrix[i][j] + m2.matrix[i][j];
 			}
 		}
@@ -273,10 +277,13 @@ static MATRIX *matrix_unary_minus(MATRIX m, MATRIX *result) {
 		result -> n_cols = m.n_cols;
 		matrix_reset(result);
 	}
-	unsigned short i;
-	for (i = 0u; i < m.n_rows; i++) {
-		unsigned short j;
-		for (j = 0u; j < m.n_cols; j++) result -> matrix[i][j] = -m.matrix[i][j];
+	#if defined(_OPENMP)
+		#pragma omp parallel for num_threads(m.n_threads)
+	#endif
+	for (unsigned short i = 0u; i < m.n_rows; i++) {
+		for (unsigned short j = 0u; j < m.n_cols; j++) {
+			result -> matrix[i][j] = -m.matrix[i][j];
+		}
 	}
 	return result;
 
@@ -322,12 +329,12 @@ extern MATRIX *matrix_multiply(MATRIX m1, MATRIX m2, MATRIX *result) {
 			result -> n_cols = m2.n_cols;
 			matrix_reset(result);
 		}
-		unsigned short i;
-		for (i = 0u; i < (*result).n_rows; i++) {
-			unsigned short j;
-			for (j = 0u; j < (*result).n_cols; j++) {
-				unsigned short k;
-				for (k = 0u; k < m1.n_cols; k++) {
+		#if defined(_OPENMP)
+			#pragma omp parallel for num_threads(m1.n_threads)
+		#endif
+		for (unsigned short i = 0u; i < (*result).n_rows; i++) {
+			for (unsigned short j = 0u; j < (*result).n_cols; j++) {
+				for (unsigned short k = 0u; k < m1.n_cols; k++) {
 					result -> matrix[i][j] += m1.matrix[i][k] * m2.matrix[k][j];
 				}
 			}
@@ -376,9 +383,13 @@ extern MATRIX *matrix_invert(MATRIX m, MATRIX *result) {
 	double det = matrix_determinant(m);
 	if (det) {
 		result = matrix_adjoint(m, result);
-		unsigned short i, j;
-		for (i = 0u; i < m.n_rows; i++) {
-			for (j = 0u; j < m.n_cols; j++) result -> matrix[i][j] /= det;
+		#if defined(_OPENMP)
+			#pragma omp parallel for num_threads(m.n_threads)
+		#endif
+		for (unsigned short i = 0u; i < m.n_rows; i++) {
+			for (unsigned short j = 0u; j < m.n_cols; j++) {
+				result -> matrix[i][j] /= det;
+			}
 		}
 		return result;
 	} else {
@@ -421,9 +432,13 @@ extern MATRIX *matrix_transpose(MATRIX m, MATRIX *result) {
 		result -> n_cols = m.n_rows;
 		matrix_reset(result);
 	}
-	unsigned short i, j;
-	for (i = 0u; i < m.n_rows; i++) {
-		for (j = 0u; j < m.n_cols; j++) result -> matrix[j][i] = m.matrix[i][j];
+	#if defined(_OPENMP)
+		#pragma omp parallel for num_threads(m.n_threads)
+	#endif
+	for (unsigned short i = 0u; i < m.n_rows; i++) {
+		for (unsigned short j = 0u; j < m.n_cols; j++) {
+			result -> matrix[j][i] = m.matrix[i][j];
+		}
 	}
 
 	return result;
@@ -466,12 +481,26 @@ extern double matrix_determinant(MATRIX m) {
 		} else {
 			/* The recursive case: an NxN matrix where N > 2 */
 			double result = 0;
-			unsigned short i;
-			for (i = 0u; i < m.n_cols; i++) {
+			#if defined(_OPENMP)
+				#pragma omp parallel for num_threads(m.n_threads)
+			#endif
+			for (unsigned short i = 0u; i < m.n_cols; i++) {
 				unsigned short axis[2] = {0, i};
 				MATRIX *minor = matrix_minor(m, axis, NULL);
-				result += pow(-1, i) * m.matrix[0][i] * matrix_determinant(
-					*minor);
+				double minor_det = matrix_determinant(*minor);
+				#if defined(_OPENMP)
+					/*
+					Because iterative sums are not thread-safe, we have to use
+					thread locking to ensure that only one thread will
+					increment the result at a time.
+					*/
+					#pragma omp critical
+					{
+						result += pow(-1, i) * m.matrix[0][i] * minor_det;
+					}
+				#else
+					result += pow(-1, i) * m.matrix[0][i] * minor_det;
+				#endif
 				matrix_free(minor);
 			}
 			return result;
@@ -560,10 +589,11 @@ static MATRIX *matrix_cofactors(MATRIX m, MATRIX *result) {
 			result -> n_cols = m.n_cols;
 			matrix_reset(result);
 		}
-		unsigned short i;
-		for (i = 0u; i < m.n_rows; i++) {
-			unsigned short j;
-			for (j = 0u; j < m.n_cols; j++) {
+		#if defined(_OPENMP)
+			#pragma omp parallel for num_threads(m.n_threads)
+		#endif
+		for (unsigned short i = 0u; i < m.n_rows; i++) {
+			for (unsigned short j = 0u; j < m.n_cols; j++) {
 				unsigned short axis[2] = {i, j};
 				MATRIX *minor = matrix_minor(m, axis, NULL);
 				result -> matrix[i][j] = pow(-1,
@@ -617,11 +647,18 @@ static MATRIX *matrix_minor(MATRIX m, unsigned short axis[2], MATRIX *result) {
 		result -> n_cols = m.n_cols - 1u;
 		matrix_reset(result);
 	}
-	unsigned short i, n1 = 0u;
-	for (i = 0u; i < m.n_rows; i++) {
+
+	/*
+	Don't use multi-threading here. Thread safety would be a nightmare as one
+	would have to access the current thread number as opposed to simply
+	incrementing n1 and n2. Since we're simply copying values over, opening
+	and closing threads would likely slow things down anyway.
+	*/
+	unsigned short n1 = 0u;
+	for (unsigned short i = 0u; i < m.n_rows; i++) {
 		if (i != axis[0]) {
-			unsigned short j, n2 = 0u;
-			for (j = 0u; j < m.n_cols; j++) {
+			unsigned short n2 = 0u;
+			for (unsigned short j = 0u; j < m.n_cols; j++) {
 				if (j != axis[1]) {
 					result -> matrix[n1][n2] = m.matrix[i][j];
 					n2++;
@@ -651,14 +688,19 @@ m : ``MATRIX *``
 */
 static void matrix_reset(MATRIX *m) {
 
-	unsigned short i;
+	/*
+	Don't use multi-threading here as memory is being allocated, which is often
+	not thread-safe. Best to let that happen sequentially so all of the data
+	can reside in adjacent addresses anyway.
+	*/
 	m -> matrix = (double **) realloc (m -> matrix,
 		(*m).n_rows * sizeof(double *));
-	for (i = 0u; i < (*m).n_rows; i++) {
-		unsigned short j;
+	for (unsigned short i = 0u; i < (*m).n_rows; i++) {
 		m -> matrix[i] = (double *) realloc (m -> matrix[i],
 			(*m).n_cols * sizeof(double));
-		for (j = 0u; j < (*m).n_cols; j++) m -> matrix[i][j] = 0.0;
+		for (unsigned short j = 0u; j < (*m).n_cols; j++) {
+			m -> matrix[i][j] = 0.0;
+		}
 	}
 
 }

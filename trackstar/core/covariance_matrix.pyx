@@ -46,3 +46,26 @@ cdef class covariance_matrix(matrix):
 	def __dealloc__(self):
 		covariance_matrix_free(self._cov)
 
+
+	def __repr__(self):
+		return super().__repr__().replace("matrix", "covmat")
+
+
+	def __setitem__(self, indices, value):
+		super().__setitem__(indices, value)
+		super().__setitem__(indices[::-1], value) # ensures diagonality
+		matrix_invert(self._m[0], self._cov[0].inv)
+
+
+	@property
+	def inv(self):
+		r"""
+		Type : ``trackstar.matrix``
+
+		The inverse of this covariance matrix, :math:`C^{-1}`.
+		"""
+		inv = matrix.zeroes(self.n_rows, self.n_cols)
+		for i in range(self.n_rows):
+			for j in range(self.n_cols):
+				inv[i, j] = self._cov[0].inv.matrix[i][j]
+		return inv

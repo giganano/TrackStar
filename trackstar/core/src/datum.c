@@ -5,7 +5,6 @@ License: MIT License. See LICENSE in top-level directory
 at: https://github.com/giganano/TrackStar.git.
 */
 
-
 #include <stdlib.h>
 #include <string.h>
 #include "datum.h"

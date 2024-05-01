@@ -6,12 +6,16 @@
 # at: https://github.com/giganano/trackstar.git.
 
 __all__ = ["matrix"]
+import numbers
+import warnings
 from .utils import copy_array_like_object
 from libc.stdlib cimport malloc, free
 from libc.string cimport strcat, strlen
 from libc.stdio cimport sprintf
 from . cimport matrix
-import numbers
+from .multithread cimport multithreading_enabled
+from .multithread cimport max_threads_allowed
+from .multithread cimport MAX_THREADS_CPU_RATIO
 
 
 cdef class matrix:
@@ -275,7 +279,7 @@ cdef class matrix:
 	True
 	"""
 
-	def __cinit__(self, arr):
+	def __cinit__(self, arr, n_threads = 1):
 		r"""
 		Allocate memory for a matrix. User access of this function strongly
 		discouraged.
@@ -318,7 +322,7 @@ Matrix or vector must contain only numerical values.""")
 			<unsigned short> len(arr[0]))
 
 
-	def __init__(self, arr):
+	def __init__(self, arr, n_threads = 1):
 		r"""
 		Initialize a ``matrix`` by type-casting a 2-dimensional array-like
 		object. See ``help(trackstar.matrix)`` for more information.
@@ -328,6 +332,7 @@ Matrix or vector must contain only numerical values.""")
 		for i in range(self.n_rows):
 			for j in range(self.n_cols):
 				self._m[0].matrix[i][j] = <double> arr[i][j]
+		self.n_threads = n_threads
 
 
 	def __dealloc__(self):
@@ -530,6 +535,50 @@ Matrix dimensions incompatible for multiplication: %dx%d and %dx%d.""" % (
 		7
 		"""
 		return self._m[0].n_cols
+
+
+	@property
+	def n_threads(self):
+		r"""
+		Type : ``int`` [positive definite]
+
+		The number of parallel processing threads to use in matrix operations.
+
+		.. note::
+
+			Parallel processing is only available if TrackStar was linked with
+			the OpenMP library at compile time.
+
+		.. todo::
+
+			Direct users to install documentation on how to install and link
+			OpenMP. Put link in RuntimeError message as well.
+		"""
+		return self._m[0].n_threads
+
+
+	@n_threads.setter
+	def n_threads(self, value):
+		if isinstance(value, numbers.Number):
+			if value % 1 == 0:
+				if value > 0:
+					value = int(value)
+					if multithreading_enabled() and value != 1:
+						self._m[0].n_threads = value
+					else:
+						raise RuntimeError("""\
+TrackStar's multithreading features are not enabled. To enable parallel \
+processing, please follow the instructions at (install docs url).""")
+				else:
+					raise ValueError("""\
+Number of parallel processing threads must be positive, not negative.""")
+			else:
+				raise ValueError("""\
+Number of parallel processing threads must be an integer, not float.""")
+		else:
+			raise TypeError("""\
+Number of parallel processing threads must be an integer. Got: %s""" % (
+				type(value)))
 
 
 	@classmethod

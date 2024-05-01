@@ -72,6 +72,7 @@ typedef struct matrix {
 	double **matrix;
 	unsigned short n_rows;
 	unsigned short n_cols;
+	unsigned short n_threads;
 
 } MATRIX;
 

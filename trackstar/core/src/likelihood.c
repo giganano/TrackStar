@@ -5,12 +5,13 @@ License: MIT License. See LICENSE in top-level directory
 at: https://github.com/giganano/TrackStar.git.
 */
 
-#if defined(_OPENMP)
-	#include <omp.h>
-#endif
+// #if defined(_OPENMP)
+// 	#include <omp.h>
+// #endif
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include "multithread.h"
 #include "likelihood.h"
 #include "utils.h"
 #include "debug.h"
@@ -117,9 +118,12 @@ References
 */
 extern double loglikelihood_datum(DATUM *d, TRACK *t) {
 
-	matrix_invert(*((MATRIX *) d -> cov), d -> cov -> inv);
+	// matrix_invert(*((MATRIX *) d -> cov), d -> cov -> inv);
 	TRACK *sub = track_subset(*d, *t);
 	double result = 0;
+	#if defined(_OPENMP)
+		#pragma omp parallel for num_threads((*t).n_threads)
+	#endif
 	for (unsigned short i = 0u; i < (*sub).n_rows; i++) {
 		double s = (*sub).weights[i] * exp(-0.5 * chi_squared(*d, *sub, i));
 		if ((*t).use_line_segment_corrections) {
@@ -136,7 +140,15 @@ extern double loglikelihood_datum(DATUM *d, TRACK *t) {
 			t -> line_segment_correction_flag |= (correction >
 				(*t).line_segment_correction_tolerance);
 		} else {}
-		result += s;
+		#if defined(_OPENMP)
+			/* iterative sums aren't thread safe, so put lock on increment */
+			#pragma omp critical
+			{
+				result += s;
+			}
+		#else
+			result += s;
+		#endif
 	}
 	track_free(sub);
 	return log(result);
@@ -300,6 +312,9 @@ static TRACK *track_subset(DATUM d, TRACK t) {
 					MAX_LABEL_SIZE * sizeof(char));
 				memset(sub -> labels[i], '\0', MAX_LABEL_SIZE);
 				strcpy(sub -> labels[i], d.labels[index]);
+				#if defined(_OPENMP)
+					#pragma omp parallel for num_threads(t.n_threads)
+				#endif
 				for (unsigned short j = 0u; j < t.n_rows; j++) {
 					sub -> predictions[j][i] = t.predictions[j][index];
 				}

@@ -12,6 +12,7 @@ cdef extern from "./src/datum.h":
 		double **vector
 		unsigned short n_rows
 		unsigned short n_cols
+		unsigned short n_threads
 
 	DATUM *datum_initialize(double *arr, char **labels, unsigned short dim)
 	void datum_free(DATUM *d)

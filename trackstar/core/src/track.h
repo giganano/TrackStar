@@ -48,6 +48,7 @@ typedef struct track {
 	double **predictions;
 	unsigned short n_rows;
 	unsigned short n_cols;
+	unsigned short n_threads;
 	char **labels;
 	double *weights;
 	unsigned short use_line_segment_corrections;

@@ -5,13 +5,14 @@
 # License: MIT License. See LICENSE in top-level directory
 # at: https://github.com/giganano/trackstar.git.
 
-from .matrix cimport MATRIX, matrix
+from .matrix cimport MATRIX, matrix, matrix_invert
 
 cdef extern from "./src/matrix.h":
 	ctypedef struct COVARIANCE_MATRIX:
 		double **matrix
 		unsigned short n_rows
 		unsigned short n_cols
+		unsigned short n_threads
 		MATRIX *inv
 
 	void covariance_matrix_free(COVARIANCE_MATRIX *cov)
