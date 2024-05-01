@@ -10,6 +10,7 @@ trackstar/core/*.c
 # C compiler outputs
 trackstar/core/src/*.o
 docs/src/_build/
+docs/src/api/*.rst
 build/
 local/
 
