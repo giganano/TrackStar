@@ -45,6 +45,3 @@ classifiers = [
 [project.urls]
 Repository = "https://github.com/giganano/TrackStar"
 Issues = "https://github.com/giganano/TrackStar/issues"
-
-# [tool.setuptools.cmdclass]
-# build_ext = "setup.build_ext"
