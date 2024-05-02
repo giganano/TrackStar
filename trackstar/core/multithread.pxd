@@ -6,6 +6,6 @@
 # at: https://github.com/giganano/trackstar.git.
 
 cdef extern from "./src/multithread.h":
-	inline unsigned short multithreading_enabled()
-	inline long max_threads_allowed()
+	unsigned short multithreading_enabled()
+	long max_threads_allowed()
 	unsigned long MAX_THREADS_CPU_RATIO
