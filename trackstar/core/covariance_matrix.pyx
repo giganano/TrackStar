@@ -42,6 +42,10 @@ cdef class covariance_matrix(matrix):
 		self._cov[0].inv = matrix_initialize(self._cov[0].n_rows,
 			self._cov[0].n_cols)
 
+	def __init__(self, arr, n_threads = 1):
+		super().__init__(arr)
+		matrix_invert(self._m[0], self._cov[0].inv)
+
 
 	def __dealloc__(self):
 		covariance_matrix_free(self._cov)

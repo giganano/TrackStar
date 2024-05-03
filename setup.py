@@ -77,7 +77,7 @@ class openmp_linker:
 	OpenMP library at compile time to enable parallel processing.
 	"""
 
-	_SUPPORTED_COMPILERS_ = set(["gcc", "clang"])
+	_SUPPORTED_COMPILERS_ = {"gcc", "clang"}
 	_CLANG_OPENMP_COMPILE_FLAGS_ = ["-Xpreprocessor", "-fopenmp"]
 	_CLANG_OPENMP_LINK_FLAGS_ = ["-Xpreprocessor", "-fopenmp", "-lomp"]
 	_GCC_OPENMP_COMPILE_FLAGS_ = ["-fopenmp"]

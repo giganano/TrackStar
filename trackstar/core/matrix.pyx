@@ -25,7 +25,9 @@ cdef class matrix:
 
 	A generic matrix object for linear algebra operations.
 
-	.. seealso:: ``trackstar.vector``
+	.. seealso:: ``trackstar.datum``
+
+	.. todo:: replace example code outputs with true uses of this class
 
 	Parameters
 	----------
@@ -364,9 +366,9 @@ Matrix or vector must contain only numerical values.""")
 			for j in range(self.n_cols):
 				# Look for '-' char as opposed to < 0 b/c -0 fails that test
 				if str(self._m[0].matrix[i][j]).startswith("-"):
-					rep += "%.2e" % (self._m[0].matrix[i][j])
+					rep += "%.4e" % (self._m[0].matrix[i][j])
 				else:
-					rep += " %.2e" % (self._m[0].matrix[i][j])
+					rep += " %.4e" % (self._m[0].matrix[i][j])
 				if j != self.n_cols - 1: rep += "    "
 			rep += " ]"
 			if i != self.n_rows - 1: rep += "\n"

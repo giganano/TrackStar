@@ -10,6 +10,7 @@ at https://github.com/giganano/TrackStar.git.
 #include "track.h"
 #include "matrix.h"
 #include "datum.h"
+#include "utils.h"
 
 /*
 .. cpp:function:: extern TRACK *track_initialize(double **predictions,

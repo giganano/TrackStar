@@ -40,17 +40,11 @@ extern DATUM *datum_initialize(double *arr, char **labels, unsigned short dim) {
 
 	DATUM *d = (DATUM *) matrix_initialize(1u, dim);
 	d = (DATUM *) realloc (d, sizeof(DATUM));
-	d -> cov = (COVARIANCE_MATRIX *) matrix_initialize(dim, dim);
-	d -> cov = (COVARIANCE_MATRIX *) realloc (d -> cov,
-		sizeof(COVARIANCE_MATRIX));
-	d -> cov -> inv = matrix_initialize(dim, dim);
 	d -> labels = (char **) malloc (dim * sizeof(char *));
 
 	unsigned short i;
 	for (i = 0u; i < dim; i++) {
 		d -> vector[0u][i] = arr[i];
-		d -> cov -> matrix[i][i] = 1.0;
-		d -> cov -> inv -> matrix[i][i] = 1.0;
 		d -> labels[i] = (char *) malloc (MAX_LABEL_SIZE * sizeof(char));
 		memset(d -> labels[i], '\0', MAX_LABEL_SIZE);
 		strcpy(d -> labels[i], labels[i]);
@@ -74,14 +68,26 @@ extern void datum_free(DATUM *d) {
 
 	if (d != NULL) {
 
+		/*
+		Do not call covariance_matrix_free( (COVARIANCE_MATRIX *) d -> cov)
+		or matrix_free( (MATRIX *) d) here. With the inheritance structure
+		implemented in Cython wrapping compatible pointer types, the attribute
+		datum._m has the same address as datum._d. Cython will call
+		matrix.__dealloc__ for this object automatically. The same is true for
+		its covariance_matrix attribute (see also comments in
+		covariance_matrix_free function in matrix.c).
+
+		Calling free(d) does not cause an error. That memory block needs to be
+		opened up anyway, but the specific pointers stored within the datum
+		still need to be freed.
+		*/
+
 		if ((*d).labels != NULL) {
 			unsigned short i;
 			for (i = 0u; i < (*d).n_cols; i++) free(d -> labels[i]);
 			free(d -> labels);
 		} else {}
-		if ((*d).cov != NULL) covariance_matrix_free(
-			(COVARIANCE_MATRIX *) d -> cov);
-		matrix_free( (MATRIX *) d);
+		free(d);
 
 	} else {}
 

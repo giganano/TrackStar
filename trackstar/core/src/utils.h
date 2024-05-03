@@ -12,6 +12,11 @@ at: https://github.com/giganano/TrackStar.git.
 extern "C" {
 #endif /* __cplusplus  */
 
+/* maximum number of characters for a quantity's label in a datum */
+#ifndef MAX_LABEL_SIZE
+#define MAX_LABEL_SIZE 100u
+#endif /* MAX_LABEL_SIZE */
+
 /*
 .. cpp:function:: extern signed short strindex(char **strlist, char *test,
 	unsigned short strlistlength);

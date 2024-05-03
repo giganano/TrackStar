@@ -138,13 +138,16 @@ extern void covariance_matrix_free(COVARIANCE_MATRIX *cov) {
 	if (cov != NULL) {
 
 		/*
-		Do not call matrix_free( (MATRIX *) cov) here, because Cython witll
-		automatically call covariance_matrix.__dealloc__ followed by
-		matrix.__dealloc__, so that function freeing the memory will be called
-		anyway. Calling matrix_free( (MATRIX *) cov) here causes a seg fault as
-		a result of that behavior by Cython upon quitting the Python
-		interpreter.
+		Due to the inheritance structure implemented with compatible pointer
+		types in the backend, calling matrix_free( (MATRIX *) cov) here results
+		in a segmentation fault when quitting the Python interpreter. This
+		arises because the attribute covariance_matrix._m is assigned the same
+		pointer value as covariance_matrix._cov. Since covariance_matrix
+		inherits from matrix, Cython calls covariance_matrix.__dealloc__
+		followed by matrix.__dealloc__ automatically, so the memory blocks
+		associated with the base matrix object will get freed automatically.
 		*/
+
 		if ((*cov).inv != NULL) matrix_free(cov -> inv);
 
 	} else {}
