@@ -377,11 +377,13 @@ Matrix or vector must contain only numerical values.""")
 
 
 	def __getitem__(self, indices):
+		r"""Index the matrix according to the rule ``matrix[i, j]``"""
 		self._check_indices(indices)
 		return self._m[0].matrix[indices[0]][indices[1]]
 
 
 	def __setitem__(self, indices, value):
+		r"""Item assignment according to the rule ``matrix[i, j] = x``"""
 		self._check_indices(indices)
 		if isinstance(value, numbers.Number):
 			self._m[0].matrix[indices[0]][indices[1]] = <double> value
