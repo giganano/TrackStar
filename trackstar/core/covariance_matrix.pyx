@@ -18,6 +18,8 @@ cdef class covariance_matrix(matrix):
 
 	A covariance matrix.
 
+	.. todo:: Finish documentation on this class.
+
 	.. sealso::
 
 		- ``trackstar.matrix``
