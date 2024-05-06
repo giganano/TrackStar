@@ -14,7 +14,7 @@ from libc.string cimport strlen
 
 
 cdef class datum:
-	
+
 	r"""
 	.. class:: trackstar.datum(**kwargs)
 
@@ -50,6 +50,7 @@ Datum must contain only numerical values. Got: %s""" % (type(kwargs[key])))
 
 	def __init__(self, **kwargs):
 		pass # need to change the __init__ signature to accept kwargs
+
 
 	def __dealloc__(self):
 		r"""
