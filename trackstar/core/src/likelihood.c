@@ -66,7 +66,7 @@ extern double loglikelihood_sample(SAMPLE *s, TRACK *t) {
 		double *by_thread = (double *) malloc ((*s).n_threads * sizeof(double));
 		#pragma omp parallel for num_threads((*s).n_threads)
 	#endif
-	for (unsigned long i = 0ul; i < (*s).n_vectors; i++) {
+	for (unsigned short i = 0u; i < (*s).n_vectors; i++) {
 		#if defined(_OPENMP)
 			by_thread[omp_get_thread_num()] += loglikelihood_datum(
 				s -> data[i], t);
@@ -75,11 +75,12 @@ extern double loglikelihood_sample(SAMPLE *s, TRACK *t) {
 		#endif
 	}
 	#if defined(_OPENMP)
-		for (unsigned long i = 0ul; i < (*s).n_threads; i++) {
+		for (unsigned short i = 0u; i < (*s).n_threads; i++) {
 			logl += by_thread[i];
 		}
 		free(by_thread);
 	#endif
+	for (unsigned short i = 0u; i < (*t).n_rows; i++) logl -= (*t).weights[i];
 	return logl;
 
 }
