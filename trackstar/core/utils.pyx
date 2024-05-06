@@ -52,7 +52,7 @@ def copy_array_like_object(obj):
 	If ``obj`` is a NumPy ``ndarray`` or a built-in Python ``array``, this
 	function will copy it with ``.tolist()``. If ``obj`` is a Pandas
 	``DataFrame``, it will use ``[obj[_] for _ in obj.values.tolist()]``.
-	If ``obj`` is a ``tuple`` or ``list``, it will pull with the copy with
+	If ``obj`` is a ``tuple`` or ``list``, it will pull the copy with
 	``obj[:]``. If ``obj`` is none of these types, this function will look for
 	``"__getitem__"`` and ``"__len__"`` attributes, and then pull a copy with
 	``[obj[_] for _ in range(len(obj))]``.
