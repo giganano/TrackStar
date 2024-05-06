@@ -123,27 +123,24 @@ elements as the track predictions.""" % (len(weights), len(copy[keys[0]])))
 	def __repr__(self):
 		r"""Returns a string representation of the track."""
 		rep = "track([\n"
-		for i in range(self._t[0].n_cols):
-			key = copy_cstring(self._t[0].labels[i])
+		keys = self.keys() + ["weights"]
+		for key in keys:
 			rep += "       %s " % (key)
 			for j in range(15 - len(key)): rep += '-'
-			rep += "> %s\n" % (self._repr_format_column(i))
+			rep += "> %s\n" % (self._repr_format_array_(self.__getitem__(key)))
 		rep += "])"
 		return rep
 
-	def _repr_format_column(self, index):
-		if self._t[0].n_rows > 10:
+
+	@staticmethod
+	def _repr_format_array_(arr):
+		if len(arr) > 10:
 			rep = "[%.4e, %.4e, %.4e, ..., %.4e, %.4e, %.4e]" % (
-				self._t[0].predictions[0][index],
-				self._t[0].predictions[1][index],
-				self._t[0].predictions[2][index],
-				self._t[0].predictions[self._t[0].n_rows - 3][index],
-				self._t[0].predictions[self._t[0].n_rows - 2][index],
-				self._t[0].predictions[self._t[0].n_rows - 1][index])
+				arr[0], arr[1], arr[2], arr[-3], arr[-2], arr[-1])
 		else:
-			rep = "[%.4e" % (self._t[0].predictions[0][index])
-			for i in range(1, self._t[0].n_rows):
-				rep += ", %.4e" % (self._t[0].predictions[i][index])
+			rep = "[%.4e" % (arr[0])
+			for i in range(1, len(arr)):
+				rep += ", %.4e" % (arr[i])
 			rep += "]"
 		return rep
 
@@ -159,22 +156,22 @@ elements as the track predictions.""" % (len(weights), len(copy[keys[0]])))
 			return self._getitem_tuple_(key)
 		else:
 			raise IndexError("""\
-Track indexing requires an integer, a string, or a combination of the two. \
-Got: %s""" % (type(key)))
+Track indexing requires a row number (int), a column label (str), or a \
+combination of the two. Got: %s""" % (type(key)))
 
 
 	def _getitem_tuple_(self, key):
 		if len(key) == 2:
 			if isinstance(key[0], str):
-				col = self._getitem_handle_str_(key[0])
+				col = self._indexing_handle_str_(key[0])
 				if isinstance(key[1], numbers.Number):
-					row = self._getitem_handle_number_(key[1])
+					row = self._indexing_handle_number_(key[1])
 					if col == -2:
 						return self._t[0].weights[row]
 					else:
 						return self._t[0].predictions[row][col]
 				elif isinstance(key[1], slice):
-					sl = self._getitem_handle_slice_(key[1])
+					sl = self._indexing_handle_slice_(key[1])
 					start = sl.start
 					stop = sl.stop
 					step = sl.step
@@ -186,14 +183,14 @@ Got: %s""" % (type(key)))
 							start, stop, step)]
 				else:
 					raise IndexError("""\
-Track indexing requires an integer, a string, or a combination of the two. \
-Got: %s and %s""" % (type(key[0]), type(key[1])))
+Track indexing requires a row number (int), a column label (str), or a \
+combination of the two. Got: %s and %s""" % (type(key[0]), type(key[1])))
 			elif isinstance(key[1], str):
 				return self._getitem_tuple_((key[1], key[0]))
 			else:
 				raise IndexError("""\
-Track indexing requires an integer, a string, or a combination of the two. \
-Got: %s and %s""" % (type(key[0]), type(key[1])))
+Track indexing requires a row number (int), a column label (str), or a \
+combination of the two. Got: %s and %s""" % (type(key[0]), type(key[1])))
 		else:
 			raise IndexError("""\
 Track indexing accepts 1 or 2 parameters. Got: %d""" % (len(key)))
@@ -201,7 +198,7 @@ Track indexing accepts 1 or 2 parameters. Got: %d""" % (len(key)))
 
 	def _getitem_str_(self, label):
 		assert isinstance(label, str), "Internal Error."
-		colidx = self._getitem_handle_str_(label)
+		colidx = self._indexing_handle_str_(label)
 		if colidx == -2:
 			return [self._t[0].weights[row] for row in range(self._t[0].n_rows)]
 		else:
@@ -211,7 +208,7 @@ Track indexing accepts 1 or 2 parameters. Got: %d""" % (len(key)))
 
 	def _getitem_number_(self, number):
 		assert isinstance(number, numbers.Number), "Internal Error."
-		row = self._getitem_handle_number_(number)
+		row = self._indexing_handle_number_(number)
 		arr = [self._t[0].predictions[row][col] for col in range(
 			self._t[0].n_cols)]
 		result = dict(zip(self.keys(), arr))
@@ -221,7 +218,7 @@ Track indexing accepts 1 or 2 parameters. Got: %d""" % (len(key)))
 
 	def _getitem_slice_(self, sl):
 		assert isinstance(sl, slice), "Internal Error."
-		sl = self._getitem_handle_slice_(sl)
+		sl = self._indexing_handle_slice_(sl)
 		start = sl.start
 		stop = sl.stop
 		step = sl.step
@@ -235,7 +232,112 @@ Track indexing accepts 1 or 2 parameters. Got: %d""" % (len(key)))
 				self.line_segment_correction_tolerance)
 
 
-	def _getitem_handle_str_(self, label):
+	def __setitem__(self, key, value):
+		if isinstance(key, str):
+			self._setitem_str_(key, value)
+		elif isinstance(key, numbers.Number):
+			self._setitem_number_(key, value)
+		elif isinstance(key, tuple):
+			self._setitem_tuple_(key, value)
+		else:
+			raise IndexError("""\
+Track item assignment requires a row number (int), a column label (str), or a \
+combination of the two. Got: %s""" % (type(key)))
+
+
+	def _setitem_str_(self, label, value):
+		assert isinstance(label, str), "Internal Error."
+		colidx = self._indexing_handle_str_(label)
+		try:
+			value = copy_array_like_object(value)
+		except TypeError:
+			raise TypeError("""\
+Item assignment via column label requires an array-like object. Got: %s""" % (
+				type(value)))
+		if len(value) == self._t[0].n_rows:
+			if all([isinstance(_, numbers.Number) for _ in value]):
+				labelcopy = copy_pystring(label)
+				try:
+					colidx = strindex(self._t[0].labels, labelcopy,
+						self._t[0].n_cols)
+				finally:
+					free(labelcopy)
+				for i in range(self._t[0].n_rows):
+					if colidx == -2:
+						self._t[0].weights[i] = value[i]
+					else:
+						self._t[0].predictions[i][colidx] = value[i]
+			else:
+				raise TypeError("""\
+Non-numerical value detected. Track only supports storing numerical data.""")
+		else:
+			raise ValueError("""\
+Array-length mismath. Got: %d for track sampled at %d points.""" % (
+				len(value), self._t[0].n_rows))
+
+
+	def _setitem_number_(self, row, value):
+		cdef char *labelcopy
+		assert isinstance(row, numbers.Number), "Internal Error."
+		row = self._indexing_handle_number_(row)
+		if isinstance(value, dict):
+			value_keys = list(value.keys())
+			self_keys = list(self.keys())
+			if set(value_keys) == set(self_keys):
+				if all([isinstance(
+					value[_], numbers.Number) for _ in value_keys]):
+					for key in value_keys:
+						labelcopy = copy_pystring(key)
+						try:
+							colidx = strindex(self._t[0].labels, labelcopy,
+								self._t[0].n_cols)
+						finally:
+							free(labelcopy)
+						if colidx >= 0:
+							self._t[0].predictions[row][colidx] = value[key]
+						else:
+							# failsafe: should've been caught already
+							assert False, "Internal Error."
+				else:
+					raise TypeError("""\
+Non-numerical value detected. Track only supports storing numerical data.""")
+			else:
+				raise ValueError("""\
+Column labels do not match. Track: %s. New data: %s.""" % (self_keys,
+					value_keys))
+		else:
+			raise TypeError("""\
+Track item assignment via row number requires type dict. Got: %s""" % (
+				type(value)))
+
+
+	def _setitem_tuple_(self, key, value):
+		assert isinstance(key, tuple), "Internal Error."
+		if len(key) == 2:
+			if isinstance(key[0], str) and isinstance(key[1], numbers.Number):
+				if isinstance(value, numbers.Number):
+					colidx = self._indexing_handle_str_(key[0])
+					row = self._indexing_handle_number_(key[1])
+					if colidx == -2:
+						self._t[0].weights[row] = value
+					else:
+						self._t[0].predictions[row][colidx] = value
+				else:
+					raise TypeError("""\
+Track only supports storage of real numbers. Got: %s""" % (type(value)))
+			elif isinstance(key[0], numbers.Number) and isinstance(key[1], str):
+				return self._setitem_tuple_((key[1], key[0]), value)
+			else:
+				raise IndexError("""\
+Track item assignment via row-column pair requires the column label (str) and \
+the row number (int). Got: %s, %s.""" % (type(key[0]), type(key[1])))
+		else:
+			raise IndexError("""\
+Track Item assignment via row-column pair only accepts two parameters. \
+Got: %d""" % (len(key)))
+
+
+	def _indexing_handle_str_(self, label):
 		assert isinstance(label, str), "Internal Error."
 		cdef char *labelcopy
 		if label == "weights":
@@ -250,11 +352,10 @@ Track indexing accepts 1 or 2 parameters. Got: %d""" % (len(key)))
 			if colidx != -1:
 				return colidx
 			else:
-				raise KeyError("""\
-Track does not have predictions for quantity labeled %s.""" % (label))
+				raise KeyError("Unrecognized quantity label: %s." % (label))
 
 
-	def _getitem_handle_number_(self, number):
+	def _indexing_handle_number_(self, number):
 		assert isinstance(number, numbers.Number), "Internal Error."
 		if number % 1 == 0:
 			row = int(number)
@@ -268,7 +369,7 @@ Index %d out of range for track sampled at %d points.""" % (
 Track row number must be an integer, not float.""")
 
 
-	def _getitem_handle_slice_(self, sl):
+	def _indexing_handle_slice_(self, sl):
 		assert isinstance(sl, slice), "Internal Error."
 		if sl.start is not None:
 			if isinstance(sl.start, numbers.Number):
