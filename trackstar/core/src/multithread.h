@@ -17,9 +17,6 @@ extern "C" {
 #endif
 #include <unistd.h>
 
-/* Number of maximum threads = N x number of active CPUs */
-#define MAX_THREADS_CPU_RATIO 10u
-
 /*
 .. cpp:function:: inline unsigned short multithreading_enabled();
 
@@ -33,21 +30,6 @@ inline unsigned short multithreading_enabled(void) {
 	#else
 		return 0u;
 	#endif
-}
-
-/*
-.. cpp:function:: inline long max_threads_allowed();
-
-Determine the maximum number of allowed threads. TrackStar, by default, will
-not allow any more than 10 times the maximum number of active CPUs. If users
-wish to relax this limit, the value of 10 is ``#define``'d using the macro
-``MAX_THREADS_CPU_RATIO`` in ``trackstar/core/src/multithread.h``.
-Simply recompile and reinstall by running ``python -m pip install .`` from the
-top-level repository after making this change.
-*/
-inline long max_threads_allowed(void) {
-	/* _SC_NPROCESSORS_ONLN gets number of active CPUs from unistd.h */
-	return MAX_THREADS_CPU_RATIO * sysconf(_SC_NPROCESSORS_ONLN);
 }
 
 #ifdef __cplusplus

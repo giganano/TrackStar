@@ -8,4 +8,7 @@
 from . cimport multithread
 
 def openmp_linked():
+	r"""
+	.. todo:: documentation on this function.
+	"""
 	return bool(multithreading_enabled())

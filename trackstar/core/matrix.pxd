@@ -10,7 +10,6 @@ cdef extern from "./src/matrix.h":
 		double **matrix
 		unsigned short n_rows
 		unsigned short n_cols
-		unsigned short n_threads
 
 	MATRIX *matrix_initialize(unsigned short n_rows, unsigned short n_cols)
 	void matrix_free(MATRIX *m)

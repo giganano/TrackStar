@@ -30,13 +30,10 @@ typedef struct sample {
 		``DATUM`` object.
 	n_vectors : ``unsigned long``
 		The number of vectors in ``data`` (i.e., the sample size).
-	n_threads : ``unsigned short``
-		The number of threads to use in looping over the sample.
 	*/
 
 	DATUM **data;
 	unsigned long n_vectors;
-	unsigned short n_threads;
 
 } SAMPLE;
 
@@ -60,7 +57,7 @@ Returns
 s : ``SAMPLE *``
 	The newly constructed sample, ready to have its vectors initialized.
 */
-extern SAMPLE *sample_initialize(unsigned long sample_size);
+extern SAMPLE *sample_initialize(void);
 
 /*
 .. cpp:function:: extern void sample_free(SAMPLE *s);
@@ -73,6 +70,21 @@ s : ``SAMPLE *``
 	The sample to be freed.
 */
 extern void sample_free(SAMPLE *s);
+
+/*
+.. cpp:function:: extern void sample_add_datum(SAMPLE *s, DATUM *d);
+
+Add a new data vector to the sample.
+
+Parameters
+----------
+s : ``SAMPLE *``
+	The sample object, which potentially already contains other data
+	vectors already added to the sample.
+d : ``DATUM *``
+	The vector to be included in this sample.
+*/
+extern void sample_add_datum(SAMPLE *s, DATUM *d);
 
 /*
 .. cpp:function:: extern unsigned short invert_covariance_matrices(SAMPLE *s);

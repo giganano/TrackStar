@@ -33,6 +33,9 @@ typedef struct track {
 	n_cols : ``unsigned short``
 		The dimensionality of the observed space (i.e., the number of
 		elements along the second axis of indexing in ``predictions``).
+	n_threads : ``unsigned short``
+		The number of parallel processing threads to use in computing
+		likelihood functions.
 	labels : ``char **``
 		An array of strings describing the quantities measured (i.e., a label
 		for each axis of the observed space). This will be used to match the

@@ -55,6 +55,7 @@ extern TRACK *track_initialize(double **predictions, char **labels,
 	t -> predictions = (double **) malloc (n_vectors * sizeof(double *));
 	t -> n_rows = n_vectors;
 	t -> n_cols = dim;
+	t -> n_threads = 1u;
 	t -> labels = (char **) malloc (dim * sizeof(char *));
 	t -> weights = (double *) malloc (n_vectors * sizeof(double));
 

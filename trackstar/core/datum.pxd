@@ -5,21 +5,25 @@
 # License: MIT License. See LICENSE in top-level directory
 # at: https://github.com/giganano/trackstar.git.
 
-from .matrix cimport MATRIX, matrix
 from .covariance_matrix cimport COVARIANCE_MATRIX, covariance_matrix
+from .matrix cimport MATRIX, matrix
+from .track cimport TRACK
 
 cdef extern from "./src/datum.h":
 	ctypedef struct DATUM:
 		double **vector
 		unsigned short n_rows
 		unsigned short n_cols
-		unsigned short n_threads
 		COVARIANCE_MATRIX *cov
 		char **labels
 
 	DATUM *datum_initialize(double *arr, char **labels, unsigned short dim)
 	void datum_free(DATUM *d)
 	double datum_get_item(DATUM d, char *label)
+
+
+cdef extern from "./src/likelihood.h":
+	double loglikelihood_datum(DATUM *d, TRACK *t)
 
 
 cdef class datum:

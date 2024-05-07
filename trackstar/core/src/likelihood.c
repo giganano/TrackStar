@@ -5,14 +5,12 @@ License: MIT License. See LICENSE in top-level directory
 at: https://github.com/giganano/TrackStar.git.
 */
 
-// #if defined(_OPENMP)
-// 	#include <omp.h>
-// #endif
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
 #include "multithread.h"
 #include "likelihood.h"
+#include "matrix.h"
 #include "utils.h"
 #include "debug.h"
 
@@ -63,8 +61,9 @@ extern double loglikelihood_sample(SAMPLE *s, TRACK *t) {
 		individual thread, because an iterative sum is not thread-safe. Total
 		is then added up at the end, after the threads have closed.
 		*/
-		double *by_thread = (double *) malloc ((*s).n_threads * sizeof(double));
-		#pragma omp parallel for num_threads((*s).n_threads)
+		double *by_thread = (double *) malloc ((*t).n_threads * sizeof(double));
+		for (unsigned short i = 0u; i < (*t).n_threads; i++) by_thread[i] = 0;
+		#pragma omp parallel for num_threads((*t).n_threads)
 	#endif
 	for (unsigned short i = 0u; i < (*s).n_vectors; i++) {
 		#if defined(_OPENMP)
@@ -75,7 +74,7 @@ extern double loglikelihood_sample(SAMPLE *s, TRACK *t) {
 		#endif
 	}
 	#if defined(_OPENMP)
-		for (unsigned short i = 0u; i < (*s).n_threads; i++) {
+		for (unsigned short i = 0u; i < (*t).n_threads; i++) {
 			logl += by_thread[i];
 		}
 		free(by_thread);
@@ -119,10 +118,12 @@ References
 */
 extern double loglikelihood_datum(DATUM *d, TRACK *t) {
 
-	// matrix_invert(*((MATRIX *) d -> cov), d -> cov -> inv);
 	TRACK *sub = track_subset(*d, *t);
+	if (sub == NULL) fatal_print("%s\n", "track_subset returned NULL.");
 	double result = 0;
 	#if defined(_OPENMP)
+		double *by_thread = (double *) malloc ((*t).n_threads * sizeof(double));
+		for (unsigned short i = 0u; i < (*t).n_threads; i++) by_thread[i] = 0;
 		#pragma omp parallel for num_threads((*t).n_threads)
 	#endif
 	for (unsigned short i = 0u; i < (*sub).n_rows; i++) {
@@ -142,15 +143,17 @@ extern double loglikelihood_datum(DATUM *d, TRACK *t) {
 				(*t).line_segment_correction_tolerance);
 		} else {}
 		#if defined(_OPENMP)
-			/* iterative sums aren't thread safe, so put lock on increment */
-			#pragma omp critical
-			{
-				result += s;
-			}
+			by_thread[omp_get_thread_num()] += s;
 		#else
 			result += s;
 		#endif
 	}
+	#if defined(_OPENMP)
+		for (unsigned short i = 0u; i < (*t).n_threads; i++) {
+			result += by_thread[i];
+		}
+		free(by_thread);
+	#endif
 	track_free(sub);
 	return log(result);
 
@@ -299,13 +302,18 @@ static TRACK *track_subset(DATUM d, TRACK t) {
 
 	TRACK *sub = (TRACK *) matrix_initialize(t.n_rows, d.n_cols);
 	sub = (TRACK *) realloc (sub, sizeof(TRACK));
+	sub -> n_threads = t.n_threads;
+	sub -> use_line_segment_corrections = t.use_line_segment_corrections;
+	sub -> line_segment_correction_tolerance = t.line_segment_correction_tolerance;
+	sub -> line_segment_correction_flag = 0u;
+
 	sub -> labels = (char **) malloc ((*sub).n_cols * sizeof(char *));
 	for (unsigned short i = 0u; i < (*sub).n_cols; i++) {
 		signed short index = strindex(t.labels, d.labels[i], t.n_cols);
 		switch(index) {
 
 			case -1:
-				free(sub);
+				track_free(sub);
 				return NULL;
 
 			default:
@@ -313,9 +321,6 @@ static TRACK *track_subset(DATUM d, TRACK t) {
 					MAX_LABEL_SIZE * sizeof(char));
 				memset(sub -> labels[i], '\0', MAX_LABEL_SIZE);
 				strcpy(sub -> labels[i], d.labels[index]);
-				#if defined(_OPENMP)
-					#pragma omp parallel for num_threads(t.n_threads)
-				#endif
 				for (unsigned short j = 0u; j < t.n_rows; j++) {
 					sub -> predictions[j][i] = t.predictions[j][index];
 				}

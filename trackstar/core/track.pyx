@@ -7,9 +7,13 @@
 
 __all__ = ["track"]
 import numbers
+import warnings
+import math as m
 from .utils import copy_array_like_object, copy_cstring
 from .utils cimport copy_pystring, strindex
 from . cimport track
+from . cimport multithread
+from .multithread cimport multithreading_enabled
 from libc.stdlib cimport malloc, free
 
 cdef class track:
@@ -20,9 +24,15 @@ cdef class track:
 	The model predicted "track" or "curve" through the observed space.
 
 	.. todo:: Finish documentation on this class.
+
+	.. todo::
+
+		Potentially make item assignment via the rules `track[row][label]` and
+		`track[label][row]` work. At the moment this does nothing. Currently,
+		the rules `track[label, row]` and `track[row, label]` are required.
 	"""
 
-	def __cinit__(self, predictions, weights = None,
+	def __cinit__(self, predictions, weights = None, n_threads = 1,
 		use_line_segment_corrections = True,
 		line_segment_correction_tolerance = 1.01):
 		if not isinstance(predictions, dict): raise TypeError("""\
@@ -39,7 +49,7 @@ Dictionary keys must be of type str. Got: %s""" % (type(key)))
 Dictionary must store array-like objects to construct a track. Got: %s""" % (
 					type(predictions[key])))
 			if not all([isinstance(_, numbers.Number) for _ in item]):
-				raise ValueError("""\
+				raise TypeError("""\
 Non-numerical value detected in predictions[%s]. All stored values must be \
 real numbers to construct a track.""" % (key))
 			elif len(copy.keys()):
@@ -95,9 +105,10 @@ elements as the track predictions.""" % (len(weights), len(copy[keys[0]])))
 			free(labels)
 
 
-	def __init__(self, predictions, weights = None,
+	def __init__(self, predictions, weights = None, n_threads = 1,
 		use_line_segment_corrections = True,
 		line_segment_correction_tolerance = 1.01):
+		self.n_threads = n_threads
 		self.use_line_segment_corrections = use_line_segment_corrections
 		self.line_segment_correction_tolerance = line_segment_correction_tolerance
 
@@ -127,20 +138,31 @@ elements as the track predictions.""" % (len(weights), len(copy[keys[0]])))
 		for key in keys:
 			rep += "       %s " % (key)
 			for j in range(15 - len(key)): rep += '-'
-			rep += "> %s\n" % (self._repr_format_array_(self.__getitem__(key)))
+			rep += "> %s\n" % (self._repr_format_array_(self[key]))
 		rep += "])"
 		return rep
 
 
 	@staticmethod
 	def _repr_format_array_(arr):
+		def format_number(num):
+			# ensures all numbers, including nans, become strings with the
+			# same length.
+			s = "%.4e" % (num)
+			if m.isnan(num): s += "       "
+			return s
 		if len(arr) > 10:
-			rep = "[%.4e, %.4e, %.4e, ..., %.4e, %.4e, %.4e]" % (
-				arr[0], arr[1], arr[2], arr[-3], arr[-2], arr[-1])
+			rep = "[%s, %s, %s, ..., %s, %s, %s]" % (
+				format_number(arr[0]),
+				format_number(arr[1]),
+				format_number(arr[2]),
+				format_number(arr[-3]),
+				format_number(arr[-2]),
+				format_number(arr[-1]))
 		else:
-			rep = "[%.4e" % (arr[0])
+			rep = "[%s" % (format_number(arr[0]))
 			for i in range(1, len(arr)):
-				rep += ", %.4e" % (arr[i])
+				rep += ", %s" % (format_number(arr[i]))
 			rep += "]"
 		return rep
 
@@ -429,6 +451,50 @@ Track step-size must be an integer. Got: %s""" % (type(sl.step)))
 		predicted at each position).
 		"""
 		return self._t[0].n_cols
+
+
+	@property
+	def n_threads(self):
+		r"""
+		Type : ``int`` [positive definite]
+
+		The number of parallel processing threads to use in matrix operations.
+
+		.. note::
+
+			Parallel processing is only available if TrackStar was linked with
+			the OpenMP library at compile time.
+
+		.. todo::
+
+			Direct users to install documentation on how to install and link
+			OpenMP. Put link in RuntimeError message as well.
+		"""
+		return self._t[0].n_threads
+
+
+	@n_threads.setter
+	def n_threads(self, value):
+		if isinstance(value, numbers.Number):
+			if value % 1 == 0:
+				if value > 0:
+					value = int(value)
+					if value == 1 or multithreading_enabled():
+						self._t[0].n_threads = value
+					else:
+						raise RuntimeError("""\
+TrackStar's multithreading features are not enabled. To enable parallel \
+processing, please follow the instructions at (install docs url).""")
+				else:
+					raise ValueError("""\
+Number of parallel processing threads must be positive, not negative.""")
+			else:
+				raise ValueError("""\
+Number of parallel processing threads must be an integer, not float.""")
+		else:
+			raise TypeError("""\
+Number of parallel processing threads must be an integer. Got: %s""" % (
+				type(value)))
 
 
 	@property

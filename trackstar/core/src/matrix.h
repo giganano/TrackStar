@@ -72,7 +72,6 @@ typedef struct matrix {
 	double **matrix;
 	unsigned short n_rows;
 	unsigned short n_cols;
-	unsigned short n_threads;
 
 } MATRIX;
 
@@ -124,28 +123,6 @@ mat : ``MATRIX *``
 	``mat``:math:`_{ij}` initialized to zero.
 */
 extern MATRIX *matrix_initialize(unsigned short n_rows, unsigned short n_cols);
-
-#if 0
-/*
-.. cpp:function:: extern COVARIANCE_MATRIX *covariance_matrix_initialize(
-	unsigned short dim);
-
-Allocate memory for an return a pointer to a ``COVARIANCE_MATRIX`` object.
-Automatically initializes all diagonal elements to a value of 1 and
-off-diagonal elements to 0.
-
-Parameters
-----------
-dim : ``unsigned short``
-	The number of rows and columns in the covariance matrix.
-
-Returns
--------
-cov : ``COVARIANCE_MATRIX *``
-	The newly constructed ``dim`` x ``dim`` covariance matrix.
-*/
-extern COVARIANCE_MATRIX *covariance_matrix_initialize(unsigned short dim);
-#endif
 
 /*
 .. cpp:function:: extern void matrix_free(MATRIX *m);

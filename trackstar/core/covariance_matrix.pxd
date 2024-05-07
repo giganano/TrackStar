@@ -12,7 +12,6 @@ cdef extern from "./src/matrix.h":
 		double **matrix
 		unsigned short n_rows
 		unsigned short n_cols
-		unsigned short n_threads
 		MATRIX *inv
 
 	void covariance_matrix_free(COVARIANCE_MATRIX *cov)

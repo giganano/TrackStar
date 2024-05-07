@@ -7,5 +7,3 @@
 
 cdef extern from "./src/multithread.h":
 	unsigned short multithreading_enabled()
-	long max_threads_allowed()
-	unsigned long MAX_THREADS_CPU_RATIO

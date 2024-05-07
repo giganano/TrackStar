@@ -11,6 +11,7 @@ from .utils import copy_array_like_object, copy_cstring
 from .utils cimport copy_pystring, strindex
 from libc.stdlib cimport malloc, free
 from libc.string cimport strlen
+from .track cimport track
 
 
 cdef class datum:
@@ -202,6 +203,10 @@ Got: %d, %d.""" % (self._d[0].n_cols, other._d[0].n_cols))
 		.. seealso:: trackstar.covariance_matrix
 		"""
 		return self._cov
+
+
+	def loglikelihood(self, track t):
+		return loglikelihood_datum(self._d, t._t)
 
 
 	def keys(self):

@@ -7,7 +7,6 @@ at: https://github.com/giganano/trackstar.git.
 
 #include <stdlib.h>
 #include <math.h>
-#include "multithread.h"
 #include "matrix.h"
 #include "debug.h"
 
@@ -17,7 +16,8 @@ static MATRIX *matrix_unary_minus(MATRIX m, MATRIX *result);
 static MATRIX *matrix_adjoint(MATRIX m, MATRIX *result);
 static MATRIX *matrix_cofactors(MATRIX m, MATRIX *result);
 static MATRIX *matrix_minor(MATRIX m, unsigned short axis[2], MATRIX *result);
-static void matrix_reset(MATRIX *m);
+static void matrix_resize(MATRIX *m, const unsigned short n_rows,
+	const unsigned short n_cols);
 
 
 /*
@@ -52,47 +52,9 @@ extern MATRIX *matrix_initialize(unsigned short n_rows, unsigned short n_cols) {
 
 	m -> n_rows = n_rows;
 	m -> n_cols = n_cols;
-	m -> n_threads = 1u; /* modified in Python to user specification */
 	return m;
 
 }
-
-
-#if 0
-/*
-.. cpp:function:: extern COVARIANCE_MATRIX *covariance_matrix_initialize(
-	unsigned short dim);
-
-Allocate memory for an return a pointer to a ``COVARIANCE_MATRIX`` object.
-Automatically initializes all diagonal elements to a value of 1 and
-off-diagonal elements to 0.
-
-Parameters
-----------
-dim : ``unsigned short``
-	The number of rows and columns in the covariance matrix.
-
-Returns
--------
-cov : ``COVARIANCE_MATRIX *``
-	The newly constructed ``dim`` x ``dim`` covariance matrix.
-*/
-extern COVARIANCE_MATRIX *covariance_matrix_initialize(unsigned short dim) {
-
-	COVARIANCE_MATRIX *cov = (COVARIANCE_MATRIX *) matrix_initialize(dim, dim);
-	cov = (COVARIANCE_MATRIX *) realloc (cov, sizeof(COVARIANCE_MATRIX));
-	cov -> inv = (MATRIX *) matrix_initialize(dim, dim);
-
-	unsigned short i;
-	for (i = 0u; i < dim; i++) {
-		cov -> matrix[i][i] = 1.0;
-		cov -> inv -> matrix[i][i] = 1.0;
-	}
-
-	return cov;
-
-}
-#endif
 
 
 /*
@@ -188,13 +150,8 @@ extern MATRIX *matrix_add(MATRIX m1, MATRIX m2, MATRIX *result) {
 		if (result == NULL) {
 			result = matrix_initialize(m1.n_rows, m1.n_cols);
 		} else {
-			result -> n_rows = m1.n_rows;
-			result -> n_cols = m1.n_cols;
-			matrix_reset(result);
+			matrix_resize(result, m1.n_rows, m1.n_cols);
 		}
-		#if defined(_OPENMP)
-			#pragma omp parallel for num_threads(m1.n_threads)
-		#endif
 		for (unsigned short i = 0u; i < m1.n_rows; i++) {
 			for (unsigned short j = 0u; j < m1.n_cols; j++) {
 				result -> matrix[i][j] = m1.matrix[i][j] + m2.matrix[i][j];
@@ -239,7 +196,7 @@ result : ``MATRIX *``
 extern MATRIX *matrix_subtract(MATRIX m1, MATRIX m2, MATRIX *result) {
 
 	MATRIX *minus_m2 = matrix_unary_minus(m2, NULL);
-	matrix_add(m1, *minus_m2, result);
+	result = matrix_add(m1, *minus_m2, result);
 	matrix_free(minus_m2);
 	return result;
 
@@ -276,13 +233,8 @@ static MATRIX *matrix_unary_minus(MATRIX m, MATRIX *result) {
 	if (result == NULL) {
 		result = matrix_initialize(m.n_rows, m.n_cols);
 	} else {
-		result -> n_rows = m.n_rows;
-		result -> n_cols = m.n_cols;
-		matrix_reset(result);
+		matrix_resize(result, m.n_rows, m.n_cols);
 	}
-	#if defined(_OPENMP)
-		#pragma omp parallel for num_threads(m.n_threads)
-	#endif
 	for (unsigned short i = 0u; i < m.n_rows; i++) {
 		for (unsigned short j = 0u; j < m.n_cols; j++) {
 			result -> matrix[i][j] = -m.matrix[i][j];
@@ -328,13 +280,8 @@ extern MATRIX *matrix_multiply(MATRIX m1, MATRIX m2, MATRIX *result) {
 		if (result == NULL) {
 			result = matrix_initialize(m1.n_rows, m2.n_cols);
 		} else {
-			result -> n_rows = m1.n_rows;
-			result -> n_cols = m2.n_cols;
-			matrix_reset(result);
+			matrix_resize(result, m1.n_rows, m2.n_cols);
 		}
-		#if defined(_OPENMP)
-			#pragma omp parallel for num_threads(m1.n_threads)
-		#endif
 		for (unsigned short i = 0u; i < (*result).n_rows; i++) {
 			for (unsigned short j = 0u; j < (*result).n_cols; j++) {
 				for (unsigned short k = 0u; k < m1.n_cols; k++) {
@@ -386,9 +333,6 @@ extern MATRIX *matrix_invert(MATRIX m, MATRIX *result) {
 	double det = matrix_determinant(m);
 	if (det) {
 		result = matrix_adjoint(m, result);
-		#if defined(_OPENMP)
-			#pragma omp parallel for num_threads(m.n_threads)
-		#endif
 		for (unsigned short i = 0u; i < m.n_rows; i++) {
 			for (unsigned short j = 0u; j < m.n_cols; j++) {
 				result -> matrix[i][j] /= det;
@@ -431,13 +375,8 @@ extern MATRIX *matrix_transpose(MATRIX m, MATRIX *result) {
 	if (result == NULL) {
 		result = matrix_initialize(m.n_cols, m.n_rows);
 	} else {
-		result -> n_rows = m.n_cols;
-		result -> n_cols = m.n_rows;
-		matrix_reset(result);
+		matrix_resize(result, m.n_cols, m.n_rows);
 	}
-	#if defined(_OPENMP)
-		#pragma omp parallel for num_threads(m.n_threads)
-	#endif
 	for (unsigned short i = 0u; i < m.n_rows; i++) {
 		for (unsigned short j = 0u; j < m.n_cols; j++) {
 			result -> matrix[j][i] = m.matrix[i][j];
@@ -484,26 +423,11 @@ extern double matrix_determinant(MATRIX m) {
 		} else {
 			/* The recursive case: an NxN matrix where N > 2 */
 			double result = 0;
-			#if defined(_OPENMP)
-				#pragma omp parallel for num_threads(m.n_threads)
-			#endif
 			for (unsigned short i = 0u; i < m.n_cols; i++) {
 				unsigned short axis[2] = {0, i};
 				MATRIX *minor = matrix_minor(m, axis, NULL);
-				double minor_det = matrix_determinant(*minor);
-				#if defined(_OPENMP)
-					/*
-					Because iterative sums are not thread-safe, we have to use
-					thread locking to ensure that only one thread will
-					increment the result at a time.
-					*/
-					#pragma omp critical
-					{
-						result += pow(-1, i) * m.matrix[0][i] * minor_det;
-					}
-				#else
-					result += pow(-1, i) * m.matrix[0][i] * minor_det;
-				#endif
+				result += pow(-1, i) * m.matrix[0][i] * matrix_determinant(
+					*minor);
 				matrix_free(minor);
 			}
 			return result;
@@ -588,13 +512,8 @@ static MATRIX *matrix_cofactors(MATRIX m, MATRIX *result) {
 		if (result == NULL) {
 			result = matrix_initialize(m.n_rows, m.n_cols);
 		} else {
-			result -> n_rows = m.n_rows;
-			result -> n_cols = m.n_cols;
-			matrix_reset(result);
+			matrix_resize(result, m.n_rows, m.n_cols);
 		}
-		#if defined(_OPENMP)
-			#pragma omp parallel for num_threads(m.n_threads)
-		#endif
 		for (unsigned short i = 0u; i < m.n_rows; i++) {
 			for (unsigned short j = 0u; j < m.n_cols; j++) {
 				unsigned short axis[2] = {i, j};
@@ -646,9 +565,7 @@ static MATRIX *matrix_minor(MATRIX m, unsigned short axis[2], MATRIX *result) {
 	if (result == NULL) {
 		result = matrix_initialize(m.n_rows - 1u, m.n_cols - 1u);
 	} else {
-		result -> n_rows = m.n_rows - 1u;
-		result -> n_cols = m.n_cols - 1u;
-		matrix_reset(result);
+		matrix_resize(result, m.n_rows - 1u, m.n_cols - 1u);
 	}
 
 	/*
@@ -677,33 +594,33 @@ static MATRIX *matrix_minor(MATRIX m, unsigned short axis[2], MATRIX *result) {
 
 
 /*
-.. cpp:function:: static void matrix_reset(MATRIX *m)
+.. cpp:function:: static void matrix_resize(MATRIX *M,
+	const unsigned short n_rows, const unsigned short n_cols);
 
-Update the amount of memory reserved for the matrix based on new dimensions and
-reset all values to zero.
+Update the amount of memory reserved for the matrix based on new dimensions,
+and set all entries to zero (i.e. :math:`M_{ij} = 0` for all :math:`i` and
+:math:`j` after calling this function).
 
 Parameters
 ----------
 m : ``MATRIX *``
-	The matrix to reset. After calling this function, ``(*m).matrix`` will have
-	the proper amount of memory allocated for an ``(*m).n_rows`` x
-	``(*m).n_cols`` matrix, and all entries will be assigned a value of zero.
+	The matrix to reszie.
+n_rows : ``const unsigned short``
+	The new number of rows in the matrix.
+n_cols : ``const unsigned short``
+	The new number of columns in the matrix.
 */
-static void matrix_reset(MATRIX *m) {
+static void matrix_resize(MATRIX *m, const unsigned short n_rows,
+	const unsigned short n_cols) {
 
-	/*
-	Don't use multi-threading here as memory is being allocated, which is often
-	not thread-safe. Best to let that happen sequentially so all of the data
-	can reside in adjacent addresses anyway.
-	*/
+	m -> n_rows = n_rows;
+	m -> n_cols = n_cols;
 	m -> matrix = (double **) realloc (m -> matrix,
 		(*m).n_rows * sizeof(double *));
-	for (unsigned short i = 0u; i < (*m).n_rows; i++) {
+	for (unsigned short i = 0u; i < n_rows; i++) {
 		m -> matrix[i] = (double *) realloc (m -> matrix[i],
-			(*m).n_cols * sizeof(double));
-		for (unsigned short j = 0u; j < (*m).n_cols; j++) {
-			m -> matrix[i][j] = 0.0;
-		}
+			n_cols * sizeof(double));
+		for (unsigned short j = 0u; j < n_cols; j++) m -> matrix[i][j] = 0.f;
 	}
 
 }
