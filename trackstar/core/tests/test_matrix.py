@@ -69,6 +69,7 @@ class TestMatrixFundamentals(MatrixBaseFixture):
 		r"""tests trackstar.matrix.__init__"""
 		assert isinstance(case, matrix)
 
+
 	@staticmethod
 	def test_size(n_rows, n_cols, case):
 		r"""tests trackstar.matrix.n_rows and matrix.n_cols"""
