@@ -9,6 +9,9 @@ tests:
 
 .PHONY: clean
 clean:
+	@ if [ -d "__pycache__" ] ; then \
+		rm -rf __pycache__ ; \
+	fi
 	@ $(MAKE) -C trackstar/ clean
 
 .PHONY: distclean
