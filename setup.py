@@ -81,7 +81,7 @@ class openmp_linker:
 	_CLANG_OPENMP_COMPILE_FLAGS_ = ["-Xpreprocessor", "-fopenmp"]
 	_CLANG_OPENMP_LINK_FLAGS_ = ["-Xpreprocessor", "-fopenmp", "-lomp"]
 	_GCC_OPENMP_COMPILE_FLAGS_ = ["-fopenmp"]
-	_GCC_OPENMP_LINK_FLAGS_ = ["-lomp"]
+	_GCC_OPENMP_LINK_FLAGS_ = ["-fopenmp"]
 
 	@staticmethod
 	def compiler_flags():
