@@ -55,6 +55,11 @@ TrackStar users enjoy the following features:
 		Finish implementing unit tests
 	</li>
 	<li>
+		Ensure the likelihood estimates is properly normalized when the data
+		vectors do not have the same dimensionality (i.e. when not all
+		quantities are measured for each datum).
+	</li>
+	<li>
 		Finish writing documentation: API reference, science documentation,
 		installation instructions, developers documentation, Changelog
 	</li>
