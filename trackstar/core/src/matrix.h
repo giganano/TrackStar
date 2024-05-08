@@ -37,17 +37,6 @@ Source: ``trackstar/core/src/matrix.c``
 extern "C" {
 #endif /* __cplusplus */
 
-#ifndef NAN
-	/*
-	If NAN is not defined, define it to be some specific value (in this case
-	-99999). Then redefine the function ``isnan`` to compare against this value.
-	We would want to redefine this macro even if ``isnan`` is already defined
-	in this case to ensure the correct behavior.
-	*/
-	#define NAN -99999
-	#define isnan(x) x == NAN;
-#endif /* NAN */
-
 #ifndef PI /* the mathematical constant */
 #define PI 3.14159265358979
 #endif /* PI */

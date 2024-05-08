@@ -95,27 +95,6 @@ d : ``DATUM *``
 */
 extern void datum_free(DATUM *d);
 
-/*
-.. cpp:function:: extern double datum_get_item(DATUM d, char *label);
-
-Obtain a component of the data vector from its string label.
-
-Parameters
-----------
-d : ``DATUM``
-	The ``DATUM`` object itself.
-label : ``char *``
-	The string label associated with the value of interest.
-
-Returns
--------
-value : ``double``
-	The numerical value of that component of the data vector. ``NAN`` if the
-	label is not associated with ``d``. -9999 if NAN is not defined on the
-	user's system.
-*/
-extern double datum_get_item(DATUM d, char *label);
-
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */
