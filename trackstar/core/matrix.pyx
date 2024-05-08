@@ -19,7 +19,11 @@ cdef class matrix:
 
 	.. seealso:: ``trackstar.datum``
 
-	.. todo:: replace example code outputs with true uses of this class
+	.. todo::
+
+		Replace example code outputs with true uses of this class. Include
+		note and example about scalar multiplication with ``prefactor``
+		instancemethod.
 
 	Parameters
 	----------
