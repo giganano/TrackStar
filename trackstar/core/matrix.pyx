@@ -8,9 +8,6 @@
 __all__ = ["matrix"]
 import numbers
 from .utils import copy_array_like_object
-from libc.stdlib cimport malloc, free
-from libc.string cimport strcat, strlen
-from libc.stdio cimport sprintf
 from . cimport matrix
 
 cdef class matrix:
@@ -55,10 +52,12 @@ cdef class matrix:
 
 	Functions
 	---------
-	zeroes : ``classmethod``
+	zeros : ``classmethod``
 		Returns a matrix of a given size where every entry is set to zero.
 	identity : ``classmethod``
 		Returns the identity matrix for a given size.
+	prefactor : ``instancemethod``
+		Multiply each matrix element by some multiplicative factor.
 	determinant : ``instancemethod``
 		Compute the determinant of the matrix.
 	inverse : ``instancemethod``
@@ -71,12 +70,12 @@ cdef class matrix:
 	>>> from trackstar import matrix
 	>>> import numpy as np
 
-	Simple matrices, such as those full of zeroes or the square identity
+	Simple matrices, such as those full of zeros or the square identity
 	matrix which can act as starting points in constructing more complex
-	matrices, can be obtained using the ``matrix.zeroes`` and
+	matrices, can be obtained using the ``matrix.zeros`` and
 	``matrix.identity`` ``classmethods``:
 
-	>>> example = matrix.zeroes(2, 3) # 2 rows by 3 columns
+	>>> example = matrix.zeros(2, 3) # 2 rows by 3 columns
 	>>> example
 	matrix([0.00e+00    0.00e+00    0.00e+00]
 	       [0.00e+00    0.00e+00    0.00e+00])
@@ -128,7 +127,7 @@ cdef class matrix:
 	True
 	>>> example == matrix.identity(5)
 	False
-	>>> example = matrix.zeroes(2, 4)
+	>>> example = matrix.zeros(2, 4)
 	False
 	>>> example = matrix.identity(4)
 	>>> example == example.inverse()
@@ -137,8 +136,8 @@ cdef class matrix:
 	For matrices with the same dimensions, addition and subtraction proceed as
 	usual with the ``+`` and ``-`` operators:
 
-	>>> example1 = matrix.zeroes(3, 4)
-	>>> example2 = matrix.zeroes(3, 4)
+	>>> example1 = matrix.zeros(3, 4)
+	>>> example2 = matrix.zeros(3, 4)
 	>>> for i in range(example1.n_rows):
 	>>>     for j in range(example1.n_cols):
 	>>>         example1[i, j] = 10 * np.random.rand()
@@ -181,8 +180,8 @@ cdef class matrix:
 	       [0.00e+00    0.00e+00    0.00e+00    0.00e+00    3.00e+00])
 	>>> 2 * matrix.identity(5) == matrix.identity(5) + matrix.identity(5)
 	True
-	>>> example1 = matrix.zeroes(3, 4) # 3 rows by 4 columns
-	>>> example2 = matrix.zeroes(4, 2) # 4 rows by 2 columns
+	>>> example1 = matrix.zeros(3, 4) # 3 rows by 4 columns
+	>>> example2 = matrix.zeros(4, 2) # 4 rows by 2 columns
 	>>> for i in range(example1.n_rows):
 	>>>     for j in range(example1.n_cols):
 	>>>         example1[i, j] = 10 * np.random.rand()
@@ -216,7 +215,7 @@ cdef class matrix:
 	Determinants of square matrices can be computed with ``x.determinant`` for
 	a matrix ``x``:
 
-	>>> example = matrix.zeroes(4, 4)
+	>>> example = matrix.zeros(4, 4)
 	>>> for i in range(example.n_rows):
 	>>>     for j in range(example.n_cols):
 	>>>         example[i, j] = 10 * np.random.rand()
@@ -232,7 +231,7 @@ cdef class matrix:
 
 	Square matrices can be inverted with ``x.inverse`` for a matrix ``x``:
 
-	>>> example = matrix.zeroes(4, 4)
+	>>> example = matrix.zeros(4, 4)
 	>>> for i in range(4):
 	>>>     for j in range(4):
 	>>>         example[i, j] = 10 * np.random.rand()
@@ -259,7 +258,7 @@ cdef class matrix:
 	Matrices of any size can be transposed with ``x.transpose`` for a matrix
 	``x``:
 
-	>>> example = matrix.zeroes(3, 4)
+	>>> example = matrix.zeros(3, 4)
 	>>> for i in range(3):
 	>>>     for j in range(4):
 	>>>         example[i, j] = 10 * np.random.rand()
@@ -443,7 +442,7 @@ Index %d is out of range for matrix with %d %ss""" % (
 	def __add__(self, matrix other):
 		cdef matrix result
 		if self.n_rows == other.n_rows and self.n_cols == other.n_cols:
-			result = matrix.zeroes(self.n_rows, self.n_cols)
+			result = matrix.zeros(self.n_rows, self.n_cols)
 			matrix_add(self._m[0], other._m[0], result._m)
 			return result
 		else:
@@ -455,7 +454,7 @@ Matrix dimensions must be equal for addition. Got: %dx%d and %dx%d.""" % (
 	def __sub__(self, matrix other):
 		cdef matrix result
 		if self.n_rows == other.n_rows and self.n_cols == other.n_cols:
-			result = matrix.zeroes(self.n_rows, self.n_cols)
+			result = matrix.zeros(self.n_rows, self.n_cols)
 			matrix_subtract(self._m[0], other._m[0], result._m)
 			return result
 		else:
@@ -467,13 +466,25 @@ Matrix dimensions must be equal for subtraction. Got: %dx%d and %dx%d.""" % (
 	def __mul__(self, matrix other):
 		cdef matrix result
 		if self.n_cols == other.n_rows:
-			result = matrix.zeroes(self.n_rows, other.n_cols)
-			matrix_multiply(self._m[0], other._m[0], result._m)
+			result = matrix.zeros(self.n_rows, other.n_cols)
+			matrix_multiply(self._m[0], <MATRIX> other._m[0], result._m)
 			return result
 		else:
 			raise ValueError("""\
 Matrix dimensions incompatible for multiplication: %dx%d and %dx%d.""" % (
 				self.n_rows, self.n_cols, other.n_rows, other.n_cols))
+
+
+	def prefactor(self, factor):
+		r"""Multiply the matrix by a numerical prefactor."""
+		if isinstance(factor, numbers.Number):
+			result = matrix.zeros(self.n_rows, self.n_cols)
+			for i in range(self.n_rows):
+				for j in range(self.n_cols):
+					result[i, j] = factor * self[i, j]
+			return result
+		else:
+			raise TypeError("Expected a real number. Got: %s" % (type(factor)))
 
 
 	@property
@@ -493,13 +504,13 @@ Matrix dimensions incompatible for multiplication: %dx%d and %dx%d.""" % (
 		Example Code
 		------------
 		>>> from vice.modeling import matrix
-		>>> example = matrix.zeroes(2, 3) # 2 rows by 3 columns
+		>>> example = matrix.zeros(2, 3) # 2 rows by 3 columns
 		>>> example.n_rows
 		2
 		>>> example = matrix.identity(5)
 		>>> example.n_rows
 		5
-		>>> example = matrix.zeroes(4, 7) # 4 rows by 7 columns
+		>>> example = matrix.zeros(4, 7) # 4 rows by 7 columns
 		>>> example.n_rows 4
 		"""
 		return self._m[0].n_rows
@@ -522,13 +533,13 @@ Matrix dimensions incompatible for multiplication: %dx%d and %dx%d.""" % (
 		Example Code
 		------------
 		>>> from vice.modeling import matrix
-		>>> example = matrix.zeroes(2, 3) # 2 rows by 3 columns
+		>>> example = matrix.zeros(2, 3) # 2 rows by 3 columns
 		>>> example.n_cols
 		3
 		>>> example = matrix.identity(5)
 		>>> example.n_cols
 		5
-		>>> example = matrix.zeroes(4, 7) # 4 rows by 7 columns
+		>>> example = matrix.zeros(4, 7) # 4 rows by 7 columns
 		>>> example.n_cols
 		7
 		"""
@@ -536,14 +547,14 @@ Matrix dimensions incompatible for multiplication: %dx%d and %dx%d.""" % (
 
 
 	@classmethod
-	def zeroes(cls, n_rows, n_cols):
+	def zeros(cls, n_rows, n_cols):
 		r"""
-		.. classmethod:: trackstar.matrix.zeroes(n_rows, n_cols)
+		.. classmethod:: trackstar.matrix.zeros(n_rows, n_cols)
 
 		Obtain an ``n_rows x n_cols`` matrix in which each element is set to
 		zero.
 		"""
-		return cls(cls._zeroes_from_size(n_rows, n_cols))
+		return cls(cls._zeros_from_size(n_rows, n_cols))
 
 
 	@classmethod
@@ -555,13 +566,13 @@ Matrix dimensions incompatible for multiplication: %dx%d and %dx%d.""" % (
 		diagonal and 0's off of it (:math:`I_{ij} = 1` for ``i == j`` and
 		:math:`I_{ij} = 0` for ``i != j``).
 		"""
-		arr = cls._zeroes_from_size(size, size)
+		arr = cls._zeros_from_size(size, size)
 		for i in range(size): arr[i][i] = 1
 		return cls(arr)
 
 
 	@staticmethod
-	def _zeroes_from_size(n_rows, n_cols):
+	def _zeros_from_size(n_rows, n_cols):
 		def _check_value(value, name):
 			r"""
 			Determines if n_rows or n_cols is an integer, and raises the
@@ -586,7 +597,7 @@ Matrix dimensions incompatible for multiplication: %dx%d and %dx%d.""" % (
 		r"""Compute the inverse if the matrix is square."""
 		cdef matrix result
 		if self.n_rows == self.n_cols:
-			result = matrix.zeroes(self.n_rows, self.n_cols)
+			result = matrix.zeros(self.n_rows, self.n_cols)
 			matrix_invert(self._m[0], result._m)
 			return result
 		else:
@@ -609,7 +620,7 @@ Cannot compute the determinant of a non-square matrix. Dimensions: %dx%d""" % (
 	def transpose(self):
 		r"""Compute the transpose of the matrix."""
 		cdef matrix result
-		result = matrix.zeroes(self.n_cols, self.n_rows)
+		result = matrix.zeros(self.n_cols, self.n_rows)
 		matrix_transpose(self._m[0], result._m)
 		return result
 

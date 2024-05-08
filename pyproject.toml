@@ -42,6 +42,9 @@ classifiers = [
 	"Topic :: Scientific/Engineering :: Physics"
 ]
 
+[project.optional-dependencies]
+dev = ["pytest >= 8.0", "numpy >= 1.21.0"]
+
 [project.urls]
 Repository = "https://github.com/giganano/TrackStar"
 Issues = "https://github.com/giganano/TrackStar/issues"

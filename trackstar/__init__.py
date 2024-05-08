@@ -10,17 +10,9 @@ Welcome to TrackStar!
 Copyright (C) 2023 James W. Johnson.
 """
 
-__all__ = ["version"]
+__all__ = ["version", "test"]
 __author__ = "James W. Johnson"
 import warnings
-
-# try:
-# 	__TRACKSTAR_SETUP__
-# except NameError:
-# 	__TRACKSTAR_SETUP__ = False
-
-# if not __TRACKSTAR_SETUP__:
-
 from .version import version
 if not version.isreleased:
 	warnings.warn("Using un-released version of TrackStar", UserWarning)
@@ -36,6 +28,7 @@ __version__ = str(version)
 __all__.append("__version__")
 from .core import *
 __all__.extend(core.__all__)
+from .tests import test
 
 def dummy(x, y):
 	r"""
@@ -65,8 +58,3 @@ def dummy(x, y):
 	8
 	"""
 	return x + y
-
-# else: pass
-
-
-
