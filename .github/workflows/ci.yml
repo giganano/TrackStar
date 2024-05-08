@@ -33,48 +33,48 @@ jobs:
           - os: ubuntu-latest
             compiler: clang
 
-        env:
-          COMPILER: ${{ matrix.compiler }}
+    env:
+      COMPILER: ${{ matrix.compiler }}
 
-        steps:
-          - name: Setup OpenMP
-            if: matrix.openmp
-            run: |
-              if [[ $OSTYPE == *"darwin"* ]] ; then
-                brew install libomp
-              fi
-              echo "TRACKSTAR_ENABLE_OPENMP=true" >> $GITHUB_ENV
+    steps:
+      - name: Setup OpenMP
+        if: matrix.openmp
+        run: |
+          if [[ $OSTYPE == *"darwin"* ]] ; then
+            brew install libomp
+          fi
+          echo "TRACKSTAR_ENABLE_OPENMP=true" >> $GITHUB_ENV
 
-          - name: Checkout Repository
-            uses: actions/checkout@v4
+      - name: Checkout Repository
+        uses: actions/checkout@v4
 
-          - name: Setup Python ${{ matrix.python-version }}
-            uses: actions/setup-python@v5
-            with:
-              python-version: ${{ matrix.python-version }}
+      - name: Setup Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
 
-          - name: Compile and Install
-            shell: bash
-            run: |
-              python -m pip install --upgrade pip
-              python -m pip install ".[dev]" -v 2> err.out
+      - name: Compile and Install
+        shell: bash
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install ".[dev]" -v 2> err.out
 
-          - name: Display Compiler Warnings and Errors
-            if: always()
-            shell: bash
-            run: |
-              if [ -f "err.out" ] ; then
-                cat err.out
-                rm -f err.out
-              fi
+      - name: Display Compiler Warnings and Errors
+        if: always()
+        shell: bash
+        run: |
+          if [ -f "err.out" ] ; then
+            cat err.out
+            rm -f err.out
+          fi
 
-          - name: Run Tests
-            shell: bash
-            run: |
-              make tests
+      - name: Run Tests
+        shell: bash
+        run: |
+          make tests
 
-          - name: Cleanup
-            shell: bash
-            run: |
-              make clean distclean
+      - name: Cleanup
+        shell: bash
+        run: |
+          make clean distclean
 
