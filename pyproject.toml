@@ -48,6 +48,3 @@ dev = ["pytest >= 8.0", "numpy >= 1.21.0"]
 [project.urls]
 Repository = "https://github.com/giganano/TrackStar"
 Issues = "https://github.com/giganano/TrackStar/issues"
-
-[tool.setuptools.package-data]
-trackstar = ["*.so"] # failsafe: ensures Cython outputs will be carried over
