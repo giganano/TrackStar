@@ -1,0 +1,80 @@
+# cython: language_level = 3, boundscheck = False
+#
+# This file is part of the TrackStar package.
+# Copyright (C) 2023 James W. Johnson (giganano9@gmail.com)
+# License: MIT License. See LICENSE in top-level directory
+# at: https://github.com/giganano/trackstar.git.
+
+name: GitHub CI
+
+on: [push, pull_request, workflow_dispatch]
+
+jobs:
+  build:
+    name: ${{ matrix.os }} | Python ${{ matrix.python-version }} | openmp = ${{ matrix.openmp }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        compiler: [gcc, clang]
+        openmp: [true, false]
+        python-version:
+          - "3.8"
+          - "3.9"
+          - "3.10"
+          - "3.11"
+          - "3.12"
+
+        exclude:
+          - os: macos-latest
+            compiler: gcc
+
+          - os: ubuntu-latest
+            compiler: clang
+
+        env:
+          COMPILER: ${{ matrix.compiler }}
+
+        steps:
+          - name: Setup OpenMP
+            if: matrix.openmp
+            run: |
+              if [[ $OSTYPE == *"darwin"* ]] ; then
+                brew install libomp
+              fi
+              echo "TRACKSTAR_ENABLE_OPENMP=true" >> $GITHUB_ENV
+
+          - name: Checkout Repository
+            uses: actions/checkout@v4
+
+          - name: Setup Python ${{ matrix.python-version }}
+            uses: actions/setup-python@v5
+            with:
+              python-version: ${{ matrix.python-version }}
+
+          - name: Compile and Install
+            shell: bash
+            run: |
+              python -m pip install --upgrade pip
+              python -m pip install ".[dev]" -v 2> err.out
+
+          - name: Display Compiler Warnings and Errors
+            if: always()
+            shell: bash
+            run: |
+              if [ -f "err.out" ] ; then
+                cat err.out
+                rm -f err.out
+              fi
+
+          - name: Run Tests
+            shell: bash
+            run: |
+              make tests
+
+          - name: Cleanup
+            shell: bash
+            run: |
+              make clean distclean
+
