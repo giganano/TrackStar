@@ -17,7 +17,6 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest]
-        compiler: [gcc, clang]
         openmp: [true, false]
         python-version:
           - "3.8"
@@ -25,16 +24,6 @@ jobs:
           - "3.10"
           - "3.11"
           - "3.12"
-
-        exclude:
-          - os: macos-latest
-            compiler: gcc
-
-          - os: ubuntu-latest
-            compiler: clang
-
-    env:
-      COMPILER: ${{ matrix.compiler }}
 
     steps:
       - name: Setup OpenMP
