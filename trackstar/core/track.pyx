@@ -33,8 +33,7 @@ cdef class track:
 	"""
 
 	def __cinit__(self, predictions, weights = None, n_threads = 1,
-		use_line_segment_corrections = True,
-		line_segment_correction_tolerance = 1.01):
+		use_line_segment_corrections = False):
 		if not isinstance(predictions, dict): raise TypeError("""\
 Track must be initialized from type dict. Got: %s""" % (type(predictions)))
 		copy = {}
@@ -106,11 +105,9 @@ elements as the track predictions.""" % (len(weights), len(copy[keys[0]])))
 
 
 	def __init__(self, predictions, weights = None, n_threads = 1,
-		use_line_segment_corrections = True,
-		line_segment_correction_tolerance = 1.01):
+		use_line_segment_corrections = False):
 		self.n_threads = n_threads
 		self.use_line_segment_corrections = use_line_segment_corrections
-		self.line_segment_correction_tolerance = line_segment_correction_tolerance
 
 
 	def __dealloc__(self):
@@ -249,9 +246,7 @@ Track indexing accepts 1 or 2 parameters. Got: %d""" % (len(key)))
 			track_subset[label] = self._getitem_str_(label)[start:stop:step]
 		weights = [self._t[0].weights[i] for i in range(start, stop, step)]
 		return track(track_subset, weights = weights,
-			use_line_segment_corrections = self.use_line_segment_corrections,
-			line_segment_correction_tolerance =
-				self.line_segment_correction_tolerance)
+			use_line_segment_corrections = self.use_line_segment_corrections)
 
 
 	def __setitem__(self, key, value):
@@ -518,44 +513,6 @@ Number of parallel processing threads must be an integer. Got: %s""" % (
 			raise TypeError("""\
 Attribute 'use_line_segment_corrections' must be of type bool. Got: %s""" % (
 				type(value)))
-
-
-	@property
-	def line_segment_correction_tolerance(self):
-		r"""
-		Type : ``float`` [default : 1.01]
-
-		Must be larger than 1 (non-inclusive).
-
-		A threshold above which a warning will be raised regarding the
-		numerical stability of the computed likelihood. This tolerance
-		quantifies how "jagged" the track is allowed to be before it begins to
-		affect the inferred likelihood, introducing numerical artifacts. In
-		these cases, a denser sampling of the predicted track is recommended.
-
-		.. note::
-
-			This parameter is only used if the attribute
-			``track.use_line_segment_correction`` is ``True``. Otherwise,
-			the corrections for the lengths of each line segment along the
-			track (i.e. its "jaggedness") are not included.
-
-		.. seealso:: trackstar.track.use_line_segment_correction
-		"""
-		return self._t[0].line_segment_correction_tolerance
-
-
-	@line_segment_correction_tolerance.setter
-	def line_segment_correction_tolerance(self, value):
-		if isinstance(value, numbers.Number):
-			if value > 1:
-				self._t[0].line_segment_correction_tolerance = value
-			else:
-				raise ValueError("""\
-Line segment correction tolerance must be larger than 1 (non-inclusive).""")
-		else:
-			raise TypeError("""\
-Line segment correction tolerance must be a float. Got: %s""" % (type(value)))
 
 
 	def keys(self):

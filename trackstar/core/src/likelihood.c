@@ -10,6 +10,7 @@ at: https://github.com/giganano/TrackStar.git.
 #include <math.h>
 #include "multithread.h"
 #include "likelihood.h"
+#include "quadrature.h"
 #include "matrix.h"
 #include "utils.h"
 #include "debug.h"
@@ -17,6 +18,7 @@ at: https://github.com/giganano/TrackStar.git.
 /* ---------- Static function comment headers not duplicated here ---------- */
 static double chi_squared(DATUM d, TRACK t, const unsigned short index);
 static double corrective_factor(DATUM d, TRACK t, const unsigned short index);
+static double corrective_factor_marginalization_integrand(double *args);
 static TRACK *track_subset(DATUM d, TRACK t);
 static MATRIX *trackpoint(TRACK t, const unsigned short index);
 
@@ -137,10 +139,7 @@ extern double loglikelihood_datum(DATUM *d, TRACK *t) {
 			eliminates the need to copy information over between the input and
 			subsampled track.
 			*/
-			double correction = corrective_factor(*d, *sub, i);
-			s *= correction;
-			t -> line_segment_correction_flag |= (correction >
-				(*t).line_segment_correction_tolerance);
+			s *= corrective_factor(*d, *sub, i);
 		} else {}
 		#if defined(_OPENMP)
 			by_thread[omp_get_thread_num()] += s;
@@ -233,6 +232,16 @@ correction : ``double``
 	:math:`\beta_{ij}`, defined according to equation A12 in Johnson et al.
 	(2022) [1]_.
 
+Notes
+-----
+Although the exact form of :math:`\beta_{ij}` is known, it is a rare case in
+which the analytic solution is not numerically stable while the numerical
+solution is. In this case, the instability arises because :math:`\beta_{ij}` is
+the product of an extremely large number and an extremely small number, which
+challenge the limits of double floating point precision. Once the values of
+:math:`a` and :math:`b` are known, which define the value of :math:`beta` (see
+science documentation), its value is computed through quadrature.
+
 References
 ----------
 .. [1] Johnson J.W., et al., 2022, MNRAS, 526, 5084
@@ -240,6 +249,10 @@ References
 static double corrective_factor(DATUM d, TRACK t, const unsigned short index) {
 
 	if (index < t.n_rows - 1u) {
+		/*
+		Determine the values of the a and b coefficients, which define the
+		corrective factor.
+		*/
 		MATRIX *tpoint_index = trackpoint(t, index);
 		MATRIX *tpoint_next = trackpoint(t, index + 1u);
 		MATRIX *delta = matrix_subtract(*((MATRIX *) &d), *tpoint_index, NULL);
@@ -247,13 +260,36 @@ static double corrective_factor(DATUM d, TRACK t, const unsigned short index) {
 		MATRIX *linesegment_T = matrix_transpose(*linesegment, NULL);
 		MATRIX *first = matrix_multiply(*linesegment, *(*d.cov).inv, NULL);
 		MATRIX *second = matrix_multiply(*first, *linesegment_T, NULL);
+		if ((*second).n_rows != 1u || (*second).n_cols != 1u) {
+			fatal_print("%s\n",
+				"Line segment correction (a): matrix larger than 1x1.");
+		} else {}
 		double a = second -> matrix[0][0];
 		first = matrix_multiply(*delta, *(*d.cov).inv, first);
 		second = matrix_multiply(*first, *linesegment_T, second);
+		if ((*second).n_rows != 1u || (*second).n_cols != 1u) {
+			fatal_print("%s\n",
+				"Line segment correction (b): matrix larger than 1x1.");
+		} else {}
 		double b = second -> matrix[0][0];
-		double correction = sqrt(PI / (2 * a));
-		correction *= exp(b * b / (2 * a));
-		correction *= erf((a - b) / sqrt(2 * a)) - erf(b / sqrt(2 * a));
+
+		/* Compute corrective factor numerically (see note above) */
+		INTEGRAL intgrl;
+		intgrl.func = &corrective_factor_marginalization_integrand;
+		intgrl.lower = 0;
+		intgrl.upper = 1;
+		intgrl.tolerance = LINE_SEGMENT_CORRECTION_TOLERANCE;
+		intgrl.n_min = LINE_SEGMENT_CORRECTION_MIN_ITERS;
+		intgrl.n_max = LINE_SEGMENT_CORRECTION_MAX_ITERS;
+		intgrl.extra_args = (double *) malloc (2 * sizeof(double));
+		intgrl.extra_args[0] = a;
+		intgrl.extra_args[1] = b;
+		intgrl.n_extra_args = 2u;
+		quad(&intgrl);
+		double correction = intgrl.result;
+
+		/* free up allocated memory */
+		free(intgrl.extra_args);
 		matrix_free(tpoint_index);
 		matrix_free(tpoint_next);
 		matrix_free(delta);
@@ -264,13 +300,41 @@ static double corrective_factor(DATUM d, TRACK t, const unsigned short index) {
 		return correction;
 	} else {
 		/*
-		The line segment correction implicitly integrates over the full length
-		of the line segment. Therefore, the point at the end of the track can
-		be treated as a line segment of length 0 that therefore does not
-		contribute to the likelihood of observation.
+		The correction integrates over the full length of the line segment.
+		Therefore, the point at the end of the track can be treated as a line
+		segment of length 0, therefore not contributing to the overall
+		likelihood.
 		*/
-		return 0.0;
+		return 0.f;
 	}
+
+}
+
+
+/*
+.. cpp:function:: static double corrective_factor_marginalization_integrand(
+	double *args);
+
+The integrand for computing line segment length corrections along the track.
+
+Parameters
+----------
+args : ``double *``
+	The integration parameters, :math:`q`, :math:`a`, and :math:`b`.
+
+Returns
+-------
+value : ``double``
+	The integrand, defined as
+
+	.. math::
+
+		\exp(\frac{-1}{2} (aq^2 - 2bq))
+*/
+static double corrective_factor_marginalization_integrand(double *args) {
+
+	double q = args[0], a = args[1], b = args[2];
+	return exp(-0.5 * (a * q * q - 2 * b * q));
 
 }
 
@@ -304,8 +368,6 @@ static TRACK *track_subset(DATUM d, TRACK t) {
 	sub = (TRACK *) realloc (sub, sizeof(TRACK));
 	sub -> n_threads = t.n_threads;
 	sub -> use_line_segment_corrections = t.use_line_segment_corrections;
-	sub -> line_segment_correction_tolerance = t.line_segment_correction_tolerance;
-	sub -> line_segment_correction_flag = 0u;
 
 	sub -> labels = (char **) malloc ((*sub).n_cols * sizeof(char *));
 	for (unsigned short i = 0u; i < (*sub).n_cols; i++) {

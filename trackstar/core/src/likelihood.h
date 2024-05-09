@@ -18,6 +18,19 @@ extern "C" {
 #include "track.h"
 
 /*
+Parameters for computing line segment length corrections along the track.
+
+*_TOLERANCE : The numerical tolerance (maximum allowed relative error).
+*_MIN_ITERS : The starting number of quadrature bins.
+*_MAX_ITERS : The maximum allowed number of quadrature bins. At this value,
+	the integration stops and the value is reported, regardless of whether or
+	not the calculation has converged to within the tolerance interval.
+*/
+#define LINE_SEGMENT_CORRECTION_TOLERANCE 1e-3
+#define LINE_SEGMENT_CORRECTION_MIN_ITERS 64ul
+#define LINE_SEGMENT_CORRECTION_MAX_ITERS 1e6
+
+/*
 .. cpp:function:: extern double loglikelihood_sample(SAMPLE *s, TRACK *t);
 
 Compute the natural logarithm of the likelihood that some sample of data vectors
