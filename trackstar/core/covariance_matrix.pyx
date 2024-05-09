@@ -70,7 +70,7 @@ cdef class covariance_matrix(matrix):
 
 		The inverse of this covariance matrix, :math:`C^{-1}`.
 		"""
-		inv = matrix.zeroes(self.n_rows, self.n_cols)
+		inv = matrix.zeros(self.n_rows, self.n_cols)
 		for i in range(self.n_rows):
 			for j in range(self.n_cols):
 				inv[i, j] = self._cov[0].inv.matrix[i][j]
