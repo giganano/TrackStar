@@ -3,6 +3,10 @@
 # License: MIT License. See LICENSE in top-level directory
 # at: https://github.com/giganano/trackstar.git.
 
+.PHONY: docs
+docs:
+	@ $(MAKE) -C docs/
+
 .PHONY: tests
 tests:
 	@ python -c "import trackstar ; trackstar.test()"

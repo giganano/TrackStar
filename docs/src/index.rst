@@ -6,36 +6,59 @@
 .. _frontpage:
 
 TrackStar
-=========
-Welcome to the **TrackStar 0.0.0.dev0** documentation!
++++++++++
 
-TrackStar is a highly optimized, multi-threaded tool for estimating best-fit
-parameters for models that predict a **track** in some N-dimensional data space.
-A **track** is any trajectory or curve through this space that is approximated
-as infinitely thin.
-That is, every datum would fall perfectly along an accurate **track** if there
-were no measurement uncertainties.
+**Version**: 1.0.0.dev0
+
+TrackStar is a highly optimized, user-friendly library designed to compute
+Bayesian likelihood estimates for models that predict a **track** in some
+N-dimensional space.
+A **track** is any trajectory or curve through that space.
 Such models arise, e.g., within astrophysics, in the context of stellar streams,
 stellar isochrones, and galactic chemical evolution.
-If your model predicts some curve through data space, and there are measurement
-uncertainties in any or all dimensions of that space, then TrackStar is the
-ideal tool for your task!
+If your model predicts a curve of some shape and your data have measurement
+uncertainties in all directions, then TrackStar is the ideal tool for your task!
+
+Useful Links
+^^^^^^^^^^^^
+
+:doc:`install`
+	For newcomers. Welcome!
 
 :doc:`science-documentation`
-	Mathematical details on TrackStar's backend and implementation.
+	Mathematical details on TrackStar's calculations.
 
 :doc:`api/index`
-	User's guide on each of the functions and objects provided by TrackStar.
-
-:doc:`developers/index`
-	Submit a bug report; license; list of contributors.
-
-.. Hidden TOCs
+	Detailed instructions on all aspects of TrackStar's usage.
 
 .. toctree::
 	:maxdepth: 1
+	:caption: Getting Started
+	:hidden:
+
+	install
+
+.. toctree::
+	:maxdepth: 1
+	:caption: User's Guide
 	:hidden:
 
 	science-documentation
 	api/index
+
+.. toctree::
+	:maxdepth: 1
+	:caption: Developer's Documentation
+	:hidden:
+
 	developers/index
+
+
+.. Hidden TOCs
+
+.. :maxdepth: 1
+.. :hidden:
+
+.. science-documentation
+.. api/index
+.. developers/index

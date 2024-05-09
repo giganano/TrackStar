@@ -17,7 +17,7 @@ ARGV
 
 try:
 	import trackstar
-except (ModuleNotFoundError, ImportError):
+except ModuleNotFoundError:
 	raise RuntimeError("""\
 TrackStar must be installed before its documentation can be compiled.""")
 from .doctree import doctree
@@ -27,7 +27,6 @@ import os
 def generate_api_ref(path = os.getcwd()):
 	r"""See ``doctree.save`` in doctree.py."""
 	doctree(trackstar).save(path = path)
-	# os.rename("%s/trackstar.rst" % (path), "%s/index.rst" % (path))
 
 if __name__ == "__main__":
 	if len(sys.argv) > 1:

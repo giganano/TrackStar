@@ -5,10 +5,14 @@
 # License: MIT License. See LICENSE in top-level directory
 # at: https://github.com/giganano/trackstar.git.
 
+__all__ = ["openmp_linked"]
 from . cimport multithread
 
 def openmp_linked():
 	r"""
-	.. todo:: documentation on this function.
+	Returns ``True`` if the OpenMP library is available, which enables
+	multithreading. ``False`` otherwise.
+
+	.. todo:: Link to install documentation.
 	"""
 	return bool(multithreading_enabled())

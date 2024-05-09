@@ -30,31 +30,3 @@ from .core import *
 __all__.extend(core.__all__)
 from .tests import test
 
-def dummy(x, y):
-	r"""
-	.. function:: trackstar.dummy(x, y)
-
-	This is a dummy function with a dummy docstring for the purposes of
-	setting up documentation.
-
-	Parameters
-	----------
-	x : ``real number``
-		The first parameter.
-	y : `real number`
-		The second parameter.
-
-	Returns
-	-------
-	z : real number
-		The sum of x and y.
-
-	Example Code
-	------------
-	>>> import trackstar
-	>>> trackstar.dummy(2, 3)
-	5
-	>>> trackstar.dummy(1, 7)
-	8
-	"""
-	return x + y

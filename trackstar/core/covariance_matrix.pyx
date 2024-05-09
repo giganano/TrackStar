@@ -20,7 +20,7 @@ cdef class covariance_matrix(matrix):
 
 	.. todo:: Finish documentation on this class.
 
-	.. sealso::
+	.. seealso::
 
 		- ``trackstar.matrix``
 		- ``trackstar.vector``

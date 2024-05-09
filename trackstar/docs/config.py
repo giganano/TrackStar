@@ -11,21 +11,41 @@ _CONFIG_ = {
 	trackstar: {
 		"header": "trackstar",
 		"subs": [
-			trackstar.version,
+			trackstar.track,
+			trackstar.sample,
+			trackstar.datum,
+			trackstar.covariance_matrix,
 			trackstar.matrix,
-			trackstar.dummy
+			trackstar.version,
+			trackstar.openmp_linked
 		]
 	},
-	trackstar.version: {
-		"header": "trackstar.version",
+	trackstar.track: {
+		"header": "trackstar.track",
+		"subs": []
+	},
+	trackstar.sample: {
+		"header": "trackstar.sample",
+		"subs": []
+	},
+	trackstar.datum: {
+		"header": "trackstar.datum",
+		"subs": []
+	},
+	trackstar.covariance_matrix: {
+		"header": "trackstar.covariance_matrix",
 		"subs": []
 	},
 	trackstar.matrix: {
 		"header": "trackstar.matrix",
 		"subs": []
 	},
-	trackstar.dummy: {
-		"header": "trackstar.dummy",
+	trackstar.version: {
+		"header": "trackstar.version",
+		"subs": []
+	},
+	trackstar.openmp_linked: {
+		"header": "trackstar.openmp_linked",
 		"subs": []
 	}
 }
