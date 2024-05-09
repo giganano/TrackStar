@@ -11,7 +11,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "trackstar"
-version = "0.0.0.dev0"
+version = "1.0.0.dev0"
 requires-python = ">=3.8"
 readme = "README.md"
 authors = [{name = "James W. Johnson", email = "giganano9@gmail.com"}]
@@ -24,7 +24,9 @@ classifiers = [
 	"License :: OSI Approved :: MIT License",
 	"Natural Language :: English",
 	"Operating System :: MacOS",
+	"Operating System :: MacOS :: MacOS X",
 	"Operating System :: POSIX",
+	"Operating System :: POSIX :: Linux",
 	"Operating System :: Unix",
 	"Programming Language :: C",
 	"Programming Language :: Cython",
@@ -43,7 +45,7 @@ classifiers = [
 ]
 
 [project.optional-dependencies]
-dev = ["pytest >= 8.0", "numpy >= 1.21.0"]
+dev = ["pytest >= 7.0", "numpy >= 1.21.0"]
 
 [project.urls]
 Repository = "https://github.com/giganano/TrackStar"
