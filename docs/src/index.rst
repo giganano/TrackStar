@@ -52,13 +52,3 @@ Useful Links
 	:hidden:
 
 	developers/index
-
-
-.. Hidden TOCs
-
-.. :maxdepth: 1
-.. :hidden:
-
-.. science-documentation
-.. api/index
-.. developers/index
