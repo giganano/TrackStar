@@ -58,9 +58,27 @@ cdef class covariance_matrix(matrix):
 
 
 	def __setitem__(self, indices, value):
-		super().__setitem__(indices, value)
-		super().__setitem__(indices[::-1], value) # ensures diagonality
-		matrix_invert(self._m[0], self._cov[0].inv)
+		self._check_indices(indices)
+		if isinstance(value, numbers.Number):
+			if indices[0] == indices[1]:
+				if value > 0:
+					if value > 1e-12:
+						self._cov[0].matrix[indices[0]][indices[1]] = value
+					else:
+						raise ValueError("""\
+As a safeguard against numerical artifacts, TrackStar does not allow values \
+smaller than 1e-12 along the diagonals of covariance matrices. If your \
+uncertainties are this small, please apply a constant, overall multiplicative \
+factor to the relevant data quantities.""")
+				else:
+					raise ValueError("""\
+Diagonal elements of covariance matrix must be positive.""")
+			else:
+				self._cov[0].matrix[indices[0]][indices[1]] = value
+				self._cov[0].matrix[indices[1]][indices[2]] = value
+		else:
+			raise TypeError("""\
+Item assignment requires a real number. Got: %s""" % (type(value)))
 
 
 	@property
