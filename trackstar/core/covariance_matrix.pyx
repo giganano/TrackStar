@@ -75,7 +75,7 @@ factor to the relevant data quantities.""")
 Diagonal elements of covariance matrix must be positive.""")
 			else:
 				self._cov[0].matrix[indices[0]][indices[1]] = value
-				self._cov[0].matrix[indices[1]][indices[2]] = value
+				self._cov[0].matrix[indices[1]][indices[0]] = value
 		else:
 			raise TypeError("""\
 Item assignment requires a real number. Got: %s""" % (type(value)))
