@@ -5,8 +5,8 @@
 	<a href="https://github.com/giganano/TrackStar/actions/workflows/ci.yml"
 		target="_blank">
 		<img src="https://github.com/giganano/TrackStar/workflows/GitHub%20CI/badge.svg">
-	</a>
-	<a href="https://github.com/giganano/TrackStar/issues" target="_blank">
+	</a><a
+		href="https://github.com/giganano/TrackStar/issues" target="_blank">
 		<img src="https://img.shields.io/github/issues/giganano/TrackStar.svg">
 	</a>
 </div>
