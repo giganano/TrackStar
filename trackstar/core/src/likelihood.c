@@ -18,6 +18,7 @@ at: https://github.com/giganano/TrackStar.git.
 
 /* ---------- Static function comment headers not duplicated here ---------- */
 static double chi_squared(DATUM d, TRACK t, const unsigned short index);
+static double delta_model(TRACK t, const unsigned short index);
 static double corrective_factor(DATUM d, TRACK t, const unsigned short index);
 static double corrective_factor_marginalization_integrand(double *args);
 static TRACK *track_subset(DATUM d, TRACK t);
@@ -144,7 +145,9 @@ extern double loglikelihood_datum(DATUM *d, TRACK *t) {
 		#pragma omp parallel for num_threads((*t).n_threads)
 	#endif
 	for (unsigned short i = 0u; i < (*sub).n_rows; i++) {
-		double s = (*sub).weights[i] * exp(-0.5 * chi_squared(*d, *sub, i));
+		double s = (*sub).weights[i];
+		s *= exp(-0.5 * chi_squared(*d, *sub, i));
+		s *= delta_model(*sub, i);
 		if ((*t).use_line_segment_corrections) {
 			/*
 			Compute the corrective factor using the subsampled track, but use
@@ -218,6 +221,47 @@ static double chi_squared(DATUM d, TRACK t, const unsigned short index) {
 	} else {
 		fatal_print("%s\n",
 			"Chi-squared calculation resulted in a matrix larger than 1x1.");
+	}
+
+}
+
+
+/*
+.. cpp:function:: static delta delta_model(TRACK t, const unsigned short index);
+
+Computes the magnitude of the vector displacement between neighboring points on
+the track.
+
+Parameters
+----------
+t : ``TRACK``
+	The track itself, containing all vectors.
+index : ``unsigned short``
+	The index of the vector along the track to compute the :math:`\Delta M` at.
+
+Returns
+-------
+delta : ``double``
+	The magnitude of the :math:`\Delta M_j = M_{j + 1} - M_j` vector.
+*/
+static double delta_model(TRACK t, const unsigned short index) {
+
+	if (index < t.n_rows - 1ul) {
+		MATRIX *current = trackpoint(t, index);
+		MATRIX *next = trackpoint(t, index + 1ul);
+		MATRIX *delta = matrix_subtract(*next, *current, NULL);
+		/* compute magnitude of delta vector in data space */
+		double mag = 0;
+		for (unsigned short i = 0u; i < (*delta).n_cols; i++) {
+			mag += (*delta).matrix[0][i] * (*delta).matrix[0][i];
+		}
+		mag = sqrt(mag);
+		free(current);
+		free(next);
+		free(delta);
+		return mag;
+	} else {
+		return 0.f;
 	}
 
 }
