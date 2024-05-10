@@ -9,11 +9,12 @@ __all__ = ["sample"]
 import math as m
 import numbers
 from .utils import copy_array_like_object, copy_cstring
-from .utils cimport copy_pystring, strindex
+from .utils cimport copy_pystring, strindex, linked_list
 from .datum cimport datum
 from . cimport sample
 from .track cimport track
-from libc.stdlib cimport free
+from libc.stdlib cimport malloc, free
+from libc.stdint cimport uintptr_t
 
 cdef class sample:
 
@@ -60,7 +61,7 @@ cdef class sample:
 		for key in self.keys():
 			rep += "        %s " % (key)
 			for j in range(15 - len(key)): rep += '-'
-			rep += "> %s\n" % (track._repr_format_array_(self[key]))
+			rep += "> %s\n" % (linked_list._repr_format_array_(self[key]))
 		rep += "])"
 		return rep
 
@@ -69,6 +70,8 @@ cdef class sample:
 		r"""
 		.. todo:: Allow indexing according to rule sample[row, col]
 		"""
+		cdef double **copies
+		cdef char *label
 		if isinstance(key, numbers.Number):
 			if key % 1 == 0:
 				key = int(key)
@@ -79,13 +82,17 @@ Index %d out of range for sample of size N = %d.""" % (key, self.size))
 			else: raise IndexError("Sample index must be an integer, not float.")
 		elif isinstance(key, str):
 			if key in self.keys():
-				values = []
+				copies = <double **> malloc (self.size * sizeof(double *))
 				for i in range(self.size):
-					if key in self._data[i].keys():
-						values.append(self._data[i][key])
+					label = copy_pystring(key)
+					idx = strindex(self._s[0].data[i][0].labels, label,
+						self._s[0].data[i][0].n_cols)
+					if idx != -1:
+						copies[i] = &self._s[0].data[i][0].vector[0][idx]
 					else:
-						values.append(float("nan"))
-				return values
+						copies[i] = <double *> malloc (sizeof(double))
+						copies[i][0] = float("nan")
+				return linked_list(<uintptr_t> copies, self.size)
 			else:
 				raise KeyError("Sample quantity label %s not recognized." % (
 					key))
@@ -104,7 +111,7 @@ Index %d out of range for sample of size N = %d.""" % (key, self.size))
 				else:
 					raise IndexError("""\
 Sample indexing with both row number and column label requires an int and a \
-string. Got: %s""" % (type(key[0]), type(key[1])))
+string. Got: %s, %s""" % (type(key[0]), type(key[1])))
 			else:
 				raise IndexError("""\
 Sample indexing requires at most two parameters. Got: %d""" % (len(key)))
@@ -215,7 +222,7 @@ Sample row number must be an int, not float.""")
 				else:
 					raise IndexError("""\
 Sample item assignment by row number and column label requires an int and a \
-string. Got: %s""" % (type(index[0]), type(index[1])))
+string. Got: %s, %s""" % (type(index[0]), type(index[1])))
 			else:
 				raise IndexError("""\
 Sample item assignment requires at most two parameters. Got: %d""" % (

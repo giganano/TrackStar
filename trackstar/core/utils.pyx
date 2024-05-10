@@ -15,12 +15,121 @@ try:
 	import pandas as pd
 except (ModuleNotFoundError, ImportError):
 	pass
+import math as m
 import numbers
 import array
 import sys
 from . cimport utils
-from libc.stdlib cimport malloc
+from libc.stdlib cimport malloc, free
 from libc.string cimport memset, strlen
+from libc.stdint cimport uintptr_t
+from libc.math cimport isnan
+
+cdef class linked_list:
+
+	r"""
+	.. todo:: documentation on this object.
+	"""
+
+	def __cinit__(self, unsigned long address, unsigned long length):
+		self._arr = <double **> malloc (length * sizeof(double *))
+
+	def __init__(self, unsigned long address, unsigned long length):
+		cdef double **arr = <double **> (<uintptr_t> address)
+		self._length = length
+		for i in range(len(self)):
+			if isnan(arr[i][0]):
+				self._arr[i] = <double *> malloc (sizeof(double))
+				self._arr[i][0] = float("nan")
+			else:
+				self._arr[i] = &arr[i][0]
+
+	def __dealloc__(self):
+		for i in range(len(self)):
+			if isnan(self._arr[i][0]): free(self._arr[i])
+		free(self._arr)
+
+	def __enter__(self):
+		r"""Opens a with statement."""
+		return self
+
+	def __exit__(self, exc_type, exc_value, exc_tb):
+		r"""Raises all errors inside of with statements."""
+		return exc_value is None
+
+	def __len__(self):
+		return self._length
+
+	def __iter__(self):
+		for i in range(len(self)): yield self._arr[i][0]
+
+	def __repr__(self):
+		copy = [x for x in self]
+		return "array(%s)" % (self._repr_format_array_(copy))
+
+	@staticmethod
+	def _repr_format_array_(arr):
+		def format_number(num):
+			# ensures all numbers, including nans, become strings with the
+			# same length.
+			s = "%.4e" % (num)
+			if m.isnan(num): s += "       "
+			return s
+		if len(arr) > 10:
+			rep = "[%s, %s, %s, ..., %s, %s, %s]" % (
+				format_number(arr[0]),
+				format_number(arr[1]),
+				format_number(arr[2]),
+				format_number(arr[-3]),
+				format_number(arr[-2]),
+				format_number(arr[-1]))
+		else:
+			rep = "[%s" % (format_number(arr[0]))
+			for i in range(1, len(arr)):
+				rep += ", %s" % (format_number(arr[i]))
+			rep += "]"
+		return rep
+
+	def __getitem__(self, index):
+		if isinstance(index, numbers.Number):
+			if index % 1 == 0:
+				index = int(index)
+				if -len(self) <= index < 0: index += len(self)
+				if not 0 <= index < len(self): raise IndexError("""\
+Index %d is out of bounds for list of length %d.""" % (index, len(self)))
+				return self._arr[index][0]
+			else:
+				raise IndexError("List index should be an int, not float.")
+		else:
+			raise IndexError("List index should be an int. Got: %s" % (
+				type(index)))
+
+	def __setitem__(self, index, value):
+		if isinstance(index, numbers.Number):
+			if index % 1 == 0:
+				if isinstance(value, numbers.Number):
+					index = int(index)
+					if -len(self) <= index < 0: index += len(self)
+					if not 0 <= index < len(self): raise IndexError("""\
+Index %d is out of bounds for list of length %d.""" % (index, len(self)))
+					if isnan(self._arr[index][0]) and not m.isnan(value):
+						raise ValueError("""\
+Item assignment does not allow changing a NaN to a real number as it changes \
+the dimensionality of the data, resulting in memory errors.""")
+					elif not isnan(self._arr[index][0]) and m.isnan(value):
+						raise ValueError("""\
+Item assignment does not allow changing a real number to a NaN as it changes \
+the dimensionality of the data, resulting in memory errors.""")
+					else:
+						self._arr[index][0] = <double> value
+				else:
+					raise TypeError("""\
+Item assignment requires a real number. Got: %s""" % (type(value)))
+			else:
+				raise IndexError("List index should be an int, not float.")
+		else:
+			raise IndexError("List index should be an int. Got: %s" % (
+				type(index)))
 
 
 def copy_array_like_object(obj):

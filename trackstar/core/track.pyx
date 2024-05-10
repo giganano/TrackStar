@@ -10,7 +10,7 @@ import numbers
 import warnings
 import math as m
 from .utils import copy_array_like_object, copy_cstring
-from .utils cimport copy_pystring, strindex
+from .utils cimport copy_pystring, strindex, linked_list
 from . cimport track
 from . cimport multithread
 from .multithread cimport multithreading_enabled
@@ -135,32 +135,8 @@ elements as the track predictions.""" % (len(weights), len(copy[keys[0]])))
 		for key in keys:
 			rep += "       %s " % (key)
 			for j in range(15 - len(key)): rep += '-'
-			rep += "> %s\n" % (self._repr_format_array_(self[key]))
+			rep += "> %s\n" % (linked_list._repr_format_array_(self[key]))
 		rep += "])"
-		return rep
-
-
-	@staticmethod
-	def _repr_format_array_(arr):
-		def format_number(num):
-			# ensures all numbers, including nans, become strings with the
-			# same length.
-			s = "%.4e" % (num)
-			if m.isnan(num): s += "       "
-			return s
-		if len(arr) > 10:
-			rep = "[%s, %s, %s, ..., %s, %s, %s]" % (
-				format_number(arr[0]),
-				format_number(arr[1]),
-				format_number(arr[2]),
-				format_number(arr[-3]),
-				format_number(arr[-2]),
-				format_number(arr[-1]))
-		else:
-			rep = "[%s" % (format_number(arr[0]))
-			for i in range(1, len(arr)):
-				rep += ", %s" % (format_number(arr[i]))
-			rep += "]"
 		return rep
 
 

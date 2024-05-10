@@ -10,4 +10,8 @@ cdef extern from "./src/utils.h":
 		unsigned short strlistlength)
 	unsigned short MAX_LABEL_SIZE
 
+cdef class linked_list:
+	cdef double **_arr
+	cdef unsigned long _length
+
 cdef char *copy_pystring(pystr) except *
