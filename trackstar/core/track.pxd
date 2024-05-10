@@ -16,6 +16,7 @@ cdef extern from "./src/track.h":
 		char **labels
 		double *weights
 		unsigned short use_line_segment_corrections
+		unsigned short normalize_weights
 
 	TRACK *track_initialize(double **predictions, char **labels,
 		double *weights, unsigned short n_vectors, unsigned short dim)

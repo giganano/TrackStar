@@ -55,6 +55,27 @@ idx : ``signed short``
 extern signed short strindex(char **strlist, char *test,
 	unsigned short strlistlength);
 
+/*
+.. cpp:function:: extern double sum(const double *arr,
+	const unsigned long length);
+
+Compute the sum of an array of real numbers.
+
+Parameters
+----------
+arr : ``double *``
+	The array to be summed.
+lentgth : ``const unsigned long``
+	The number of elements in ``arr``.
+
+Returns
+-------
+s : ``double``
+	``arr[0]`` + ``arr[1]`` + ``arr[2]`` + ... + ``arr[length - 3]`` +
+	``arr[length - 2]`` + `arr[length - 1]``.
+*/
+extern double sum(const double *arr, const unsigned long length);
+
 #ifdef __cplusplus
 }
 #endif /* __cplusplus  */

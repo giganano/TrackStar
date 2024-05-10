@@ -55,6 +55,7 @@ typedef struct track {
 	char **labels;
 	double *weights;
 	unsigned short use_line_segment_corrections;
+	unsigned short normalize_weights;
 
 } TRACK;
 

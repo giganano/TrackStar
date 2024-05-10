@@ -39,3 +39,31 @@ extern signed short strindex(char **strlist, char *test,
 	return -1;
 
 }
+
+
+/*
+.. cpp:function:: extern double sum(const double *arr,
+	const unsigned long length);
+
+Compute the sum of an array of real numbers.
+
+Parameters
+----------
+arr : ``double *``
+	The array to be summed.
+lentgth : ``const unsigned long``
+	The number of elements in ``arr``.
+
+Returns
+-------
+s : ``double``
+	``arr[0]`` + ``arr[1]`` + ``arr[2]`` + ... + ``arr[length - 3]`` +
+	``arr[length - 2]`` + `arr[length - 1]``.
+*/
+extern double sum(const double *arr, const unsigned long length) {
+
+	double s = 0;
+	for (unsigned long i = 0ul; i < length; i++) s += arr[i];
+	return s;
+
+}

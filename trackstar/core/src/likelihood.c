@@ -14,6 +14,7 @@ at: https://github.com/giganano/TrackStar.git.
 #include "matrix.h"
 #include "utils.h"
 #include "debug.h"
+#include "utils.h"
 
 /* ---------- Static function comment headers not duplicated here ---------- */
 static double chi_squared(DATUM d, TRACK t, const unsigned short index);
@@ -56,7 +57,13 @@ References
 */
 extern double loglikelihood_sample(SAMPLE *s, TRACK *t) {
 
-	double logl = 0.0;
+	double logl = 0.0, weight_norm;
+	if ((*t).normalize_weights) {
+		weight_norm = sum((*t).weights, (*t).n_rows);
+		for (unsigned short i = 0u; i < (*t).n_rows; i++) {
+			t -> weights[i] /= weight_norm;
+		}
+	} else {}
 	#if defined(_OPENMP)
 		/*
 		Parallelized likelihood calculation is done separately for each
@@ -81,7 +88,15 @@ extern double loglikelihood_sample(SAMPLE *s, TRACK *t) {
 		}
 		free(by_thread);
 	#endif
-	for (unsigned short i = 0u; i < (*t).n_rows; i++) logl -= (*t).weights[i];
+	if ((*t).normalize_weights) {
+		for (unsigned short i = 0u; i < (*t).n_rows; i++) {
+			t -> weights[i] *= weight_norm;
+		}
+	} else {
+		for (unsigned short i = 0u; i < (*t).n_rows; i++) {
+			logl -= (*t).weights[i];
+		}
+	}
 	return logl;
 
 }

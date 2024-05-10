@@ -7,6 +7,7 @@ at: https://github.com/giganano/TrackStar.git.
 
 #include <stdlib.h>
 #include "quadrature.h"
+#include "utils.h"
 
 /* ---------- static function comment headers not duplicated here ---------- */
 static double simpsons_rule(double (*func)(double *), const double lower,
@@ -17,7 +18,6 @@ static double trapezoid_rule(double (*func)(double *), const double lower,
 	const unsigned short n_extra_args);
 static double *bin_edges(const double start, const double stop, 
 	const unsigned long n_bins);
-static double sum(const double *arr, const unsigned long length);
 static double absval(double x);
 static signed short sign(double x);
 
@@ -217,34 +217,6 @@ static double *bin_edges(const double start, const double stop,
 	double dx = (stop - start) / n_bins;
 	for (unsigned long i = 0ul; i <= n_bins; i++) arr[i] = start + i * dx;
 	return arr;
-
-}
-
-
-/*
-.. cpp:function:: static double sum(const double *arr,
-	const unsigned long length);
-
-Compute the sum of an array of real numbers.
-
-Parameters
-----------
-arr : ``double *``
-	The array to be summed.
-lentgth : ``const unsigned long``
-	The number of elements in ``arr``.
-
-Returns
--------
-s : ``double``
-	``arr[0]`` + ``arr[1]`` + ``arr[2]`` + ... + ``arr[length - 3]`` +
-	``arr[length - 2]`` + `arr[length - 1]``.
-*/
-static double sum(const double *arr, const unsigned long length) {
-
-	double s = 0;
-	for (unsigned long i = 0ul; i < length; i++) s += arr[i];
-	return s;
 
 }
 
