@@ -6,12 +6,14 @@
 # at: https://github.com/giganano/trackstar.git.
 
 __all__ = ["sample"]
+import math as m
 import numbers
 from .utils import copy_array_like_object, copy_cstring
 from .utils cimport copy_pystring, strindex
 from .datum cimport datum
 from . cimport sample
 from .track cimport track
+from libc.stdlib cimport free
 
 cdef class sample:
 
@@ -110,6 +112,118 @@ Sample indexing requires at most two parameters. Got: %d""" % (len(key)))
 			raise IndexError("""\
 Sample index must be either a data vector index (int) or a quantity label \
 (str). Got: %s""" % (type(key)))
+
+
+	def __setitem__(self, index, value):
+		cdef char *copy
+		if isinstance(index, numbers.Number):
+			if index % 1 == 0:
+				index = int(index)
+				if -self.size <= index < 0: index += self.size
+				if not 0 <= index < self.size: raise IndexError("""\
+Index %d out of bounds for sample of size N = %d.""" % (index, self.size))
+				if isinstance(value, datum):
+					if set(value.keys()) == set(self._data[index].keys()):
+						for key in value.keys():
+							self._data[index][key] = value[key]
+					else:
+						raise ValueError("""\
+Sample item assignment by row number requires dictionary or datum keys to \
+match.""")
+				elif isinstance(value, dict):
+					if set(value.keys()) == set(self._data[index].keys()):
+						for key in value.keys():
+							if isinstance(value[key], numbers.Number):
+								self._data[index][key] = value[key]
+							else:
+								raise TypeError("""\
+Sample only supports real numbers. Got: %s""" % (type(value[key])))
+					else:
+						raise ValueError("""\
+Sample item assignment by row number requires dictionary or datum keys to \
+match.""")
+				else:
+					raise TypeError("""\
+Sample item assignment by row number requires a dictionary or datum. \
+Got: %s""" % (type(value)))
+			else:
+				raise TypeError("""\
+Sample item assignment by row number requires an int, not foat.""")
+		elif isinstance(index, str):
+			if index not in self.keys(): raise ValueError("""\
+Column label not recognized: %s""" % (index))
+			try:
+				value = copy_array_like_object(value)
+			except TypeError:
+				raise TypeError("""\
+Sample item assignment by column label requires an array-like object. \
+Got: %s""" % (type(value)))
+			if len(value) != self.size: raise ValueError("""\
+Array length mismatch: %d for sample of size %d.""" % (len(value), self.size))
+			if all([isinstance(_, numbers.Number) for _ in value]):
+				copy = copy_pystring(index)
+				for i in range(self.size):
+					idx = strindex(self._s[0].data[i][0].labels, copy,
+						self._s[0].data[i][0].n_cols)
+					if idx != -1 and not m.isnan(value[i]):
+						self._s[0].data[i][0].vector[0][idx] = value[i]
+					elif idx != -1 and m.isnan(value[i]):
+						raise ValueError("""\
+Datum at index %d stores a quantity labeled %s. Cannot assign item at this \
+index to NaN as it would change dimensionality of the data and result in \
+memory errors.""" % (i, index))
+					elif idx == -1 and m.isnan(value[i]):
+						pass
+					else: # idx == -1 and not m.isnan(value[i])
+						raise ValueError("""\
+Datum at index %d does not have a quantity labeled %s. Item assignment by \
+column label requires a NaN at this position.""" % (i, index))
+				free(copy)
+			else:
+				raise TypeError("""\
+Sample item assignment detected non-numerical value in array-like object.""")
+		elif isinstance(index, tuple):
+			if len(index) == 2:
+				if (isinstance(index[0], str) and
+					isinstance(index[1], numbers.Number)):
+					if index[1] % 1 == 0:
+						row = int(index[1])
+						if -self.size <= row < 0: row += self.size
+						if not 0 <= row < self.size: raise IndexError("""\
+Index %d out of bounds for sample of size N = %d.""" % (row, self.size))
+						if not isinstance(value, numbers.Number):
+							raise TypeError("""\
+Sample item assignment requires a real number. Got: %s""" % (type(value)))
+						if index[0] in self._data[row].keys():
+							if not m.isnan(value):
+								self._data[row][index[0]] = value
+							else:
+								raise ValueError("""\
+Datum at index %d stores a quantity labeled %s. Cannot assign item at this \
+index to NaN as it would change dimensionality of the data and result in \
+memory errors.""" % (row, index[0]))
+						else:
+							if not m.isnan(value): raise KeyError("""\
+Datum at index %d does not store a quantity labeled %s. Only item assignment \
+to NaN is allowed.""" % (row, index[0]))
+					else:
+						raise IndexError("""\
+Sample row number must be an int, not float.""")
+				elif (isinstance(index[1], str) and
+					isinstance(index[0], numbers.Number)):
+					self[index[1], index[0]] = value
+				else:
+					raise IndexError("""\
+Sample item assignment by row number and column label requires an int and a \
+string. Got: %s""" % (type(index[0]), type(index[1])))
+			else:
+				raise IndexError("""\
+Sample item assignment requires at most two parameters. Got: %d""" % (
+					len(index)))
+		else:
+			raise IndexError("""\
+Sample assignment requires a row number (int), column label (str), or some \
+combination of the two. Got: %s""" % (type(index)))
 
 
 	def add_datum(self, datum measurement):
