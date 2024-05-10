@@ -79,6 +79,7 @@ Diagonal elements of covariance matrix must be positive.""")
 		else:
 			raise TypeError("""\
 Item assignment requires a real number. Got: %s""" % (type(value)))
+		matrix_invert(self._m[0], self._cov[0].inv)
 
 
 	@property
@@ -86,7 +87,9 @@ Item assignment requires a real number. Got: %s""" % (type(value)))
 		r"""
 		Type : ``trackstar.matrix``
 
-		The inverse of this covariance matrix, :math:`C^{-1}`.
+		The inverse of this covariance matrix, :math:`C^{-1}`. This object
+		passes a copy of the current inverse covariance matrix, so item
+		assignment does nothing.
 		"""
 		inv = matrix.zeros(self.n_rows, self.n_cols)
 		for i in range(self.n_rows):

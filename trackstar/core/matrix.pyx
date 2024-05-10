@@ -470,7 +470,7 @@ Matrix dimensions must be equal for subtraction. Got: %dx%d and %dx%d.""" % (
 	def __mul__(self, other):
 		if isinstance(other, numbers.Number):
 			return self._mul_prefactor_(other)
-		elif isinstance(other, self.__class__):
+		elif isinstance(other, matrix):
 			return self._mul_matrix_(other)
 		else:
 			raise TypeError("""\
