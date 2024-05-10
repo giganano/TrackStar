@@ -203,11 +203,6 @@ Track indexing accepts 1 or 2 parameters. Got: %d""" % (len(key)))
 			else:
 				copies[i] = &self._t[0].predictions[i][colidx]
 		return linked_list(<uintptr_t> copies, self._t[0].n_rows)
-		# if colidx == -2:
-		# 	return [self._t[0].weights[row] for row in range(self._t[0].n_rows)]
-		# else:
-		# 	return [self._t[0].predictions[row][colidx] for row in range(
-		# 		self._t[0].n_rows)]
 
 
 	def _getitem_number_(self, number):
@@ -224,11 +219,6 @@ Track indexing accepts 1 or 2 parameters. Got: %d""" % (len(key)))
 		keys[self._t[0].n_cols] = copy_pystring("weights")
 		return linked_dict(<uintptr_t> copies, <uintptr_t> keys,
 			self._t[0].n_cols)
-		# arr = [self._t[0].predictions[row][col] for col in range(
-		# 	self._t[0].n_cols)]
-		# result = dict(zip(self.keys(), arr))
-		# result["weights"] = self._t[0].weights[row]
-		# return result
 
 
 	def _getitem_slice_(self, sl):
