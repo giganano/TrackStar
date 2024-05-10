@@ -467,7 +467,36 @@ Matrix dimensions must be equal for subtraction. Got: %dx%d and %dx%d.""" % (
 				self.n_rows, self.n_cols, other.n_rows, other.n_cols))
 
 
-	def __mul__(self, matrix other):
+	def __mul__(self, other):
+		if isinstance(other, numbers.Number):
+			return self._mul_prefactor_(other)
+		elif isinstance(other, self.__class__):
+			return self._mul_matrix_(other)
+		else:
+			raise TypeError("""\
+Matrix multiplication requires either a real number or another matrix of \
+compatible size. Got: %s""" % (type(other)))
+
+
+	def __rmul__(self, other):
+		if isinstance(other, numbers.Number):
+			return self.__mul__(other)
+		else:
+			raise TypeError("""\
+Matrix multiplication requires either a real number or another matrix of \
+compatible size. Got: %s""" % (type(other)))
+
+
+	def _mul_prefactor_(self, other):
+		assert isinstance(other, numbers.Number), "Internal Error."
+		cdef matrix result = matrix.zeros(self.n_rows, self.n_cols)
+		for i in range(self.n_rows):
+			for j in range(self.n_cols):
+				result[i, j] = other * self[i, j]
+		return result
+
+
+	def _mul_matrix_(self, matrix other):
 		cdef matrix result
 		if self.n_cols == other.n_rows:
 			result = matrix.zeros(self.n_rows, other.n_cols)
@@ -477,18 +506,6 @@ Matrix dimensions must be equal for subtraction. Got: %dx%d and %dx%d.""" % (
 			raise ValueError("""\
 Matrix dimensions incompatible for multiplication: %dx%d and %dx%d.""" % (
 				self.n_rows, self.n_cols, other.n_rows, other.n_cols))
-
-
-	def prefactor(self, factor):
-		r"""Multiply the matrix by a numerical prefactor."""
-		if isinstance(factor, numbers.Number):
-			result = matrix.zeros(self.n_rows, self.n_cols)
-			for i in range(self.n_rows):
-				for j in range(self.n_cols):
-					result[i, j] = factor * self[i, j]
-			return result
-		else:
-			raise TypeError("Expected a real number. Got: %s" % (type(factor)))
 
 
 	@property

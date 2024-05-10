@@ -151,7 +151,7 @@ class TestMatrixArithmetic(MatrixBaseFixture):
 
 	@staticmethod
 	def test_multiply(n_rows, n_cols, case):
-		r"""tests trackstar.matrix.__mul__"""
+		r"""tests trackstar.matrix.__mul__ for matrices"""
 		for other_dimension in range(2, 11):
 			try:
 				left = matrix(np.random.random(size = [other_dimension, n_rows]))
@@ -188,12 +188,22 @@ class TestMatrixArithmetic(MatrixBaseFixture):
 
 	@staticmethod
 	def test_prefactor(n_rows, n_cols, case):
-		r"""tests trackstar.matrix.prefactor"""
+		r"""
+		tests trackstar.matrix.__mul__ and trackstar.matrix.__rmul__ for real
+		numbers.
+		"""
 		factor = np.random.random()
 		try:
-			result = case.prefactor(factor)
+			result = case * factor
 		except:
 			assert False
+		for i in range(n_rows):
+			for j in range(n_cols):
+				assert result[i, j] == pytest.approx(factor * case[i, j])
+		try:
+			result = factor * case
+		except:
+			return False
 		for i in range(n_rows):
 			for j in range(n_cols):
 				assert result[i, j] == pytest.approx(factor * case[i, j])
