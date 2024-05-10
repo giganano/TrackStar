@@ -14,4 +14,9 @@ cdef class linked_list:
 	cdef double **_arr
 	cdef unsigned long _length
 
+cdef class linked_dict:
+	cdef double **_arr
+	cdef char **_keys
+	cdef unsigned short _n_elements
+
 cdef char *copy_pystring(pystr) except *

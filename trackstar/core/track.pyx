@@ -10,11 +10,12 @@ import numbers
 import warnings
 import math as m
 from .utils import copy_array_like_object, copy_cstring
-from .utils cimport copy_pystring, strindex, linked_list
+from .utils cimport copy_pystring, strindex, linked_list, linked_dict
 from . cimport track
 from . cimport multithread
 from .multithread cimport multithreading_enabled
 from libc.stdlib cimport malloc, free
+from libc.stdint cimport uintptr_t
 
 cdef class track:
 
@@ -193,22 +194,41 @@ Track indexing accepts 1 or 2 parameters. Got: %d""" % (len(key)))
 
 	def _getitem_str_(self, label):
 		assert isinstance(label, str), "Internal Error."
+		cdef double **copies
 		colidx = self._indexing_handle_str_(label)
-		if colidx == -2:
-			return [self._t[0].weights[row] for row in range(self._t[0].n_rows)]
-		else:
-			return [self._t[0].predictions[row][colidx] for row in range(
-				self._t[0].n_rows)]
+		copies = <double **> malloc (self._t[0].n_rows * sizeof(double *))
+		for i in range(self._t[0].n_rows):
+			if colidx == -2:
+				copies[i] = &self._t[0].weights[i]
+			else:
+				copies[i] = &self._t[0].predictions[i][colidx]
+		return linked_list(<uintptr_t> copies, self._t[0].n_rows)
+		# if colidx == -2:
+		# 	return [self._t[0].weights[row] for row in range(self._t[0].n_rows)]
+		# else:
+		# 	return [self._t[0].predictions[row][colidx] for row in range(
+		# 		self._t[0].n_rows)]
 
 
 	def _getitem_number_(self, number):
 		assert isinstance(number, numbers.Number), "Internal Error."
 		row = self._indexing_handle_number_(number)
-		arr = [self._t[0].predictions[row][col] for col in range(
-			self._t[0].n_cols)]
-		result = dict(zip(self.keys(), arr))
-		result["weights"] = self._t[0].weights[row]
-		return result
+		cdef double **copies = <double **> malloc (
+			(self._t[0].n_cols + 1) * sizeof(double *))
+		cdef char **keys = <char **> malloc(
+			(self._t[0].n_cols + 1) * sizeof(double *))
+		for i in range(self._t[0].n_cols):
+			copies[i] = &self._t[0].predictions[row][i]
+			keys[i] = self._t[0].labels[i]
+		copies[self._t[0].n_cols] = &self._t[0].weights[row]
+		keys[self._t[0].n_cols] = copy_pystring("weights")
+		return linked_dict(<uintptr_t> copies, <uintptr_t> keys,
+			self._t[0].n_cols)
+		# arr = [self._t[0].predictions[row][col] for col in range(
+		# 	self._t[0].n_cols)]
+		# result = dict(zip(self.keys(), arr))
+		# result["weights"] = self._t[0].weights[row]
+		# return result
 
 
 	def _getitem_slice_(self, sl):

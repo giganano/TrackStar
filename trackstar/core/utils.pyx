@@ -31,49 +31,51 @@ cdef class linked_list:
 	.. todo:: documentation on this object.
 	"""
 
-	def __cinit__(self, unsigned long address, unsigned long length):
-		self._arr = <double **> malloc (length * sizeof(double *))
-
 	def __init__(self, unsigned long address, unsigned long length):
-		cdef double **arr = <double **> (<uintptr_t> address)
+		self._arr = <double **> (<uintptr_t> address)
 		self._length = length
-		for i in range(len(self)):
-			if isnan(arr[i][0]):
-				self._arr[i] = <double *> malloc (sizeof(double))
-				self._arr[i][0] = float("nan")
-			else:
-				self._arr[i] = &arr[i][0]
+
 
 	def __dealloc__(self):
 		for i in range(len(self)):
 			if isnan(self._arr[i][0]): free(self._arr[i])
 		free(self._arr)
 
+
 	def __enter__(self):
 		r"""Opens a with statement."""
 		return self
+
 
 	def __exit__(self, exc_type, exc_value, exc_tb):
 		r"""Raises all errors inside of with statements."""
 		return exc_value is None
 
+
 	def __len__(self):
 		return self._length
+
 
 	def __iter__(self):
 		for i in range(len(self)): yield self._arr[i][0]
 
+
 	def __repr__(self):
 		copy = [x for x in self]
-		return "array(%s)" % (self._repr_format_array_(copy))
+		return "linked_array(%s)" % (self._repr_format_array_(copy))
+
 
 	@staticmethod
 	def _repr_format_array_(arr):
 		def format_number(num):
 			# ensures all numbers, including nans, become strings with the
 			# same length.
-			s = "%.4e" % (num)
-			if m.isnan(num): s += "       "
+			if m.isnan(num):
+				s = " nan       "
+			elif num >= 0:
+				s = " %.4e" % (num)
+			else:
+				s = "%.4e" % (num)
 			return s
 		if len(arr) > 10:
 			rep = "[%s, %s, %s, ..., %s, %s, %s]" % (
@@ -90,6 +92,7 @@ cdef class linked_list:
 			rep += "]"
 		return rep
 
+
 	def __getitem__(self, index):
 		if isinstance(index, numbers.Number):
 			if index % 1 == 0:
@@ -103,6 +106,7 @@ Index %d is out of bounds for list of length %d.""" % (index, len(self)))
 		else:
 			raise IndexError("List index should be an int. Got: %s" % (
 				type(index)))
+
 
 	def __setitem__(self, index, value):
 		if isinstance(index, numbers.Number):
@@ -130,6 +134,96 @@ Item assignment requires a real number. Got: %s""" % (type(value)))
 		else:
 			raise IndexError("List index should be an int. Got: %s" % (
 				type(index)))
+
+
+cdef class linked_dict:
+
+	r"""
+	.. todo:: documentation on this object.
+	"""
+
+	def __init__(self, unsigned long data_address, unsigned long keys_address,
+		unsigned short n_elements):
+		self._arr = <double **> (<uintptr_t> data_address)
+		self._keys = <char **> (<uintptr_t> keys_address)
+		self._n_elements = n_elements
+
+
+	def __dealloc__(self):
+		free(self._arr)
+		free(self._keys)
+
+
+	def __enter__(self):
+		r"""Opens a with statement."""
+		return self
+
+
+	def __exit__(self, exc_type, exc_value, exc_tb):
+		r"""Raises all exceptions inside of with statements."""
+		return exc_value is None
+
+
+	def __repr__(self):
+		rep = "linked_dictionary({\n"
+		for i in range(self._n_elements):
+			rep += "  \"%s\": %.4e,\n" % (copy_cstring(self._keys[i]),
+				self._arr[i][0])
+		rep += "})"
+		return rep
+
+
+	def __getitem__(self, key):
+		cdef char *copy
+		if isinstance(key, str):
+			copy = copy_pystring(key)
+			try:
+				idx = strindex(self._keys, copy, self._n_elements)
+			finally:
+				free(copy)
+			if idx != -1:
+				return self._arr[idx][0]
+			else:
+				raise KeyError("Unrecognized quantity label: %s." % (key))
+		else:
+			raise KeyError("Expected a string. Got: %s" % (type(key)))
+
+
+	def __setitem__(self, key, value):
+		cdef char *copy
+		if isinstance(key, str):
+			if isinstance(value, numbers.Number):
+				copy = copy_pystring(key)
+				try:
+					idx = strindex(self._keys, copy, self._n_elements)
+				finally:
+					free(copy)
+				if idx != -1:
+					if isnan(self._arr[idx][0]) and not m.isnan(value):
+						raise ValueError("""\
+Item assignment does not allow changing a NaN to a real number as it changes \
+the dimensionality of the data, resulting in memory errors.""")
+					elif not isnan(self._arr[idx][0]) and m.isnan(value):
+						raise ValueError("""\
+Item assignment does not allow changing a real number to a NaN as it changes \
+the dimensionality of the data, resulting in memory errors.""")
+					else:
+						self._arr[idx][0] = <double> value
+				else:
+					raise KeyError("Unrecognized quantity label: %s" % (key))
+			else:
+				raise TypeError("Expected a real number. Got: %s" % (
+					type(value)))
+		else:
+			raise KeyError("Expected a string. Got: %s" % (type(key)))
+
+
+	def keys(self):
+		_keys = []
+		for i in range(self._n_elements):
+			_keys.append(copy_cstring(self._keys[i]))
+		return _keys
+
 
 
 def copy_array_like_object(obj):
