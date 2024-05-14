@@ -7,6 +7,7 @@ at: https://github.com/giganano/TrackStar.git.
 
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 #include "datum.h"
 #include "matrix.h"
 #include "utils.h"
@@ -57,39 +58,163 @@ extern DATUM *datum_initialize(double *arr, char **labels, unsigned short dim) {
 /*
 .. cpp:function:: extern void datum_free(DATUM *d);
 
-Free up the memory associated with a ``DATUM`` object.
+Free up the memory associated with a ``DATUM`` object that is user-facing.
 
 Parameters
 ----------
 d : ``DATUM *``
 	The datum to be freed.
+
+Notes
+-----
+In practice, this function should only be called upon exiting the python
+interpreter, or when a user calls ``del`` on their ``DATUM`` object.
+
+The important difference between this function and ``datum_free_everything``
+is that this function does not free *every* block of memory stored by a
+``DATUM``. Doing so causes memory errors because Cython automatically calls
+the necessary ``__dealloc__`` functions that do free up the required blocks of
+memory. Namely, this function does not call
+``covariance_matrix_free(d -> cov))`` or ``matrix_free( (MATRIX *) d)``,
+because Cython calls ``matrix.__dealloc__`` with the same address as
+``datum._d``.
 */
 extern void datum_free(DATUM *d) {
 
 	if (d != NULL) {
 
-		/*
-		Do not call covariance_matrix_free( (COVARIANCE_MATRIX *) d -> cov)
-		or matrix_free( (MATRIX *) d) here. With the inheritance structure
-		implemented in Cython wrapping compatible pointer types, the attribute
-		datum._m has the same address as datum._d. Cython will call
-		matrix.__dealloc__ for this object automatically. The same is true for
-		its covariance_matrix attribute (see also comments in
-		covariance_matrix_free function in matrix.c).
-
-		Calling free(d) does not cause an error. That memory block needs to be
-		opened up anyway, but the specific pointers stored within the datum
-		still need to be freed.
-		*/
-
 		if ((*d).labels != NULL) {
-			unsigned short i;
-			for (i = 0u; i < (*d).n_cols; i++) free(d -> labels[i]);
+			for (unsigned short i = 0u; i < (*d).n_cols; i++) {
+				free(d -> labels[i]);
+			}
 			free(d -> labels);
 		} else {}
 		free(d);
 
 	} else {}
+
+}
+
+
+/*
+.. cpp:function:: extern void datum_free_everything(DATUM *d);
+
+Free up the memory associated with a ``DATUM`` object that is *not* user-facing.
+
+Parameters
+----------
+d : ``DATUM *``
+	The datum to be freed.
+
+Notes
+-----
+In practice, this function should only be called for ``DATUM`` objects created
+in TrackStar's C library or cdef'ed instances created in Cython that are not
+returned to the user.
+
+.. seealso::
+
+	See "Notes" under function ``datum_free`` for details on the differences
+	between the two functions.
+*/
+extern void datum_free_everything(DATUM *d) {
+
+	covariance_matrix_free_everything(d -> cov);
+	if (d != NULL) {
+		if ((*d).labels != NULL) {
+			for (unsigned short i = 0u; i < (*d).n_cols; i++) {
+				free(d -> labels[i]);
+			}
+			free(d -> labels);
+		}
+		matrix_free((MATRIX *) d);
+	} else {}
+
+}
+
+
+/*
+.. cpp:function:: extern DATUM *datum_specific_quantities(DATUM d,
+	char **labels, unsigned short n_labels);
+
+Obtain a pointer to a ``DATUM`` object containing the relevant information for
+only *some* of the quantities stored in a given ``DATUM``.
+
+Parameters
+----------
+d : ``DATUM``
+	The input data vector.
+labels : ``char **``
+	The column labels to pull from the datum object.
+n_labels : ``unsigned short``
+	The number of elements in ``labels``.
+
+Returns
+-------
+sub : ``DATUM *``
+	A new ``DATUM`` object, containing only the labels, vector components, and
+	covariance matrix entries associated with particular measurements.
+	``NULL`` if none of the the elements of ``labels`` match the vector
+	components of ``d``.
+*/
+extern DATUM *datum_specific_quantities(DATUM d, char **labels,
+	unsigned short n_labels) {
+
+	/*
+	Start by grabbing the integer indices of each label in the data vector.
+	Copy their label strings while we're at it.
+	*/
+	unsigned short n_indices = 0u, *indices = NULL;
+	char **copies = NULL;
+	for (unsigned short i = 0u; i < n_labels; i++) {
+		signed short idx = strindex(d.labels, labels[i], d.n_cols);
+		if (idx >= 0) {
+			if (indices == NULL) {
+				indices = (unsigned short *) malloc (sizeof(unsigned short));
+				copies = (char **) malloc (sizeof(char *));
+			} else {
+				indices = (unsigned short *) realloc (indices,
+					(n_indices + 1u) * sizeof(unsigned short));
+				copies = (char **) realloc (copies,
+					(n_indices + 1u) * sizeof(char));
+			}
+			indices[n_indices] = (unsigned) idx;
+			copies[n_indices++] = d.labels[idx];
+		} else {
+			/*
+			Doing nothing allows ``sample.loglikelihood`` to work as intended,
+			by working only with the available measurements in the event a
+			given datum doesn't have measurements for every quantity.
+			``datum.likelihood`` raises an error before this function gets to
+			this point on the python side.
+			*/
+		}
+	}
+
+	/*
+	Now just amass all of the information needed for ``datum_intialize``, and
+	once we've got it, copy the covariance matrix over and invert it.
+	*/
+	if (indices == NULL) return NULL; /* see note in else block above */
+	double *arr = (double *) malloc (n_indices * sizeof(double));
+	for (unsigned short i = 0u; i < n_indices; i++) {
+		arr[i] = d.vector[0][indices[i]];
+	}
+	DATUM *sub = datum_initialize(arr, copies, n_indices);
+	sub -> cov = (COVARIANCE_MATRIX *) matrix_initialize(n_indices, n_indices);
+	sub -> cov = (COVARIANCE_MATRIX *) realloc (sub -> cov,
+		sizeof(COVARIANCE_MATRIX));
+	for (unsigned short i = 0u; i < n_indices; i++) {
+		for (unsigned short j = 0u; j < n_indices; j++) {
+			sub -> cov -> matrix[i][j] = (*d.cov).matrix[indices[i]][indices[j]];
+		}
+	}
+	sub -> cov -> inv = matrix_invert( *((MATRIX *) (*sub).cov), NULL );
+	free(arr);
+	free(copies);
+	free(indices);
+
+	return sub;
 
 }
 

@@ -62,14 +62,46 @@ extern SAMPLE *sample_initialize(void);
 /*
 .. cpp:function:: extern void sample_free(SAMPLE *s);
 
-Free up the memory associated with a ``SAMPLE`` object.
+Free up the memory associated with a ``SAMPLE`` object that is user-facing.
 
 Parameters
 ----------
 s : ``SAMPLE *``
 	The sample to be freed.
+
+Notes
+-----
+In practice, this function should only be called upon exiting the python
+interpreter, or when a user calls ``del`` on their ``SAMPLE`` object.
+
+The important difference between this function and ``sample_free_everything``
+is that this function does not free *every* block of memory stored by a
+``SAMPLE`` object. Doing so causes memory errors because Cython automatically
+calls the necessary ``__dealloc__`` functions that do free up the required
+blocks of memory. Namely, this function does not call ``datum_free`` for
+each individual ``DATUM`` stored by ``s``, because Cython calls
+``datum.__dealloc__`` with the same addresses as ``sample.data``.
 */
 extern void sample_free(SAMPLE *s);
+
+/*
+.. cpp:function:: extern void sample_free_everything(SAMPLE *s);
+
+Free up the memory associated with a ``SAMPLE`` object that is *not*
+user-facing.
+
+Notes
+-----
+In practice, this function should only be called for ``SAMPLE``
+objects created in TrackStar's C library or cdef'ed instances created in Cython
+that are not returned to the user.
+
+.. seealso::
+
+	See "Notes" under function ``sample_free`` for details on the differences
+	between these two functions.
+*/
+extern void sample_free_everything(SAMPLE *s);
 
 /*
 .. cpp:function:: extern void sample_add_datum(SAMPLE *s, DATUM *d);
@@ -87,21 +119,29 @@ d : ``DATUM *``
 extern void sample_add_datum(SAMPLE *s, DATUM *d);
 
 /*
-.. cpp:function:: extern unsigned short invert_covariance_matrices(SAMPLE *s);
+.. cpp:function:: extern SAMPLE *sample_specific_quantities(SAMPLE s,
+	char **labels, unsigned short n_labels);
 
-Invert all covariance matrices stored within a ``SAMPLE`` object.
+Obtain a pointer to a ``SAMPLE`` object containing the relevant information
+for only *some* of the quantities stored in a given ``SAMPLE``.
 
 Parameters
 ----------
-s : ``SAMPLE *``
-	The sample, containing some number of data vectors, whose covariance
-	matrices are to be inverted.
+s : ``SAMPLE``
+	The input sample of data vectors.
+labels : ``char **``
+	The column labels to pull from the sample object.
+n_labels : ``unsigned short``
+	The number of elements in ``label``.
 
 Returns
 -------
-0 on success. 1 if one or more covariance matrices is not invertible.
+sub : ``SAMPLE *``
+	A new ``SAMPLE`` object, containing only the labels, vector components, and
+	covariance matrix entries associated with particular measurements.
 */
-extern unsigned short invert_covariance_matrices(SAMPLE *s);
+extern SAMPLE *sample_specific_quantities(SAMPLE s, char **labels,
+	const unsigned short n_labels);
 
 #ifdef __cplusplus
 }

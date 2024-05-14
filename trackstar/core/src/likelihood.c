@@ -17,12 +17,15 @@ at: https://github.com/giganano/TrackStar.git.
 #include "utils.h"
 
 /* ---------- Static function comment headers not duplicated here ---------- */
+static double normalize_weights(TRACK *t);
+static void unnormalize_weights(TRACK *t, const double weight_norm);
 static double chi_squared(DATUM d, TRACK t, const unsigned short index);
 static double delta_model(TRACK t, const unsigned short index);
 static double corrective_factor(DATUM d, TRACK t, const unsigned short index);
 static double corrective_factor_marginalization_integrand(double *args);
 static TRACK *track_subset(DATUM d, TRACK t);
 static MATRIX *trackpoint(TRACK t, const unsigned short index);
+static unsigned short CALLING_FUNCTION = 0u;
 
 
 /*
@@ -56,15 +59,11 @@ References
 ----------
 .. [1] Johnson J.W., et al., 2022, MNRAS, 526, 5084
 */
-extern double loglikelihood_sample(SAMPLE *s, TRACK *t) {
+extern double loglikelihood_sample(SAMPLE s, TRACK *t) {
 
-	double logl = 0.0, weight_norm;
-	if ((*t).normalize_weights) {
-		weight_norm = sum((*t).weights, (*t).n_rows);
-		for (unsigned short i = 0u; i < (*t).n_rows; i++) {
-			t -> weights[i] /= weight_norm;
-		}
-	} else {}
+	CALLING_FUNCTION = 1u;
+	double logl = 0.f, weight_norm = 1.f;
+	if ((*t).normalize_weights) weight_norm = normalize_weights(t);
 	#if defined(_OPENMP)
 		/*
 		Parallelized likelihood calculation is done separately for each
@@ -75,12 +74,12 @@ extern double loglikelihood_sample(SAMPLE *s, TRACK *t) {
 		for (unsigned short i = 0u; i < (*t).n_threads; i++) by_thread[i] = 0;
 		#pragma omp parallel for num_threads((*t).n_threads)
 	#endif
-	for (unsigned short i = 0u; i < (*s).n_vectors; i++) {
+	for (unsigned long i = 0ul; i < s.n_vectors; i++) {
 		#if defined(_OPENMP)
 			by_thread[omp_get_thread_num()] += loglikelihood_datum(
-				s -> data[i], t);
+				*s.data[i], t);
 		#else
-			logl += loglikelihood_datum(s -> data[i], t);
+			logl += loglikelihood_datum(*s.data[i], t);
 		#endif
 	}
 	#if defined(_OPENMP)
@@ -90,14 +89,13 @@ extern double loglikelihood_sample(SAMPLE *s, TRACK *t) {
 		free(by_thread);
 	#endif
 	if ((*t).normalize_weights) {
-		for (unsigned short i = 0u; i < (*t).n_rows; i++) {
-			t -> weights[i] *= weight_norm;
-		}
+		unnormalize_weights(t, weight_norm);
 	} else {
 		for (unsigned short i = 0u; i < (*t).n_rows; i++) {
 			logl -= (*t).weights[i];
 		}
 	}
+	CALLING_FUNCTION = 0u;
 	return logl;
 
 }
@@ -134,9 +132,13 @@ References
 ----------
 .. [1] Johnson J.W., et al., 2022, MNRAS, 526, 5084
 */
-extern double loglikelihood_datum(DATUM *d, TRACK *t) {
+extern double loglikelihood_datum(DATUM d, TRACK *t) {
 
-	TRACK *sub = track_subset(*d, *t);
+	double weight_norm = 1.f;
+	if (CALLING_FUNCTION && (*t).normalize_weights) {
+		weight_norm = normalize_weights(t);
+	} else {}
+	TRACK *sub = track_subset(d, *t);
 	if (sub == NULL) fatal_print("%s\n", "track_subset returned NULL.");
 	double result = 0;
 	#if defined(_OPENMP)
@@ -146,7 +148,7 @@ extern double loglikelihood_datum(DATUM *d, TRACK *t) {
 	#endif
 	for (unsigned short i = 0u; i < (*sub).n_rows; i++) {
 		double s = (*sub).weights[i];
-		s *= exp(-0.5 * chi_squared(*d, *sub, i));
+		s *= exp(-0.5 * chi_squared(d, *sub, i));
 		s *= delta_model(*sub, i);
 		if ((*t).use_line_segment_corrections) {
 			/*
@@ -157,7 +159,7 @@ extern double loglikelihood_datum(DATUM *d, TRACK *t) {
 			eliminates the need to copy information over between the input and
 			subsampled track.
 			*/
-			s *= corrective_factor(*d, *sub, i);
+			s *= corrective_factor(d, *sub, i);
 		} else {}
 		#if defined(_OPENMP)
 			by_thread[omp_get_thread_num()] += s;
@@ -171,8 +173,60 @@ extern double loglikelihood_datum(DATUM *d, TRACK *t) {
 		}
 		free(by_thread);
 	#endif
+	if (CALLING_FUNCTION && (*t).normalize_weights) {
+		unnormalize_weights(t, weight_norm);
+	} else {}
 	track_free(sub);
 	return log(result);
+
+}
+
+
+/*
+.. cpp:function:: static double normalize_weights(TRACK *t);
+
+Normalize the weights stored by a ``TRACK`` object such that they add up to 1.
+
+Parameters
+----------
+t : ``TRACK *``
+	A pointer to the input track itself
+
+Returns
+-------
+weight_norm : ``double``
+	The sum of the weights prior to normalization.
+*/
+static double normalize_weights(TRACK *t) {
+
+	double weight_norm = sum((*t).weights, (*t).n_rows);
+	for (unsigned short i = 0u; i < (*t).n_rows; i++) {
+		t -> weights[i] /= weight_norm;
+	}
+	return weight_norm;
+
+}
+
+
+/*
+.. cpp:function:: static void unnormalize_weights(TRACK *t,
+	const double weight_norm);
+
+Undo the action of ``normalize_weights``, restting the track weights to their
+original values.
+
+Parameters
+----------
+t : ``TRACK *``
+	A pointer to the input track itself.
+weight_norm : ``double``
+	The value returned by ``normalize_weights``.
+*/
+static void unnormalize_weights(TRACK *t, const double weight_norm) {
+
+	for (unsigned short i = 0u; i < (*t).n_rows; i++) {
+		t -> weights[i] *= weight_norm;
+	}
 
 }
 

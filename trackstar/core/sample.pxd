@@ -15,11 +15,14 @@ cdef extern from "./src/sample.h":
 
 	SAMPLE *sample_initialize()
 	void sample_free(SAMPLE *s)
+	void sample_free_everything(SAMPLE *s)
 	void sample_add_datum(SAMPLE *s, DATUM *d)
+	SAMPLE *sample_specific_quantities(SAMPLE s, char **labels,
+		unsigned short n_labels)
 
 
 cdef extern from "./src/likelihood.h":
-	double loglikelihood_sample(SAMPLE *s, TRACK *t)
+	double loglikelihood_sample(SAMPLE s, TRACK *t)
 
 
 cdef class sample:

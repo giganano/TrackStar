@@ -19,11 +19,14 @@ cdef extern from "./src/datum.h":
 
 	DATUM *datum_initialize(double *arr, char **labels, unsigned short dim)
 	void datum_free(DATUM *d)
+	void datum_free_everything(DATUM *d)
 	double datum_get_item(DATUM d, char *label)
+	DATUM *datum_specific_quantities(DATUM d, char **labels,
+		unsigned short n_labels)
 
 
 cdef extern from "./src/likelihood.h":
-	double loglikelihood_datum(DATUM *d, TRACK *t)
+	double loglikelihood_datum(DATUM d, TRACK *t)
 
 
 cdef class datum:

@@ -61,7 +61,7 @@ References
 ----------
 .. [1] Johnson J.W., et al., 2022, MNRAS, 526, 5084
 */
-extern double loglikelihood_sample(SAMPLE *s, TRACK *t);
+extern double loglikelihood_sample(SAMPLE s, TRACK *t);
 
 /*
 .. cpp:function:: extern double loglikelihood_datum_backen(DATUM *d, TRACK *t);
@@ -93,7 +93,7 @@ References
 ----------
 .. [1] Johnson J.W., et al., 2022, MNRAS, 526, 5084
 */
-extern double loglikelihood_datum(DATUM *d, TRACK *t);
+extern double loglikelihood_datum(DATUM d, TRACK *t);
 
 #ifdef __cplusplus
 }

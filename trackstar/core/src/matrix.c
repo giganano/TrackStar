@@ -88,31 +88,64 @@ extern void matrix_free(MATRIX *m) {
 /*
 .. cpp:function:: extern void covariance_matrix_free(COVARIANCE_MATRIX *cov);
 
-Free up the memory associated with a ``COVARIANCE_MATRIX`` object.
+Free up the memory associated with a ``COVARIANCE_MATRIX`` object that is
+user-facing.
 
 Parameters
 ----------
 cov : ``COVARIANCE_MATRIX *``
 	The covariance matrix to be freed.
+
+Notes
+-----
+In practice, this function should only be called upon exiting the python
+interpreter, or when a user calls ``dell`` on their ``COVARIANCE_MATRIX``
+object.
+
+The important difference between this function and
+``covariance_matrix_free_everything`` is that this function does not free
+*every* block of memory stored by a ``COVARIANCE_MATRIX``. Doing so causes
+memory errors because Cython automatically calls the necessary ``__dealloc__``
+functions that do free up the required blocks of memory. Namely, this function
+does not call ``matrix_free((MATRIX *) cov)``, because Cython calls
+``matrix.__dealloc__`` with the same address as ``cov._cov``.
 */
 extern void covariance_matrix_free(COVARIANCE_MATRIX *cov) {
 
 	if (cov != NULL) {
-
-		/*
-		Due to the inheritance structure implemented with compatible pointer
-		types in the backend, calling matrix_free( (MATRIX *) cov) here results
-		in a segmentation fault when quitting the Python interpreter. This
-		arises because the attribute covariance_matrix._m is assigned the same
-		pointer value as covariance_matrix._cov. Since covariance_matrix
-		inherits from matrix, Cython calls covariance_matrix.__dealloc__
-		followed by matrix.__dealloc__ automatically, so the memory blocks
-		associated with the base matrix object will get freed automatically.
-		*/
-
 		if ((*cov).inv != NULL) matrix_free(cov -> inv);
-
 	} else {}
+
+}
+
+
+/*
+.. cpp:function:: extern void covariance_matrix_free_everything(
+	COVARIANCE_MATRIX *cov);
+
+Free up the memory associated with a ``COVARIANCE_MATRIX`` object that is
+*not* user-facing.
+
+Parameters
+----------
+cov : ``COVARIANCE_MATRIX *``
+	The covariance matrix to be freed.
+
+Notes
+-----
+In practice, this function should only be called for ``COVARIANCE_MATRIX``
+objects created in TrackStar's C library or cdef'ed instances created in
+Cython that are not returned to the user.
+
+.. seealso::
+
+	See "Notes" under function ``covariance_matrix_free`` for details on the
+	differences between the two functions.
+*/
+extern void covariance_matrix_free_everything(COVARIANCE_MATRIX *cov) {
+
+	covariance_matrix_free(cov);
+	if (cov != NULL) free(cov);
 
 }
 

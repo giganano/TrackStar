@@ -10,6 +10,8 @@ import math as m
 import numbers
 from .utils import copy_array_like_object, copy_cstring
 from .utils cimport copy_pystring, strindex, linked_list
+from .matrix cimport matrix_free
+from .covariance_matrix cimport covariance_matrix_free
 from .datum cimport datum
 from . cimport sample
 from .track cimport track
@@ -241,7 +243,8 @@ combination of the two. Got: %s""" % (type(index)))
 		self._data.append(measurement)
 
 
-	def loglikelihood(self, track t, normalize_weights = True):
+	def loglikelihood(self, track t, quantities = None,
+		normalize_weights = True):
 		r"""
 		Compute natural logarithm of the likelihood that this sample would be
 		observed by the model predicted track ``t``.
@@ -255,13 +258,46 @@ combination of the two. Got: %s""" % (type(index)))
 
 		.. todo:: Raise a warning when normalize_weights is False
 		"""
+		cdef SAMPLE *sub
+		cdef char **labels
 		if isinstance(normalize_weights, bool):
 			t._t[0].normalize_weights = int(normalize_weights)
-			return loglikelihood_sample(self._s, t._t)
 		else:
 			raise TypeError("""\
 Keyword arg 'normalize_weights' must be of type bool. Got: %s""" % (
 				type(normalize_weights)))
+		self_keys = self.keys()
+		track_keys = t.keys()
+		if quantities is None:
+			for key in self_keys:
+				if key not in track_keys: raise ValueError("""\
+Track does not have predictions for quantity labeled %s.""" % (key))
+			return loglikelihood_sample(self._s[0], t._t)
+		elif isinstance(quantities, list) or isinstance(quantities, tuple):
+			for qty in quantities:
+				if not isinstance(qty, str): raise TypeError("""\
+Elements of keyword arg 'quantities' must all be of type str. Got: %s""" % (
+					type(qty)))
+				if qty not in self_keys: raise ValueError("""\
+Sample does not have measurements for quantity labeled %s.""" % (qty))
+				if qty not in track_keys: raise ValueError("""\
+Track does not have predictions for quantity labeled %s.""" % (qty))
+			labels = <char **> malloc (
+				len(quantities) * sizeof(char *))
+			for i in range(len(quantities)):
+				labels[i] = copy_pystring(quantities[i])
+			sub = sample_specific_quantities(self._s[0], labels,
+				len(quantities))
+			try:
+				return loglikelihood_sample(sub[0], t._t)
+			finally:
+				sample_free_everything(sub)
+				for i in range(len(quantities)): free(labels[i])
+				free(labels)
+		else:
+			raise TypeError("""\
+Keyword arg 'quantities' must be of type list, tuple, or None. Got: %s""" % (
+				type(quantities)))
 
 
 	@property
