@@ -1,16 +1,12 @@
 
-Comprehensive API Reference
-===========================
+API Reference
+=============
 
-Welcome to TrackStar's API reference!
-Here you can find a manual on how to use each of the functions and objects
-provided by TrackStar, including but not limited to their call signatures,
-attributes, keyword arguments, return values, exceptions raised, and example
-codes.
+This reference details the functions, modules, and objects included in
+TrackStar.
 
 .. toctree::
-	:titlesonly:
-	:maxdepth: 2
+	:maxdepth: 1
+	:glob:
 
-	trackstar
-
+	*

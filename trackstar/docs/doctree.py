@@ -50,16 +50,10 @@ class doctree:
 
 
 	def __repr__(self):
-		rep = "%s\n" % (self.header)
+		rep = "\n%s\n" % (self.header)
 		for i in range(len(self.header)): rep += "="
 		rep += "\n"
 		rep += textwrap.dedent(self._obj.__doc__)
-		if len(self.subs):
-			rep += "\n\n"
-			rep += ".. toctree::\n"
-			rep += "\t:titlesonly:\n"
-			rep += "\t:maxdepth: 5\n\n"
-			for _ in self.subs: rep += "\t%s\n" % (_.header) # leave off .rst
 		return rep
 
 
@@ -156,13 +150,3 @@ Attribute `subs` must be of type `list`. Got: %s""" % (type(subs)))
 			f.write(str(self))
 			f.close()
 		for _ in self.subs: _.save(path = path)
-		# with open("%s/toctree.rst" % (path), 'w') as f:
-		# 	f.write(".. toctree::\n")
-		# 	f.write("\t:maxdepth: 1\n")
-		# 	f.write("\t%s\n" % (self.header))
-		# 	def addsubs(tree):
-		# 		for sub in tree.subs:
-		# 			f.write("\t%s\n" % (sub.header))
-		# 			if len(sub.subs): addsubs(sub)
-		# 	addsubs(self)
-		# 	f.close()

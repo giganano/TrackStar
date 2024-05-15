@@ -8,11 +8,10 @@
 Contributors
 ============
 
-James W. Johnson
-----------------
-| **License Owner** (Spring 2023 - Present)
-| Email: giganano9@gmail.com
+| **James W. Johnson**
+| *License Owner* (Spring 2023 - Present)
+| Email: jjohnson10@carnegiescience.edu
 | Website: https://jamesjohnson.space
-| The Ohio State University, Department of Astronomy
+| The Observatories of the Carnegie Institution of Washington
 | 140 W. 18th Ave., Columbus, OH, 43204
 

@@ -24,9 +24,10 @@ help:
 
 .PHONY: api
 api:
-	@ python -m trackstar.docs ./api
+	@ python -m trackstar.docs ./api ./clib
 
 .PHONY: clean
 clean:
 	@ rm -rf _build
 	@ $(MAKE) -C api/ clean
+	@ $(MAKE) -C clib/ clean

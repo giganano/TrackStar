@@ -4,30 +4,10 @@ Copyright (C) 2023 James W. Johnson (giganano9@gmail.com)
 License: MIT License. See LICENSE in top-level directory
 at: https://github.com/giganano/trackstar.git.
 
-Contents
---------
-.. cpp:type:: MATRIX
-	An arbitrary, 2-dimensional matrix of real numbers.
-.. cpp:type:: COVARIANCE_MATRIX
-	An arbitrary covariance matrix, a pointer type compatible with MATRIX.
-.. function: MATRIX *matrix_initialize
-	Allocate memory for and obtain a pointer to a MATRIX object.
-.. cpp:function:: void matrix_free
-	Free up the memory stored by a MATRIX object.
-.. cpp:function:: MATRIX *matrix_add
-	The addition operation for two similarly-sized matrices.
-.. cpp:function:: MATRIX *matrix_subtract
-	The subtraction operation for two similarly-sized matrices.
-.. cpp:function:: MATRIX *matrix_multiply
-	The multiplication operation for two compatibly-sized matrices.
-.. cpp:function:: MATRIX *matrix_invert
-	Compute the inverse of a square matrix.
-.. cpp:function:: MATRIX *matrix_transpose
-	Compute the transpose of any matrix.
-.. cpp:function:: MATRIX *matrix_determinant
-	Compute the determinant of a square matrix.
+This header file includes all of the core matrix algebra types and routines
+that are central to TrackStar's backend.
 
-Source: ``trackstar/core/src/matrix.c``
+**Source File**: ``trackstar/core/src/matrix.c``
 */
 
 #ifndef MATRIX_H
@@ -43,19 +23,32 @@ extern "C" {
 
 typedef struct matrix {
 
-	/* 
-	.. cpp:type:: MATRIX
+	/*
+	.. c:type:: MATRIX
 
-	An arbitrary, 2-dimensional matrix of real numbers.
-	
-	Attributes
-	----------
-	matrix : ``double **``
-		The matrix itself.
-	n_rows : ``unsigned short``
-		The number of rows in the matrix.
-	n_cols : ``unsigned short``
-		The number of columns in the matrix.
+		An arbitrary, 2-dimensional matrix of real numbers.
+
+		.. c:member:: double **matrix
+
+			The matrix itself, stored as a pointer to each row.
+
+		.. c:member:: unsigned short n_rows
+
+			The number of rows in the matrix.
+
+		.. c:member:: unsigned short n_cols
+
+			The number of columns in the matrix.
+
+		To obtain the :math:`i,j`'th element of some matrix :math:`m_{ij}`,
+		it should be indexed first with row number and second with column
+		number according to the rule
+
+		.. code-block:: c
+
+			double item = mat -> matrix[row][column];
+
+		where ``row`` = :math:`i` and ``column`` = :math:`j`.
 	*/
 
 	double **matrix;
@@ -67,21 +60,37 @@ typedef struct matrix {
 typedef struct covariance_matrix {
 
 	/*
-	.. cpp:type:: COVARIANCE_MATRIX
+	.. c:type:: COVARIANCE_MATRIX
 
-	An arbitrary covariance matrix, a pointer type compatible with ``MATRIX``.
-	In practice, ``n_rows`` and ``n_cols`` must be equal, and TrackStar's
-	python API enforces this.
-	
-	matrix : ``double **``
-		The covariance matrix itself.
-	n_rows : ``unsigned short``
-		The number of rows in the matrix.
-	n_cols : ``unsigned short``
-		The number of columns in the matrix. Equal to n_rows for this
-		particular matrix type.
-	inv : ``MATRIX *``
-		The inverse of this particular covariance matrix.
+		An arbitrary covariance matrix describing measurement uncertainties.
+
+		.. c:member:: double **matrix
+
+			The covariance matrix itself, stored as a pointer to each row.
+
+		.. c:member:: unsigned short n_rows
+
+			The number of rows in the covariance matrix.
+
+		.. c:member:: unsigned short n_cols
+
+			The number of columns in the covariance matrix. See note below.
+
+		.. c:member:: MATRIX *inv
+
+			The inverse of a particular covariance matrix.
+
+		In practice, ``n_rows`` and ``n_cols`` must be equal, and TrackStar's
+		python API enforces this requirement. Although these two attributes are
+		redundant, including them both allows :c:type:`COVARIANCE_MATRIX` and
+		:c:type:`MATRIX` to be compatible pointer types, which enables
+		type-casting. Because of this implementation, a
+		:c:type:`COVARIANCE_MATRIX` can be passed to TrackStar's core matrix
+		algebra routines. For example:
+
+		.. code-block::
+
+			double det = matrix_determinant( *((MATRIX *) cov) );
 	*/
 
 	double **matrix;
@@ -92,250 +101,250 @@ typedef struct covariance_matrix {
 } COVARIANCE_MATRIX;
 
 /*
-.. cpp:function:: extern MATRIX *matrix_initialize(unsigned short n_rows,
-	unsigned short n_cols);
+.. c:function:: extern MATRIX *matrix_initialize(unsigned short n_rows, unsigned short n_cols);
 
-Allocate memory for and return a pointer to a MATRIX object.
-Automatically initializes all matrix elements to zero.
+	Allocate memory for an return a pointer to a :c:type:`MATRIX` objbect.
 
-Parameters
-----------
-n_rows : ``unsigned short``
-	The number of rows in the matrix.
-n_cols : ``unsigned short``
-	The number of columns in the matrix.
+	Parameters
+	----------
+	n_rows : ``unsigned short``
+		The desired number of rows in the matrix.
+	n_cols : ``unsigned short``
+		The desired number of columns in the matrix.
 
-Returns
--------
-mat : ``MATRIX *``
-	The newly constructed ``n_rows`` x ``n_cols`` matrix with each element
-	``mat``:math:`_{ij}` initialized to zero.
+	Returns
+	-------
+	m : ``MATRIX *``
+		A pointer to the newly constructed ``n_rows`` x ``n_cols`` matrix, with
+		each element of :c:member:`MATRIX.matrix` set to zero (i.e.
+		:math:`m_{ij} = 0` for all :math:`i,j`) and the values of the
+		attributes :c:member:`MATRIX.n_rows` and :c:member:`MATRIX.n_cols`
+		assigned accordingly.
 */
 extern MATRIX *matrix_initialize(unsigned short n_rows, unsigned short n_cols);
 
+
 /*
-.. cpp:function:: extern void matrix_free(MATRIX *m);
+.. c:function:: extern void matrix_free(MATRIX *m);
 
-Free up the memory associated with a MATRIX object.
+	Free up the memory associated with a :c:type:`MATRIX` object.
 
-Parameters
-----------
-m : ``MATRIX *``
-	The matrix to free itself.
+	Parameters
+	----------
+	m : ``MATRIX *``
+		A pointer to the :c:type:`MATRIX` object whose memory is to be freed.
 */
 extern void matrix_free(MATRIX *m);
 
 /*
-.. cpp:function:: extern void covariance_matrix_free(COVARIANCE_MATRIX *cov);
+.. c:function:: extern void covariance_matrix_free(COVARIANCE_MATRIX *cov);
 
-Free up the memory associated with a ``COVARIANCE_MATRIX`` object that is
-user-facing.
+	Free up the memory associated with a :c:type:`COVARIANCE_MATRIX` object
+	that is user-facing.
 
-Parameters
-----------
-cov : ``COVARIANCE_MATRIX *``
-	The covariance matrix to be freed.
+	Parameters
+	----------
+	cov : ``COVARIANCE_MATRIX *``
+		The covariance matrix to be freed.
 
-Notes
------
-In practice, this function should only be called upon exiting the python
-interpreter, or when a user calls ``dell`` on their ``COVARIANCE_MATRIX``
-object.
+	Notes
+	-----
+	In practice, this function should only be called upon exiting the python
+	interpreter, or when a user calls ``del`` on their
+	:c:type:`COVARIANCE_MATRIX` object.
 
-The important difference between this function and
-``covariance_matrix_free_everything`` is that this function does not free
-*every* block of memory stored by a ``COVARIANCE_MATRIX``. Doing so causes
-memory errors because Cython automatically calls the necessary ``__dealloc__``
-functions that do free up the required blocks of memory. Namely, this function
-does not call ``matrix_free((MATRIX *) cov)``, because Cython calls
-``matrix.__dealloc__`` with the same address as ``cov._cov``.
+	The important difference between this function and
+	:c:func:`covariance_matrix_free_everything` is that this function does
+	not free *every* block of memory stored by a :c:type:`COVARIANCE_MATRIX`.
+	Doing so causes memory errors because Cython automatically calls the
+	necessary ``__dealloc__`` functions that do free up the required blocks of
+	memory. Namely, this function does not call ``matrix_free((MATRIX *) cov)``,
+	because Cython calls ``matrix.__dealloc__`` with the same address as
+	``cov._cov``.
 */
 extern void covariance_matrix_free(COVARIANCE_MATRIX *cov);
 
 /*
-.. cpp:function:: extern void covariance_matrix_free_everything(
-	COVARIANCE_MATRIX *cov);
+.. c:function:: extern void covariance_matrix_free_everything(COVARIANCE_MATRIX *cov);
 
-Free up the memory associated with a ``COVARIANCE_MATRIX`` object that is
-*not* user-facing.
+	Free up the memory associated with a ``COVARIANCE_MATRIX`` object that is
+	*not* user-facing.
 
-Parameters
-----------
-cov : ``COVARIANCE_MATRIX *``
-	The covariance matrix to be freed.
+	Parameters
+	----------
+	cov : ``COVARIANCE_MATRIX *``
+		The covariance matrix to be freed.
 
-Notes
------
-In practice, this function should only be called for ``COVARIANCE_MATRIX``
-objects created in TrackStar's C library or cdef'ed instances created in
-Cython that are not returned to the user.
+	Notes
+	-----
+	In practice, this function should only be called for
+	:c:type:`COVARIANCE_MATRIX` objects created in TrackStar's C library or
+	``cdef``'ed instances created in Cython that are not returned to the user.
 
-.. seealso::
+	.. seealso::
 
-	See "Notes" under function ``covariance_matrix_free`` for details on the
-	differences between the two functions.
+		See "Notes" under :c:func:`covariance_matrix_free` for details on the
+		differences between the two functions.
 */
 extern void covariance_matrix_free_everything(COVARIANCE_MATRIX *cov);
 
 /*
-.. cpp:function:: extern MATRIX *matrix_add(MATRIX m1, MATRIX m2,
-	MATRIX *result);
+.. c:function:: extern MATRIX *matrix_add(MATRIX m1, MATRIX m2, MATRIX *result);
 
-Parameters
-----------
-m1 : ``MATRIX``
-	The first matrix in the addition operation.
-m2 : ``MATRIX``
-	The second matrix in the addition operation.
-result : ``MATRIX *``
-	A pointer to an already-initialized MATRIX to store the resultant matrix in,
-	if applicable. If ``NULL``, memory will be allocated automatically.
+	Parameters
+	----------
+	m1 : ``MATRIX``
+		The first matrix in the addition operation.
+	m2 : ``MATRIX``
+		The second matrix in the addition operation.
+	result : ``MATRIX *``
+		A pointer to an already-initialized :c:type:`MATRIX` to store the
+		resultant matrix in, if applicable. If ``NULL``, memory will be
+		allocated automatically. It a pointer is provided, the same pointer
+		will be returned.
 
-Returns
--------
-result : ``MATRIX *``
-	A MATRIX :math:`M` defined based on ``m1`` and ``m2`` such that
+	Returns
+	-------
+	result : ``MATRIX *``
+		A :c:type:`MATRIX` :math:`M` defined based on ``m1`` and ``m2`` such
+		that
 
-	.. math:: M_{ij} = m1_{ij} + m2_{ij}.
-
-Notes
------
-If a pointer is provided for ``result`` as an argument to this function, the
-return value will be the same memory address.
+		.. math:: M_{ij} = m_{1,ij} + m_{2,ij}.
 */
 extern MATRIX *matrix_add(MATRIX m1, MATRIX m2, MATRIX *result);
 
 /*
-.. cpp:function:: extern MATRIX *matrix_subtract(MATRIX m1, MATRIX m2,
-	MATRIX *result);
+.. c:function:: extern MATRIX *matrix_subtract(MATRIX m1, MATRIX m2, MATRIX *result);
 
-Subtract two matrices.
+	Subtract two matrices.
 
-Parameters
-----------
-m1 : ``MATRIX``
-	The first matrix in the subtraction operation.
-m2 : ``MATRIX``
-	The second matrix in the subtraction operation.
-result : ``MATRIX *``
-	A pointer to an already-initialized ``MATRIX`` object to store the
-	resultant matrix, if applicable. If ``NULL``, memory will be allocated
-	automatically.
+	Parameters
+	----------
+	m1 : ``MATRIX``
+		The first matrix in the subtraction operation.
+	m2 : ``MATRIX``
+		The second matrix in the subtraction operation.
+	result : ``MATRIX *``
+		A pointer to an already-initialized :c:type:`MATRIX` object to store
+		the resultant matrix, if applicable. If ``NULL``, memory will be
+		allocated automatically. If a pointer is provided, the same pointer
+		will be returned.
 
-Returns
--------
-result : ``MATRIX *``
-	The matrix :math:`m` defined by :math:`m_{ij} = m1_{ij} - m2_{ij}`.
+	Returns
+	-------
+	result : ``MATRIX *``
+		A :c:type:`MATRIX` :math:`M` defined based on ``m1`` and ``m2`` such
+		that
 
-.. note::
-
-	If a pointer is provided for ``result`` as an argument to this function,
-	the return value will be the same memory address.
+		.. math:: M_{ij} = m_{1,ij} - m_{2,ij}
 */
 extern MATRIX *matrix_subtract(MATRIX m1, MATRIX m2, MATRIX *result);
 
 /*
-.. cpp:function:: extern MATRIX *matrix_multiply(MATRIX m2, MATRIX m2,
-	MATRIX *result);
+.. c:function:: extern MATRIX *matrix_multiply(MATRIX m1, MATRIX m2, MATRIX *result);
 
-Multiply two matrices.
+	Multiply two matrices.
 
-Parameters
-----------
-m1 : ``MATRIX``
-	The first matrix in the multiplication operation.
-m2 : ``MATRIX``
-	The second matrix in the multiplication operation.
-result : ``MATRIX``
-	A pointer to an already-initialized ``MATRIX`` object to store the
-	resultant matrix, if applicable. if ``NULL``, memory will be allocated
-	automatically.
+	Parameters
+	----------
+	m1 : ``MATRIX``
+		The first matrix in the multiplication operation.
+	m2 : ``MATRIX``
+		The second matrix in the multiplication operation.
+	result : ``MATRIX``
+		A pointer to an already-initialized :c:type:`MATRIX` object to store
+		the resultant matrix, if applicable. if ``NULL``, memory will be
+		allocated automatically. If a pointer is provided, the same pointer
+		will be returned.
 
-Returns
--------
-``result``: ``MATRIX *``
-	The product of the two matrices :math:`c`, defined such that
-	:math:`c_{ij} = \sum_k m1_{ik} * m2_{kj}`.
+	Returns
+	-------
+	``result``: ``MATRIX *``
+		A :c:type:`MATRIX` :math:`M` defined based on ``m1`` and ``m2`` such
+		that
 
-.. note::
-
-	If a pointer is provided for ``result`` as an argument to this function,
-	the return value will be the same memory address.
+		.. math:: M_{ij} = \sum_k m_{1i,k} m_{2k,j}
 */
 extern MATRIX *matrix_multiply(MATRIX m1, MATRIX m2, MATRIX *result);
 
 /*
-.. cpp:function:: extern MATRIX *matrix_invert(MATRIX m, MATRIX *result);
+.. c:function:: extern MATRIX *matrix_invert(MATRIX m, MATRIX *result);
 
-Invert a square matrix.
+	Invert a square matrix.
 
-Parameters
-----------
-m : ``MATRIX``
-	The input matrix.
-result : ``MATRIX *``
-	A pointer to an already-initialized ``MATRIX`` object to store the inverse
-	matrix, if applicable., if ``NULL``, memory will be allocated automatically.
+	Parameters
+	----------
+	m : ``MATRIX``
+		The input matrix.
+	result : ``MATRIX *``
+		A pointer to an already-initialized :c:type:`MATRIX` object to store
+		the inverse matrix, if applicable., if ``NULL``, memory will be
+		allocated automatically. If a pointer is provided, the same pointer
+		will be returned.
 
-Returns
--------
-result : ``MATRIX *``
-	The inverse :math:`m^{-1}` of the input matrix, defined such that
-	:math:`m^{-1}m = mm^{-1} = I`, where :math:`I` is the identity matrix of
-	the same size as :math:`m`. A return value of ``NULL`` is returned when
-	:math:`det(m) = 0`; in these cases, the matrix is not invertible.
+	Returns
+	-------
+	result : ``MATRIX *``
+		The :c:type:`MATRXIX` :math:`m^{-1}`, defined such that
 
-.. note::
+		.. math:: m^{-1}m = mm^{-1} = I
 
-	If a pointer is provided for ``result`` as an argument to this function,
-	the return value will be the same memory address, unless the determinant is
-	zero.
+		where :math:`I` is the identity matrix of the same size as :math:`m`.
+		``NULL`` is returned when :math:`det(m) = 0`, because such matrices
+		are not invertible.
+
+	.. note::
+
+		While some non-square matrices have left- and right-inverses, TrackStar
+		only supports inversion of square matrices.
 */
 extern MATRIX *matrix_invert(MATRIX m, MATRIX *result);
 
 /*
-.. cpp:function:: extern MATRIX *matrix_transpose(MATRIX m, MATRIX *result);
+.. c:function:: extern MATRIX *matrix_transpose(MATRIX m, MATRIX *result);
 
-Transpose a matrix.
+	Transpose a matrix.
 
-Parameters
-----------
-m : ``MATRIX``
-	The input matrix.
-result : ``MATRIX *``
-	A pointer to an already-initialized ``MATRIX`` object to store the
-	transpose, if applicable. if ``NULL``, memory will be allocated
-	automatically.
+	Parameters
+	----------
+	m : ``MATRIX``
+		The input matrix.
+	result : ``MATRIX *``
+		A pointer to an already-initialized :c:type:`MATRIX` object to store
+		the transpose, if applicable. If ``NULL``, memory will be allocated
+		automatically. IF a pointer is provided, the same pointer will be
+		returned.
 
-Returns
--------
-result : ``MATRIX *``
-	The transpose, defined as :math:`m_{ij}^T = m_{ji}`.
+	Returns
+	-------
+	result : ``MATRIX *``
+		The :c:type:`MATRIX` :math:`m^T`, defined such that
 
-.. note::
-
-	If a pointer is provided for ``result`` as an argument to this function,
-	the return value will be the same memory address.
+		.. math:: m^T_{ij} = m_{ji}		
 */
 extern MATRIX *matrix_transpose(MATRIX m, MATRIX *result);
 
 /*
-.. cpp:function:: extern double matrix_determinant(MATRIX m);
+.. c:function:: extern double matrix_determinant(MATRIX m);
 
-Compute the determinant of a square matrix.
+	Compute the determinant of a square matrix.
 
-Parameters
-----------
-m : ``MATRIX``
-	The matrix itself.
+	Parameters
+	----------
+	m : ``MATRIX``
+		The matrix itself.
 
-Returns
--------
-det : ``double``
-	:math:`det(m)`, compute via expansion by minors in the first row of the
-	matrix. The expansion by minors is handled recursively within an iterative
-	sum, with the solution for a 2x2 matrix implemented as the base case.
-	As a failsafe, the obvious solution for a 1x1 matrix is implemented as an
+	Returns
+	-------
+	det : ``double``
+		:math:`det(m)`, computed via expansion by minors in the first row of
+		the matrix. 
+
+	Notes
+	-----
+	The expansion by minors is implemented recursively within an iterative sum,
+	with the solution for a 2x2 matrix implemented as the base case. As a
+	failsafe, the obvious solution for a 1x1 matrix is implemented as an
 	additional base case.
 */
 extern double matrix_determinant(MATRIX m);

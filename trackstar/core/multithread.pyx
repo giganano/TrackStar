@@ -10,9 +10,13 @@ from . cimport multithread
 
 def openmp_linked():
 	r"""
-	Returns ``True`` if the OpenMP library is available, which enables
-	multithreading. ``False`` otherwise.
+	.. function:: openmplinked()
 
-	.. todo:: Link to install documentation.
+		Returns ``True`` if TrackStar's parallel processing features are
+		enabled, and ``False`` otherwise.
+
+		If you would like to make use of these features, follow the
+		instructions for enabling multi-threading under TrackStar's
+		:doc:`install guide <../install>`.
 	"""
 	return bool(multithreading_enabled())
