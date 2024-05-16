@@ -12,6 +12,7 @@ trackstar/core/*.c
 trackstar/core/src/*.o
 docs/src/_build/
 docs/src/api/*.rst
+docs/src/clib/*.h.rst
 build/
 local/
 
