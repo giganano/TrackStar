@@ -6,118 +6,143 @@
 # at: https://github.com/giganano/trackstar.git.
 
 import importlib.metadata
+import warnings
+import re
 __ISRELEASED__ = False
+
+class VersionWarning(UserWarning):
+
+	r"""
+	An warning class intended for drawing the user's attention to their
+	version of TrackStar (i.e. if they are using, e.g., an alpha release or a
+	development version).
+	"""
+
+	pass
+
 
 class version:
 
 	r"""
+	The string containing the current version number can be accessed via
+	``trackstar.__version__`` or ``str(trackstar.version)``.
+
+	Notes
+	-----
 	TrackStar adopts the PEP 440 [1]_ convention for software versioning.
-	Its version number can be accessed via ``trackstar.__version__`` as well as
-	``str(trackstar.version)``.
-
-	Attributes
-	----------
-	major : ``int``
-		The major version number of this release. This number increases by one
-		whenever there are changes to TrackStar's API that break backwards
-		compatibility.
-	minor : ``int``
-		The minor version number of this release. This number increases by one
-		whenever there are new features added to TrackStar.
-	micro : ``int``
-		The micro version number of this release. This number increases by one
-		whenever there is a patch or documentation updates.
-	alpha : ``int``
-		The alpha version number of this release. ``None`` if this is not an
-		alpha release.
-	beta : ``int``
-		The beta version number of this release. ``None`` if this is not a
-		beta release.
-	rc : ``int``
-		The release candidate number of this release. ``None`` if this is not a
-		release candidate.
-	post : ``int``
-		The post number of this release. ``None`` if this is not a post release.
-	dev : ``int``
-		The development number of this release. ``None`` if this is not a
-		development release.
-	isreleased : ``bool``
-		Whether or not this is a released version of TrackStar. If ``False``,
-		users are strongly encouraged to contact one of TrackStar's
-		contributors if they are not a contributor themselves.
-	python_requires : ``str``
-		The string identifier for the minimum version of python required to run
-		this version of TrackStar.
-
-	.. note::
-
-		As stipulated by both standard software versioning conventions and the
-		PEP 440 standards, any given release will have at most one of ``alpha``,
-		``beta``, ``rc``, ``post`` and ``dev`` as anything other than ``None``.
-
-	Functions
-	---------
-	.. function:: trackstar.version.todict()
-
-		Type-cast this version information to a ``dict``.
+	As stipulated by both standard software versioning conventions and the
+	PEP 440 standard, any release may be either an alpha, a beta, or a release
+	candidate, but not multiple at the same time.
 
 	.. [1] https://peps.python.org/pep-0440/
 	"""
 
+	_ERR_MSG_ = "Internal error: invalid version information."
+
 	def __init__(self):
-		_version = importlib.metadata.version(__name__.split('.')[0])
-		_version = _version.split('.')
-		msg = "Invalid version information"
-		assert len(_version) in [3, 4], msg
-		for i in range(2): assert _version[i].isdigit(), msg
-		self._major = int(_version[0])
-		self._minor = int(_version[1])
-		if len(_version) == 3:
-			if "a" in _version[2]:
-				micro, alpha = _version[2].split('a')
-				assert alpha.isdigit(), msg
-				self._alpha = int(alpha)
-			elif "b" in _version[2]:
-				micro, beta = _version[2].split('b')
-				assert beta.isdigit(), msg
-				self._beta = int(beta)
-			elif "rc":
-				micro, rc = _version[2].split("rc")
-				assert rc.isdigit(), msg
-				self._rc = int(rc)
-			else:
-				micro = _version[2]
-			assert micro.isdigit(), msg
-			self._micro = int(micro)
-		else: # must be 4 based on prior assertion
-			assert _version[2].isdigit(), msg
-			self._micro = int(_version[2])
-			if "post" in _version[3]:
-				post = _version[3][4:]
-				assert post.isdigit(), msg
-				self._post = int(post)
-			elif "dev" in _version[3]:
-				dev = _version[3][3:]
-				assert dev.isdigit(), msg
-				self._dev = int(dev)
-			else: pass
-		assert isinstance(__ISRELEASED__, bool), msg
+		assert isinstance(__ISRELEASED__, bool), version._ERR_MSG_
+		breakdown = version._parse_version_number(
+			importlib.metadata.version(__name__.split('.')[0]))
+		self._epoch = breakdown["epoch"]
+		self._major = breakdown["major"]
+		self._minor = breakdown["minor"]
+		self._micro = breakdown["micro"]
+		self._alpha = breakdown["alpha"]
+		self._beta = breakdown["beta"]
+		self._rc = breakdown["rc"]
+		self._post = breakdown["post"]
+		self._dev = breakdown["dev"]
 		self._isreleased = __ISRELEASED__
-		if not hasattr(self, "alpha"): self._alpha = None
-		if not hasattr(self, "beta"): self._beta = None
-		if not hasattr(self, "rc"): self._rc = None
-		if not hasattr(self, "post"): self._post = None
-		if not hasattr(self, "dev"): self._dev = None
-		assert self.__repr__() == '.'.join(_version), """\
-Internal version string does not match package metadata."""
+		if self.alpha is not None: warnings.warn("""\
+Using an alpha version of TrackStar. Be advised that buggy behavior and/or \
+numerical artifacts are possible. If you suspect either, please open an issue \
+at https://github.com/giganano/TrackStar/issues. We strongly encourage \
+consulting with TrackStar developers.""", VersionWarning)
+		if self.beta is not None: warnings.warn("""\
+Using a beta version of TrackStar. Be advised that buggy behavior and/or \
+numerical artifacts are possible. If you suspect either, please open an issue \
+at https://github.com/giganano/TrackStar/issues.""", VersionWarning)
+		if self.rc is not None: warnings.warn("""\
+Using a pre-release of TrackStar. If you suspect buggy behavior and/or \
+numerical artifacts, please open an issue at \
+https://github.com/giganano/TrackStar/issues""", VersionWarning)
+		if self.dev is not None: warnings.warn("""\
+Using a development version of TrackStar. Be advised that the features in \
+development may exhibit buggy behavior and/or numerical artifacts. We \
+encourage consulting with TrackStar developers.""", VersionWarning)
+		if not self.isreleased: warnings.warn("""\
+Using an un-released version of TrackStar.""", VersionWarning)
+
+
+	@staticmethod
+	def _parse_version_number(number):
+		breakdown = {
+			"epoch": None,
+			"major": None,
+			"minor": None,
+			"micro": None,
+			"alpha": None,
+			"beta": None,
+			"rc": None,
+			"post": None,
+			"dev": None
+		}
+		p = re.compile(
+r"^(\d+!)?(\d+){1}(.\d+){1}(.\d+)?(a\d+|b\d+|rc\d+)?(.post\d+)?(.dev\d+)?$")
+		match = p.match(number)
+		assert match is not None, version._ERR_MSG_
+		groups = match.groups()
+		if groups[0] is not None:
+			assert groups[0].endswith("!"), version._ERR_MSG_
+			assert groups[0][:-1].isdigit(), version._ERR_MSG_
+			breakdown["epoch"] = int(groups[0][:-1])
+		else: pass
+		assert groups[1] is not None, version._ERR_MSG_
+		assert groups[1].isdigit(), version._ERR_MSG_
+		breakdown["major"] = int(groups[1])
+		assert groups[2] is not None, version._ERR_MSG_
+		assert groups[2].startswith("."), version._ERR_MSG_
+		assert groups[2][1:].isdigit(), version._ERR_MSG_
+		breakdown["minor"] = int(groups[2][1:])
+		for group in groups[3:]:
+			if group is None:
+				continue
+			elif group.startswith("."):
+				assert (group[1:].isdigit() or group[1:5] == "post" or
+					group[1:4] == "dev"), version._ERR_MSG_
+				if group[1:].isdigit():
+					breakdown["micro"] = int(group[1:])
+				elif group[1:5] == "post":
+					breakdown["post"] = int(group[5:])
+				else:
+					breakdown["dev"] = int(group[4:])
+			elif group.startswith("a"):
+				assert group[1:].isdigit()
+				breakdown["alpha"] = int(group[1:])
+			elif group.startswith("b"):
+				assert group[1:].isdigit()
+				breakdown["beta"] = int(group[1:])
+			elif group.startswith("rc"):
+				assert group[2:].isdigit()
+				breakdown["rc"] = int(group[2:])
+			else:
+				assert False, version._ERR_MSG_
+		return breakdown
 
 
 	def __repr__(self):
 		r"""The X.Y.Z version string."""
-		rep = "%d.%d.%d" % (self.major, self.minor, self.micro)
-		if self.alpha is not None: rep += "a%d" % (self.alpha)
-		if self.beta is not None: rep += "b%d" % (self.beta)
-		if self.rc is not None: rep += "rc%d" % (self.rc)
+		rep = ""
+		if self.epoch is not None: rep += "%d!" % (self.epoch)
+		rep += "%d.%d" % (self.major, self.minor)
+		if self.minor is not None: rep += ".%d" % (self.minor)
+		if self.alpha is not None:
+			rep += "a%d" % (self.alpha)
+		elif self.beta is not None:
+			rep += "b%d" % (self.beta)
+		elif self.rc is not None:
+			rep += "rc%d" % (self.rc)
+		else: pass
 		if self.post is not None: rep += ".post%d" % (self.post)
 		if self.dev is not None: rep += ".dev%d" % (self.dev)
 		return rep
@@ -127,6 +152,7 @@ Internal version string does not match package metadata."""
 		r"""
 		Type-casts to a tuple.
 		"""
+		yield self.epoch
 		yield self.major
 		yield self.minor
 		yield self.micro
@@ -148,6 +174,7 @@ Internal version string does not match package metadata."""
 		Convert this object into a dictionary.
 		"""
 		return {
+			"epoch": 		self.epoch,
 			"major": 		self.major,
 			"minor": 		self.minor,
 			"micro": 		self.micro,
@@ -158,6 +185,18 @@ Internal version string does not match package metadata."""
 			"dev": 			self.dev,
 			"isreleased": 	self.isreleased
 		}
+
+
+	@property
+	def epoch(self):
+		r"""
+		Type : ``int``
+
+		The epoch version number. In general, this property will always be
+		``None`` as the developers do not anticipate a need to modify
+		TrackStar's version number handling in the foreseeable future.
+		"""
+		return self._epoch
 
 
 	@property
