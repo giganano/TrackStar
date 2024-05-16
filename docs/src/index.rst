@@ -12,11 +12,9 @@ TrackStar
 
 TrackStar is a highly optimized, user-friendly library designed to compute
 Bayesian likelihood estimates for models that predict curves in any
-N-dimensional space.
+N-dimensional space when the data have uncertainties in all directions.
 Such models arise, e.g., within astrophysics, in the context of stellar streams,
 stellar isochrones, and galactic chemical evolution.
-If your model predicts a curve of some shape and your data have measurement
-uncertainties in all directions, then TrackStar is the ideal tool for your task!
 
 Useful Links
 ============
@@ -36,6 +34,7 @@ Useful Links
 	:hidden:
 
 	install
+	tutorials/index
 
 .. toctree::
 	:maxdepth: 2

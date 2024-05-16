@@ -5,15 +5,16 @@
 # License: MIT License. See LICENSE in top-level directory
 # at: https://github.com/giganano/trackstar.git.
 
+import trackstar
 import textwrap
 import glob
 import os
 
 class clib:
 
-	def __init__(self, pkg):
-		# headers = glob.glob("%s/core/src/*.h" % (pkg.__path__[0]))
-		headers = ["%s/core/src/matrix.h" % (pkg.__path__[0])]
+	def __init__(self):
+		# headers = glob.glob("%s/core/src/*.h" % (trackstar.__path__[0]))
+		headers = ["%s/core/src/matrix.h" % (trackstar.__path__[0])]
 		self._headers = [header_file(_) for _ in headers]
 
 

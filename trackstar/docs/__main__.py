@@ -23,18 +23,18 @@ try:
 except ModuleNotFoundError:
 	raise RuntimeError("""\
 TrackStar must be installed before its documentation can be compiled.""")
-from .doctree import doctree
+from .apiref import apiref
 from .clib import clib
 import sys
 import os
 
 def generate_api_ref(path = os.getcwd()):
-	r"""See ``doctree.save`` in doctree.py."""
-	doctree(trackstar).save(path = path)
+	r"""See ``apiref.save`` in apiref.py."""
+	apiref().save(path = path)
 
 def generate_clib_ref(path = os.getcwd()):
 	r"""See ``clib.save`` in clib.py."""
-	clib(trackstar).save(path = path)
+	clib().save(path = path)
 
 if __name__ == "__main__":
 	if len(sys.argv) > 2:

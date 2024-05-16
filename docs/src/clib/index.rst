@@ -9,7 +9,7 @@ C Library
 TrackStar's C library resides in a source directory at ``trackstar/core/src``,
 with the Cython wrapper files in ``trackstar/core`` providing the python
 bindings for the types and functions implemented there.
-Its documentation is provided here broken down by header file.
+Its documentation is provided here, broken down by header file.
 
 **For Developers**: In general, TrackStar's C library does not raise any python
 exceptions.

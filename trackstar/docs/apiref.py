@@ -6,147 +6,199 @@
 # at: https://github.com/giganano/trackstar.git.
 
 from .config import _CONFIG_
+from inspect import signature
 import textwrap
 import os
 
-class doctree:
+class apiref:
 
-	r"""
-	*TrackStar Developer's Documentation*
+	def __init__(self):
+		self._docpages = []
+		for item in _CONFIG_.keys():
+			self._docpages.append(docpage(item,
+				name = _CONFIG_[item]["name"],
+				title = _CONFIG_[item]["title"],
+				designation = _CONFIG_[item]["designation"],
+				subs = _CONFIG_[item]["subs"]))
 
-	A tree structure whose nodes are modules within a python namespace and
-	whose branches are other nodes or functions/classes within that namespace.
-	Requires the _CONFIG_ dictionary in config.py to produce the TrackStar
-	API reference.
+	@property
+	def docpages(self):
+		r"""
+		Type : ``list``
 
-	**Signature**: trackstar.docs.doctree(obj)
+		Each of the individual ``docpage`` objects, initialized based on the
+		input in ``config.py``.
+		"""
+		return self._docpages
 
-	Parameters
-	----------
-	obj : ``object``
-		The object to start the doctree at. In practice, this will be
-		TrackStar's root __init__ file.
+	def save(self, path = os.getcwd()):
+		r"""
+		Save the API ref as a series of .rst files.
+		"""
+		for page in self.docpages: page.save(path = path)
 
-	Attributes
-	----------
-	header : ``str``
-		The string that will be displayed at the top of this objects' page of
-		the documentation.
-	subs : ``list``
-		A list of the objects that are to be treated as branches off of this
-		object in the API namespace.
 
-	Functions
-	---------
-	save : ``instancemethod``
-		Recursively save the docstring for ``obj``, all of its ``subs``, and
-		all of their ``subs`` in reStructured Text files.
-	"""
+class docpage:
 
-	def __init__(self, obj):
+	def __init__(self, obj, name = None, designation = None, title = None,
+		subs = []):
 		self.obj = obj
-		self.header = _CONFIG_[self._obj]["header"]
-		self.subs = _CONFIG_[self._obj]["subs"]
-
+		self.name = name
+		self.designation = designation
+		self.title = title
+		self.subs = subs
 
 	def __repr__(self):
-		rep = "\n%s\n" % (self.header)
-		for i in range(len(self.header)): rep += "="
-		rep += "\n"
-		rep += textwrap.dedent(self._obj.__doc__)
+		rep = "\n"
+		if self.title is not None:
+			rep += "%s\n" % (self.title)
+			for i in range(len(self.title)): rep += "="
+			rep += "\n\n"
+		else: pass
+		try:
+			sig = signature(self.obj)
+		except (ValueError, TypeError):
+			sig = None
+		if self.designation is not None:
+			rep += ".. py:%s:: %s" % (self.designation, self.name)
+		else: pass
+		if sig is not None:
+			rep += "("
+			params = list(sig.parameters.keys())
+			if len(params) and params[0] == "self":
+				start = 1
+			else:
+				start = 0
+			for i in range(start, len(params)):
+				if i == start:
+					rep += "%s" % (params[i])
+				else:
+					rep += ", %s" % (params[i])
+			rep += ")\n\n"
+		elif hasattr(self.obj, "__signature__"):
+			rep += "%s\n\n" % (self.obj.__signature__)
+		else:
+			rep += "\n\n"
+		rep += self.obj.__doc__
+		rep += "\n\n"
 		return rep
-
 
 	@property
 	def obj(self):
 		r"""
-		Type : ``object`` (i.e., any type)
+		Type : ``object`` (i.e. any type)
 
 		The object to generate the reStructuredText file for given its
 		docstring.
 		"""
 		return self._obj
 
-
 	@obj.setter
 	def obj(self, value):
 		if hasattr(value, "__doc__"):
 			self._obj = value
 		else:
-			raise ValueError("Must have attribute '__doc__'.")
-
+			raise ValueError("Must have attribute __doc__")
 
 	@property
-	def header(self):
+	def name(self):
 		r"""
 		Type : ``str``
 
-		The string that will appear as the title of this object's page of the
-		documentation.
+		The name of the object to be displayed at the top of the RST file.
 		"""
-		return self._header
+		return self._name
 
-
-	@header.setter
-	def header(self, value):
+	@name.setter
+	def name(self, value):
 		if isinstance(value, str):
-			self._header = value
+			self._name = value
+		elif value is None:
+			self._name = ""
 		else:
-			raise TypeError("Header must be of type `str`. Got: %s" % (
+			raise TypeError("Expected a string or None. Got: %s" % (
 				type(value)))
 
+	@property
+	def designation(self):
+		r"""
+		Type : ``str``
+
+		The type of object (e.g., "function", "class", "attribute").
+		"""
+		return self._designation
+
+	@designation.setter
+	def designation(self, value):
+		if isinstance(value, str):
+			self._designation = value
+		elif value is None:
+			self._designation = None
+		else:
+			raise TypeError("Expected a string or None. Got: %s" % (
+				type(value)))
+
+	@property
+	def title(self):
+		r"""
+		Type : ``str``
+
+		The string to use the title of the documentation page.
+		"""
+		return self._title
+
+	@title.setter
+	def title(self, value):
+		if isinstance(value, str):
+			self._title = value
+		elif value is None:
+			self._title = None
+		else:
+			raise TypeError("Expected a string or None. Got: %s" % (
+				type(value)))
 
 	@property
 	def subs(self):
 		r"""
 		Type : ``list``
 
-		The ``doctree`` objects to be listed as "under" this one in toctrees
-		and the like. These are the "branches" of the tree.
+		A list of objects whose documentation is to be compiled onto the same
+		page as this object.
 		"""
 		return self._subs
-
 
 	@subs.setter
 	def subs(self, value):
 		if isinstance(value, list):
-			self._subs = len(value) * [0.]
-			for i in range(len(self._subs)):
-				if isinstance(value[i], self.__class__):
-					self._subs[i] = value[i]
-				elif value[i] in _CONFIG_.keys():
-					self._subs[i] = self.__class__(value[i])
+			self._subs = []
+			for i in range(len(value)):
+				if value[i] in _CONFIG_.keys():
+					self._subs.append(docpage(value[i],
+						name = _CONFIG_[value[i]]["name"],
+						title = _CONFIG_[value[i]]["title"],
+						designation = _CONFIG_[value[i]]["designation"],
+						subs = _CONFIG_[value[i]]["subs"]))
 				else:
-					raise ValueError("Invalid sub: %s" % (str(value[i])))
+					raise ValueError("Object not in config file: %s" % (
+						value[i]))
 		else:
-			raise TypeError("""\
-Attribute `subs` must be of type `list`. Got: %s""" % (type(subs)))
-
+			raise TypeError("Expected a list. Got: %s" % (type(value)))
 
 	def save(self, path = os.getcwd()):
-		r"""
-		Produce the output files for the base element of this doctree and
-		recursively produce all output files along all branches thereafter.
+		if not self.is_sub():
+			with open("%s/%s.rst" % (path, self.name), 'w') as f:
+				f.write(str(self))
+				for sub in self.subs:
+					f.write(str(sub))
+				f.close()
+		else:
+			pass
 
-		**Signature**: x.save()
+	def is_sub(self):
+		sub = False
+		for key in _CONFIG_.keys():
+			sub |= self.obj in _CONFIG_[key]["subs"]
+			if sub: break
+		return sub
 
-		Parameters
-		----------
-		x : ``doctree``
-			An instance of this class.
-		path : ``str`` [default : ``os.getcwd()``]
-			The relative or absolute path to the location to store the output
-			files. Defaults to the current working directory.
 
-		Notes
-		-----
-		In practice, this function only ever gets called in the following
-		manner:
-
-		>>> import trackstar
-		>>> doctree(trackstar).save()
-		"""
-		with open("%s/%s.rst" % (path, self.header), 'w') as f:
-			f.write(str(self))
-			f.close()
-		for _ in self.subs: _.save(path = path)

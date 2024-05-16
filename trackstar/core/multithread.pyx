@@ -10,13 +10,11 @@ from . cimport multithread
 
 def openmp_linked():
 	r"""
-	.. function:: openmplinked()
+	Returns ``True`` if TrackStar's parallel processing features are
+	enabled, and ``False`` otherwise.
 
-		Returns ``True`` if TrackStar's parallel processing features are
-		enabled, and ``False`` otherwise.
-
-		If you would like to make use of these features, follow the
-		instructions for enabling multi-threading under TrackStar's
-		:doc:`install guide <../install>`.
+	If you would like to make use of these features, follow the
+	instructions for enabling multi-threading under TrackStar's
+	:doc:`install guide <../install>`.
 	"""
 	return bool(multithreading_enabled())

@@ -18,30 +18,38 @@ Trackstar is with ``pip``:
 
 __ multithread_
 
-TrackStar can also be installed manually by pulling the latest version from
-GitHub:
+While the PyPI_ distribution is the latest stable release, those interested in
+modifying TrackStar's source code or implementing an extension of its
+existing features should pull the latest version from GitHub:
 
 .. code-block:: bash
 
 	$ git clone https://github.com/giganano/TrackStar
 	$ cd TrackStar
-	$ python -m pip install .
 
-While the PyPI_ distribution is the latest stable release, installing from
-source is necessary if you are interested in modifying TrackStar's source code
-or implementing an extension of its existing features.
-In this case, we recommend installing in editable mode and checking the
-optional developer's dependencies in your call to ``pip``:
+In this case, we recommend installing in editable mode and including the
+optional developer's and documentation dependencies in your call to ``pip``:
 
 .. code-block:: bash
 
-	$ python -m pip install -e ".[dev]" -v
+	$ python -m pip install -e ".[dev,docs]" -v
 
 .. _PyPI: https://pypi.org/project/trackstar
 
 The additional ``-v`` flag runs the installation verbosely, printing the
 compiler commands and warnings to the console, which can be useful information
 for developers.
+After installing from source, we recommend compiling the documentation
+locally by running
+
+.. code-block:: bash
+
+	$ make docs
+
+from the top-level directory.
+Once complete, the front-page can be found at
+``./docs/src/_build/html/index.html``, which can be opened in your default web
+browser by running ``make -C docs/ open``.
 
 
 Requirements
@@ -124,9 +132,8 @@ top-level directory of TrackStar's source tree:
 
 After you have made your desired modifications, simply follow the same set of
 instructions described above to `install from source`__.
-We strongly recommend `running TrackStar's unit tests`__ after installing the
-software to ensure its reliability if any version requirements have been
-relaxed.
+**After installing with relaxed requirements, we strongly recommend**
+`running TrackStar's unit tests`__ **to ensure its reliability.**
 
 __ install_
 __ testing_
