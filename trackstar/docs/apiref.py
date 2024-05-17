@@ -15,11 +15,16 @@ class apiref:
 	def __init__(self):
 		self._docpages = []
 		for item in _CONFIG_.keys():
-			self._docpages.append(docpage(item,
-				name = _CONFIG_[item]["name"],
-				title = _CONFIG_[item]["title"],
-				designation = _CONFIG_[item]["designation"],
-				subs = _CONFIG_[item]["subs"]))
+			kwargs = {}
+			if "name" in _CONFIG_[item].keys():
+				kwargs["name"] = _CONFIG_[item]["name"]
+			if "title" in _CONFIG_[item].keys():
+				kwargs["title"] = _CONFIG_[item]["title"]
+			if "designation" in _CONFIG_[item].keys():
+				kwargs["designation"] = _CONFIG_[item]["designation"]
+			if "subs" in _CONFIG_[item].keys():
+				kwargs["subs"] = _CONFIG_[item]["subs"]
+			self._docpages.append(docpage(item, **kwargs))
 
 	@property
 	def docpages(self):
@@ -60,6 +65,8 @@ class docpage:
 		except (ValueError, TypeError):
 			sig = None
 		if self.designation is not None:
+			for i in range(self.get_doc_indentation_level() - 1): rep += "\t"
+			# if self.is_sub(): rep += "\t"
 			rep += ".. py:%s:: %s" % (self.designation, self.name)
 		else: pass
 		if sig is not None:
@@ -114,7 +121,7 @@ class docpage:
 		if isinstance(value, str):
 			self._name = value
 		elif value is None:
-			self._name = ""
+			self._name = self.obj.__name__
 		else:
 			raise TypeError("Expected a string or None. Got: %s" % (
 				type(value)))
@@ -173,11 +180,16 @@ class docpage:
 			self._subs = []
 			for i in range(len(value)):
 				if value[i] in _CONFIG_.keys():
-					self._subs.append(docpage(value[i],
-						name = _CONFIG_[value[i]]["name"],
-						title = _CONFIG_[value[i]]["title"],
-						designation = _CONFIG_[value[i]]["designation"],
-						subs = _CONFIG_[value[i]]["subs"]))
+					kwargs = {}
+					if "name" in _CONFIG_[value[i]].keys():
+						kwargs["name"] = _CONFIG_[value[i]]["name"]
+					if "title" in _CONFIG_[value[i]].keys():
+						kwargs["title"] = _CONFIG_[value[i]]["title"]
+					if "designation" in _CONFIG_[value[i]].keys():
+						kwargs["designation"] = _CONFIG_[value[i]]["designation"]
+					if "subs" in _CONFIG_[value[i]].keys():
+						kwargs["subs"] = _CONFIG_[value[i]]["subs"]
+					self._subs.append(docpage(value[i], **kwargs))
 				else:
 					raise ValueError("Object not in config file: %s" % (
 						value[i]))
@@ -201,4 +213,20 @@ class docpage:
 			if sub: break
 		return sub
 
+
+	def get_doc_indentation_level(self):
+		n_tabs = []
+		lines = self.obj.__doc__.split("\n")
+		for line in lines:
+			if line.startswith("\t"):
+				i = 0
+				broke = False
+				while line[i] == "\t":
+					i += 1
+					if i == len(line):
+						broke = True
+						break
+				if not broke: n_tabs.append(i)
+			else: continue
+		return min(n_tabs)
 

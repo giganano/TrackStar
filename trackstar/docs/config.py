@@ -28,67 +28,67 @@ _CONFIG_ = {
 		]
 	},
 	trackstar.version.__class__.epoch: {
-		"name": "trackstar.version.epoch",
+		"name": "epoch",
 		"designation": "attribute",
 		"title": None,
 		"subs": []
 	},
 	trackstar.version.__class__.major: {
-		"name": "trackstar.version.major",
+		"name": "major",
 		"designation": "attribute",
 		"title": None,
 		"subs": []
 	},
 	trackstar.version.__class__.minor: {
-		"name": "trackstar.version.minor",
+		"name": "minor",
 		"designation": "attribute",
 		"title": None,
 		"subs": []
 	},
 	trackstar.version.__class__.micro: {
-		"name": "trackstar.version.micro",
+		"name": "micro",
 		"designation": "attribute",
 		"title": None,
 		"subs": []
 	},
 	trackstar.version.__class__.alpha: {
-		"name": "trackstar.version.alpha",
+		"name": "alpha",
 		"designation": "attribute",
 		"title": None,
 		"subs": []
 	},
 	trackstar.version.__class__.beta: {
-		"name": "trackstar.version.beta",
+		"name": "beta",
 		"designation": "attribute",
 		"title": None,
 		"subs": []
 	},
 	trackstar.version.__class__.rc: {
-		"name": "trackstar.version.rc",
+		"name": "rc",
 		"designation": "attribute",
 		"title": None,
 		"subs": []
 	},
 	trackstar.version.__class__.post: {
-		"name": "trackstar.version.post",
+		"name": "post",
 		"designation": "attribute",
 		"title": None,
 		"subs": []
 	},
 	trackstar.version.__class__.dev: {
-		"name": "trackstar.version.dev",
+		"name": "dev",
 		"designation": "attribute",
 		"title": None,
 		"subs": []
 	},
 	trackstar.version.__class__.isreleased: {
-		"name": "trackstar.version.isreleased",
+		"name": "isreleased",
 		"designation": "attribute",
 		"title": None,
 		"subs": []
 	},
 	trackstar.version.__class__.todict: {
-		"name": "trackstar.version.todict",
+		"name": "todict",
 		"designation": "method",
 		"title": None,
 		"subs": []
@@ -149,43 +149,36 @@ _CONFIG_ = {
 		]
 	},
 	trackstar.matrix.n_rows: {
-		"name": "trackstar.matrix.n_rows",
 		"designation": "attribute",
 		"title": None,
 		"subs": []
 	},
 	trackstar.matrix.n_cols: {
-		"name": "trackstar.matrix.n_cols",
 		"designation": "attribute",
 		"title": None,
 		"subs": []
 	},
 	trackstar.matrix.identity: {
-		"name": "trackstar.matrix.identity",
 		"designation": "classmethod",
 		"title": None,
 		"subs": []
 	},
 	trackstar.matrix.zeros: {
-		"name": "trackstar.matrix.zeros",
 		"designation": "classmethod",
 		"title": None,
 		"subs": []
 	},
 	trackstar.matrix.determinant: {
-		"name": "trackstar.matrix.determinant",
 		"designation": "method",
 		"title": None,
 		"subs": []
 	},
 	trackstar.matrix.invert: {
-		"name": "trackstar.matrix.invert",
 		"designation": "method",
 		"title": None,
 		"subs": []
 	},
 	trackstar.matrix.transpose: {
-		"name": "trackstar.matrix.transpose",
 		"designation": "method",
 		"title": None,
 		"subs": []
