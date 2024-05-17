@@ -5,42 +5,64 @@
 # License: MIT License. See LICENSE in top-level directory
 # at: https://github.com/giganano/trackstar.git.
 
+from .exceptions import VersionWarning, VersionError
 import importlib.metadata
 import warnings
 import re
 __ISRELEASED__ = False
 
-class VersionWarning(UserWarning):
-
-	r"""
-	An warning class intended for drawing the user's attention to their
-	version of TrackStar (i.e. if they are using, e.g., an alpha release or a
-	development version).
-	"""
-
-	pass
-
 
 class version:
 
 	r"""
-	The string containing the current version number can be accessed via
-	``trackstar.__version__`` or ``str(trackstar.version)``.
+	The version number in string format can be accessed via
 
-	Notes
-	-----
-	TrackStar adopts the PEP 440 [1]_ convention for software versioning.
-	As stipulated by both standard software versioning conventions and the
-	PEP 440 standard, any release may be either an alpha, a beta, or a release
-	candidate, but not multiple at the same time.
+	>>> trackstar.__version__
+	>>> str(trackstar.version)
 
-	.. [1] https://peps.python.org/pep-0440/
+	Components of the version number can be accessed as attributes. For
+	example:
+
+	>>> major = trackstar.version.major
+	>>> minor = trackstar.version.minor
+
+	The version number can also be type-cast to a tuple and iterated over
+	according to
+
+	>>> version_info = tuple(trackstar.version)
+	>>> for item in trackstar.version: print(item)
+
+	It can also be indexed as a list, which accesses the same ``tuple``:
+
+	>>> major = trackstar.version[0]
+	>>> minor = trackstar.version[1]
+
+	To get the information in dictionary format:
+
+	>>> trackstar.version.todict()
+
+	.. note::
+
+		TrackStar adopts the PEP 440 [1]_ convention for software versioning.
+		As stipulated by both standard software versioning conventions and the
+		PEP 440 standard, any release may be either an alpha, a beta, or a
+		release candidate, but not more than one.
+
+		.. [1] https://peps.python.org/pep-0440/
+
+	.. seealso::
+
+		Special :doc:`exception <trackstar.exceptions>` classes
+		``VersionWarning`` and ``VersionError``.
 	"""
 
-	_ERR_MSG_ = "Internal error: invalid version information."
+	_ERR_MSG_ = """\
+Internal error: invalid version information. Please open an issue at \
+https://github.com/giganano/TrackStar/issues."""
 
 	def __init__(self):
-		assert isinstance(__ISRELEASED__, bool), version._ERR_MSG_
+		if not isinstance(__ISRELEASED__, bool): raise VersionError(
+			version._ERR_MSG_)
 		breakdown = version._parse_version_number(
 			importlib.metadata.version(__name__.split('.')[0]))
 		self._epoch = breakdown["epoch"]
@@ -90,26 +112,26 @@ Using an un-released version of TrackStar.""", VersionWarning)
 		p = re.compile(
 r"^(\d+!)?(\d+){1}(.\d+){1}(.\d+)?(a\d+|b\d+|rc\d+)?(.post\d+)?(.dev\d+)?$")
 		match = p.match(number)
-		assert match is not None, version._ERR_MSG_
+		if match is None: raise VersionError(version._ERR_MSG_)
 		groups = match.groups()
 		if groups[0] is not None:
-			assert groups[0].endswith("!"), version._ERR_MSG_
-			assert groups[0][:-1].isdigit(), version._ERR_MSG_
+			if not groups[0].endswith("!"): raise VersionError(version._ERR_MSG_)
+			if not groups[0][:-1].isdigit(): raise VersionError(version._ERR_MSG_)
 			breakdown["epoch"] = int(groups[0][:-1])
 		else: pass
-		assert groups[1] is not None, version._ERR_MSG_
-		assert groups[1].isdigit(), version._ERR_MSG_
+		if groups[1] is None: raise VersionError(version._ERR_MSG_)
+		if not groups[1].isdigit(): raise VersionError(version._ERR_MSG_)
 		breakdown["major"] = int(groups[1])
-		assert groups[2] is not None, version._ERR_MSG_
-		assert groups[2].startswith("."), version._ERR_MSG_
-		assert groups[2][1:].isdigit(), version._ERR_MSG_
+		if groups[2] is None: raise VersionError(version._ERR_MSG_)
+		if not groups[2].startswith("."): raise VersionError(version._ERR_MSG_)
+		if not groups[2][1:].isdigit(): raise VersionError(version._ERR_MSG_)
 		breakdown["minor"] = int(groups[2][1:])
 		for group in groups[3:]:
 			if group is None:
 				continue
 			elif group.startswith("."):
-				assert (group[1:].isdigit() or group[1:5] == "post" or
-					group[1:4] == "dev"), version._ERR_MSG_
+				if not (group[1:].isdigit() or group[1:5] == "post" or
+					group[1:4] == "dev"): raise VersionError(version._ERR_MSG_)
 				if group[1:].isdigit():
 					breakdown["micro"] = int(group[1:])
 				elif group[1:5] == "post":
@@ -117,16 +139,16 @@ r"^(\d+!)?(\d+){1}(.\d+){1}(.\d+)?(a\d+|b\d+|rc\d+)?(.post\d+)?(.dev\d+)?$")
 				else:
 					breakdown["dev"] = int(group[4:])
 			elif group.startswith("a"):
-				assert group[1:].isdigit()
+				if not group[1:].isdigit(): raise VersionError(version._ERR_MSG_)
 				breakdown["alpha"] = int(group[1:])
 			elif group.startswith("b"):
-				assert group[1:].isdigit()
+				if not group[1:].isdigit(): raise VersionError(version._ERR_MSG_)
 				breakdown["beta"] = int(group[1:])
 			elif group.startswith("rc"):
-				assert group[2:].isdigit()
+				if not group[2:].isdigit(): raise VersionError(version._ERR_MSG_)
 				breakdown["rc"] = int(group[2:])
 			else:
-				assert False, version._ERR_MSG_
+				raise VersionError(version._ERR_MSG_)
 		return breakdown
 
 
@@ -152,7 +174,7 @@ r"^(\d+!)?(\d+){1}(.\d+){1}(.\d+)?(a\d+|b\d+|rc\d+)?(.post\d+)?(.dev\d+)?$")
 		r"""
 		Type-casts to a tuple.
 		"""
-		yield self.epoch
+		if self.epoch is not None: yield self.epoch
 		yield self.major
 		yield self.minor
 		yield self.micro
@@ -169,32 +191,14 @@ r"^(\d+!)?(\d+){1}(.\d+){1}(.\d+)?(a\d+|b\d+|rc\d+)?(.post\d+)?(.dev\d+)?$")
 		return tuple(self).__getitem__(key)
 
 
-	def todict(self):
-		r"""
-		Convert this object into a dictionary.
-		"""
-		return {
-			"epoch": 		self.epoch,
-			"major": 		self.major,
-			"minor": 		self.minor,
-			"micro": 		self.micro,
-			"alpha": 		self.alpha,
-			"beta": 		self.beta,
-			"rc": 			self.rc,
-			"post": 		self.post,
-			"dev": 			self.dev,
-			"isreleased": 	self.isreleased
-		}
-
-
 	@property
 	def epoch(self):
 		r"""
-		Type : ``int``
+		Type : ``int`` or ``None``
 
 		The epoch version number. In general, this property will always be
-		``None`` as the developers do not anticipate a need to modify
-		TrackStar's version number handling in the foreseeable future.
+		``None`` as the TrackStar developers do not anticipate a need to modify
+		its version number handling in the foreseeable future.
 		"""
 		return self._epoch
 
@@ -220,9 +224,10 @@ r"^(\d+!)?(\d+){1}(.\d+){1}(.\d+)?(a\d+|b\d+|rc\d+)?(.post\d+)?(.dev\d+)?$")
 	@property
 	def micro(self):
 		r"""
-		Type : ``int``
+		Type : ``int`` or ``None``
 
-		The micro version number.
+		The micro version number. Also commonly known as a patch number.
+		``None`` or ``0`` if this release is not a patch.
 		"""
 		return self._micro
 
@@ -231,7 +236,8 @@ r"^(\d+!)?(\d+){1}(.\d+){1}(.\d+)?(a\d+|b\d+|rc\d+)?(.post\d+)?(.dev\d+)?$")
 		r"""
 		Type : ``int`` or ``None``
 
-		The alpha release version number.
+		The alpha release version number. ``None`` if this is not an alpha
+		release.
 		"""
 		return self._alpha
 
@@ -240,7 +246,8 @@ r"^(\d+!)?(\d+){1}(.\d+){1}(.\d+)?(a\d+|b\d+|rc\d+)?(.post\d+)?(.dev\d+)?$")
 		r"""
 		Type : ``int`` or ``None``
 
-		The beta release version number.
+		The beta release version number. ``None`` if this is not a beta
+		release.
 		"""
 		return self._beta
 
@@ -249,27 +256,30 @@ r"^(\d+!)?(\d+){1}(.\d+){1}(.\d+)?(a\d+|b\d+|rc\d+)?(.post\d+)?(.dev\d+)?$")
 		r"""
 		Type : ``int`` or ``None``
 
-		The release candidate version number.
+		The release candidate version number. ``None`` if this is not a
+		release candidate.
 		"""
 		return self._rc
-
-	@property
-	def dev(self):
-		r"""
-		Type : ``int`` or ``None``
-
-		The development release version number.
-		"""
-		return self._dev
 
 	@property
 	def post(self):
 		r"""
 		Type : ``int`` or ``None``
 
-		The post release version number.
+		The post release version number. ``None`` if this is not a post
+		release.
 		"""
 		return self._post
+
+	@property
+	def dev(self):
+		r"""
+		Type : ``int`` or ``None``
+
+		The development release version number. ``None`` if this is not a
+		development release.
+		"""
+		return self._dev
 
 	@property
 	def isreleased(self):
@@ -279,6 +289,23 @@ r"^(\d+!)?(\d+){1}(.\d+){1}(.\d+)?(a\d+|b\d+|rc\d+)?(.post\d+)?(.dev\d+)?$")
 		Whether or not this version has been tagged and released.
 		"""
 		return self._isreleased
+
+	def todict(self):
+		r"""
+		Convert this object into a dictionary.
+		"""
+		return {
+			"epoch": 		self.epoch,
+			"major": 		self.major,
+			"minor": 		self.minor,
+			"micro": 		self.micro,
+			"alpha": 		self.alpha,
+			"beta": 		self.beta,
+			"rc": 			self.rc,
+			"post": 		self.post,
+			"dev": 			self.dev,
+			"isreleased": 	self.isreleased
+		}
 
 
 version = version()

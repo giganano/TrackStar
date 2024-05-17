@@ -15,3 +15,4 @@ for different scientific applications can be found under
 	trackstar.version
 	trackstar.matrix
 	trackstar.openmp_linked
+	trackstar.exceptions

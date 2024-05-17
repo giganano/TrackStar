@@ -6,12 +6,112 @@
 # at: https://github.com/giganano/trackstar.git.
 
 import trackstar
+import trackstar.exceptions
 
 _CONFIG_ = {
 	trackstar.version: {
 		"name": "trackstar.version",
-		"designation": "module",
+		"designation": "data",
 		"title": "Version Information",
+		"subs": [
+			trackstar.version.__class__.epoch,
+			trackstar.version.__class__.major,
+			trackstar.version.__class__.minor,
+			trackstar.version.__class__.micro,
+			trackstar.version.__class__.alpha,
+			trackstar.version.__class__.beta,
+			trackstar.version.__class__.rc,
+			trackstar.version.__class__.post,
+			trackstar.version.__class__.dev,
+			trackstar.version.__class__.isreleased,
+			trackstar.version.__class__.todict,
+		]
+	},
+	trackstar.version.__class__.epoch: {
+		"name": "trackstar.version.epoch",
+		"designation": "attribute",
+		"title": None,
+		"subs": []
+	},
+	trackstar.version.__class__.major: {
+		"name": "trackstar.version.major",
+		"designation": "attribute",
+		"title": None,
+		"subs": []
+	},
+	trackstar.version.__class__.minor: {
+		"name": "trackstar.version.minor",
+		"designation": "attribute",
+		"title": None,
+		"subs": []
+	},
+	trackstar.version.__class__.micro: {
+		"name": "trackstar.version.micro",
+		"designation": "attribute",
+		"title": None,
+		"subs": []
+	},
+	trackstar.version.__class__.alpha: {
+		"name": "trackstar.version.alpha",
+		"designation": "attribute",
+		"title": None,
+		"subs": []
+	},
+	trackstar.version.__class__.beta: {
+		"name": "trackstar.version.beta",
+		"designation": "attribute",
+		"title": None,
+		"subs": []
+	},
+	trackstar.version.__class__.rc: {
+		"name": "trackstar.version.rc",
+		"designation": "attribute",
+		"title": None,
+		"subs": []
+	},
+	trackstar.version.__class__.post: {
+		"name": "trackstar.version.post",
+		"designation": "attribute",
+		"title": None,
+		"subs": []
+	},
+	trackstar.version.__class__.dev: {
+		"name": "trackstar.version.dev",
+		"designation": "attribute",
+		"title": None,
+		"subs": []
+	},
+	trackstar.version.__class__.isreleased: {
+		"name": "trackstar.version.isreleased",
+		"designation": "attribute",
+		"title": None,
+		"subs": []
+	},
+	trackstar.version.__class__.todict: {
+		"name": "trackstar.version.todict",
+		"designation": "method",
+		"title": None,
+		"subs": []
+	},
+	trackstar.exceptions: {
+		"name": "trackstar.exceptions",
+		"designation": None,
+		"title": "Exceptions",
+		"subs": [
+			trackstar.VersionWarning,
+			trackstar.VersionError
+		]
+	},
+	trackstar.VersionWarning: {
+		"name": "trackstar.VersionWarning",
+		"designation": "exception",
+		"title": None,
+		"subs": []
+	},
+	trackstar.VersionError: {
+		"name": "trackstar.VersionError",
+		"designation": "exception",
+		"title": None,
 		"subs": []
 	},
 	# trackstar.track: {

@@ -14,11 +14,13 @@ for curves when the data have errors in all directions.
 
 __all__ = ["version", "test"]
 __author__ = "James W. Johnson"
-import warnings
 from .version import version
 __version__ = str(version)
 __all__.append("__version__")
 from .core import *
 __all__.extend(core.__all__)
+from .exceptions import *
+__all__.extend(exceptions.__all__)
 from .tests import test
+import warnings # enables warnings to be silenced within TrackStar
 
