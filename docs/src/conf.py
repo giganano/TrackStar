@@ -7,16 +7,12 @@
 #
 # Configuration file for sphinx documentation builder.
 
-import sys
-if sys.version_info[:2] < (3, 7): raise RuntimeError("""\
-Python version >= 3.7.0 required to compile documentation.""")
-
 try:
 	import sphinx
 except (ModuleNotFoundError, ImportError):
-	raise RuntimeError("Sphinx >= 2.0.0 is required to compile documentation.")
-if tuple([int(_) for _ in sphinx.__version__.split('.')[:2]]) < (2, 0):
-	raise RuntimeError("Sphinx >= 2.0.0 is required to compile documentation. \
+	raise RuntimeError("Sphinx >= 6.0.0 is required to compile documentation.")
+if tuple([int(_) for _ in sphinx.__version__.split('.')[:2]]) < (6, 0):
+	raise RuntimeError("Sphinx >= 6.0.0 is required to compile documentation. \
 Current version: %s""" % (sphinx.__version__))
 else: pass
 try:
@@ -33,7 +29,7 @@ release = trackstar.__version__
 
 
 # -- General configuration ---------------------------------------------------
-extensions = ["sphinx.ext.todo", "sphinx.ext.intersphinx"]
+extensions = ["sphinx.ext.todo", "sphinx.ext.intersphinx", "nbsphinx"]
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -46,6 +42,7 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 
 # -- Options for HTML output -------------------------------------------------
 html_theme = "sphinx_rtd_theme"
+html_style = "css/custom.css"
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,

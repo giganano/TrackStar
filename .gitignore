@@ -13,6 +13,7 @@ trackstar/core/src/*.o
 docs/src/_build/
 docs/src/api/*.rst
 docs/src/clib/*.h.rst
+docs/src/tutorials/.ipynb_checkpoints/*
 build/
 local/
 
