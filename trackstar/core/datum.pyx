@@ -93,9 +93,9 @@ Datum must contain only numerical values. Got: %s""" % (type(kwargs[key])))
 			if idx != -1:
 				return self._d[0].vector[0][idx]
 			else:
-				raise ValueError("Unrecognized datum label: %s" % (key))
+				raise KeyError("Unrecognized datum label: %s" % (key))
 		else:
-			raise TypeError("Datum label must be a string. Got: %s" % (
+			raise KeyError("Datum label must be a string. Got: %s" % (
 				type(key)))
 
 
@@ -111,7 +111,7 @@ Datum must contain only numerical values. Got: %s""" % (type(kwargs[key])))
 				if idx != -1:
 					self._d[0].vector[0][idx] = <double> value
 				else:
-					raise ValueError("""\
+					raise KeyError("""\
 Unrecognized datum label: %s. If additional vector components are to be added, \
 a new datum object must be created.""" % (key))
 			else:
