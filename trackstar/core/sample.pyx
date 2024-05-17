@@ -104,8 +104,20 @@ Index %d out of range for sample of size N = %d.""" % (key, self.size))
 					isinstance(key[1], numbers.Number)):
 					# hand it off to datum.__getitem__
 					# error handling in number instance above will take care of
-					# floating point IndexError
-					return self.__getitem__(key[1])[key[0]]
+					# out of range and floating point IndexError
+					try:
+						# return self.__getitem__(key[1])[key[0]]
+						return self[key[1]].__getitem__(key[0],
+							sample_keys = self.keys())
+					except KeyError:
+						# Could be a quantity stored by the sample but not
+						# available for this particular data vector
+						if (key[0] in self.keys() and
+							key[0] not in self._data[key[1]].keys()):
+							return float("nan")
+						else:
+							# something else
+							raise
 				elif (isinstance(key[1], str) and 
 					isinstance(key[0], numbers.Number)):
 					# same as above, just different order
