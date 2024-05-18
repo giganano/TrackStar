@@ -7,7 +7,8 @@
 
 __all__ = ["covariance_matrix"]
 import numbers
-from libc.stdlib cimport realloc
+from .utils cimport copy_pystring, strindex
+from libc.stdlib cimport realloc, free
 from . cimport covariance_matrix
 from .matrix cimport matrix_initialize
 
@@ -44,6 +45,8 @@ cdef class covariance_matrix(matrix):
 		self._cov[0].inv = matrix_initialize(self._cov[0].n_rows,
 			self._cov[0].n_cols)
 
+		self._cov[0].labels = NULL
+
 	def __init__(self, arr):
 		super().__init__(arr)
 		matrix_invert(self._m[0], self._cov[0].inv)
@@ -57,7 +60,17 @@ cdef class covariance_matrix(matrix):
 		return super().__repr__().replace("matrix", "covmat")
 
 
+	def __getitem__(self, keys):
+		if self._cov[0].labels is not NULL:
+			return super().__getitem__(self._indices_from_labels_(keys))
+		else:
+			return super().__getitem__(keys)
+
+
 	def __setitem__(self, indices, value):
+		if self._cov[0].labels is not NULL:
+			indices = self._indices_from_labels_(indices)
+		else: pass
 		self._check_indices(indices)
 		if isinstance(value, numbers.Number):
 			if indices[0] == indices[1]:
@@ -80,6 +93,41 @@ Diagonal elements of covariance matrix must be positive.""")
 			raise TypeError("""\
 Item assignment requires a real number. Got: %s""" % (type(value)))
 		matrix_invert(self._m[0], self._cov[0].inv)
+
+
+	def _indices_from_labels_(self, keys):
+		cdef char *copy
+		if isinstance(keys, tuple):
+			indices = []
+			if len(keys) == 2:
+				for i in range(len(keys)):
+					if isinstance(keys[i], str):
+						copy = copy_pystring(keys[i])
+						try:
+							idx = strindex(self._cov[0].labels, copy,
+								self._cov[0].n_rows)
+						finally:
+							free(copy)
+						if idx == -1: raise KeyError("""\
+Unrecognized datum label: %s""" % (keys[i]))
+						indices.append(idx)
+					elif isinstance(keys[i], numbers.Number):
+						indices.append(keys[i])
+					else:
+						raise KeyError("""\
+Covariance matrix indices must be either a string or an integer. Got: %s""" % (
+							type(keys[i])))
+				return tuple(indices)
+			else:
+				raise KeyError("""\
+One or two labels or indices are required for covariance matrix indexing. \
+Got: %d""" % (len(keys)))
+		elif isinstance(keys, str) or isinstance(keys, numbers.Number):
+			return self._indices_from_labels_((keys, keys))
+		else:
+			raise KeyError("""\
+Covariance matrix indices must be either a string or an integer. Got: %s""" % (
+				type(keys)))
 
 
 	@property

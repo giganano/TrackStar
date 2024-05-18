@@ -80,6 +80,23 @@ typedef struct covariance_matrix {
 
 			The inverse of a particular covariance matrix.
 
+		.. c:member:: char **labels
+
+			An array of string labels describing the measured quantities.
+			These labels are more directly associated with the ``DATUM`` type
+			(see ``trackstar/core/src/datum.h`` header), but by storing the
+			same pointer here, TrackStar's user friendliness is enhanced by
+			letting the covariance matrix also be aware of the labels the user
+			has provided, allowing them to more easily track which rows and
+			columns refer to which quantities.
+
+			.. note::
+
+				Based on this use of the ``labels`` attribute, it should
+				never be assigned, modified, or freed in TrackStar's backend.
+				Assignment to the proper pointer value is handled in
+				``datum.__cinit__``.
+
 		In practice, ``n_rows`` and ``n_cols`` must be equal, and TrackStar's
 		python API enforces this requirement. Although these two attributes are
 		redundant, including them both allows :c:type:`COVARIANCE_MATRIX` and
@@ -97,6 +114,7 @@ typedef struct covariance_matrix {
 	unsigned short n_rows;
 	unsigned short n_cols;
 	MATRIX *inv;
+	char **labels;
 
 } COVARIANCE_MATRIX;
 

@@ -43,6 +43,7 @@ Datum must contain only numerical values. Got: %s""" % (type(kwargs[key])))
 			self._m = <MATRIX *> self._d
 			self._cov = covariance_matrix.identity(len(keys))
 			self._d[0].cov = self._cov._cov
+			self._d[0].cov[0].labels = self._d[0].labels
 		finally:
 			free(vector)
 			for i in range(len(keys)): free(labels[i])
