@@ -6,9 +6,12 @@
 # at: https://github.com/giganano/trackstar.git.
 
 __all__ = ["covariance_matrix"]
+import textwrap
 import numbers
+from .utils import copy_cstring
 from .utils cimport copy_pystring, strindex
 from libc.stdlib cimport realloc, free
+from libc.string cimport strlen
 from . cimport covariance_matrix
 from .matrix cimport matrix_initialize
 
@@ -57,7 +60,19 @@ cdef class covariance_matrix(matrix):
 
 
 	def __repr__(self):
-		return super().__repr__().replace("matrix", "covmat")
+		base = super().__repr__().replace("matrix", "covariance_matrix")
+		if self._cov[0].labels is not NULL:
+			lines = base.split("\n")
+			for i in range(1, len(lines) - 1):
+				row = textwrap.dedent(lines[i])
+				line = "    %s " % (copy_cstring(self._cov[0].labels[i - 1]))
+				for j in range(15 - strlen(self._cov[0].labels[i - 1])):
+					line += "-"
+				line += "> %s" % (row)
+				lines[i] = line
+			return "\n".join(lines)
+		else:
+			return base
 
 
 	def __getitem__(self, keys):
@@ -144,3 +159,16 @@ Covariance matrix indices must be either a string or an integer. Got: %s""" % (
 			for j in range(self.n_cols):
 				inv[i, j] = self._cov[0].inv.matrix[i][j]
 		return inv
+
+
+	def keys(self):
+		r"""
+		Get the dictionary labels, if applicable.
+		"""
+		if self._cov[0].labels is not NULL:
+			_keys = []
+			for i in range(self.n_cols):
+				_keys.append(copy_cstring(self._cov[0].labels[i]))
+			return _keys
+		else:
+			return None

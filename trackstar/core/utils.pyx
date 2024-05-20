@@ -72,10 +72,10 @@ cdef class linked_list:
 			# same length.
 			if m.isnan(num):
 				s = " nan       "
-			elif num >= 0:
-				s = " %.4e" % (num)
-			else:
+			elif str(num).startswith("-"): # -0.0 fails the num >= 0 condition
 				s = "%.4e" % (num)
+			else:
+				s = " %.4e" % (num)
 			return s
 		if len(arr) > 10:
 			rep = "[%s, %s, %s, ..., %s, %s, %s]" % (

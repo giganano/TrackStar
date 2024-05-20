@@ -7,7 +7,7 @@
 
 __all__ = ["matrix"]
 import numbers
-from .utils import copy_array_like_object
+from .utils import copy_array_like_object, linked_list
 from . cimport matrix
 
 cdef class matrix:
@@ -350,21 +350,10 @@ Matrix or vector must contain only numerical values.""")
 
 	def __repr__(self):
 		r"""Returns a string representation of the matrix."""
-		rep = "matrix("
+		rep = "matrix(\n"
 		for i in range(self.n_rows):
-			if i:
-				rep += "       ["
-			else:
-				rep += "["
-			for j in range(self.n_cols):
-				# Look for '-' char as opposed to < 0 b/c -0 fails that test
-				if str(self._m[0].matrix[i][j]).startswith("-"):
-					rep += "%.4e" % (self._m[0].matrix[i][j])
-				else:
-					rep += " %.4e" % (self._m[0].matrix[i][j])
-				if j != self.n_cols - 1: rep += "    "
-			rep += " ]"
-			if i != self.n_rows - 1: rep += "\n"
+			row = [self._m[0].matrix[i][j] for j in range(self.n_cols)]
+			rep += "    %s\n" % (linked_list._repr_format_array_(row))
 		rep += ")"
 		return rep
 
