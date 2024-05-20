@@ -46,7 +46,11 @@ classifiers = [
 
 [project.optional-dependencies]
 dev = ["pytest >= 7.0", "numpy >= 1.21.0"]
-docs = ["sphinx >= 6.0", "nbsphinx >= 0.8"] # see also docs/src/conf.py
+docs = [ # see also docs/src/conf.py
+	"sphinx >= 6.0",
+	"sphinx-rtd-theme >= 2.0",
+	"nbsphinx >= 0.8"
+]
 
 [project.urls]
 Repository = "https://github.com/giganano/TrackStar"
