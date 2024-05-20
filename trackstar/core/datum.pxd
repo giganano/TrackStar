@@ -17,7 +17,7 @@ cdef extern from "./src/datum.h":
 		COVARIANCE_MATRIX *cov
 		char **labels
 
-	DATUM *datum_initialize(double *arr, char **labels, unsigned short dim)
+	DATUM *datum_initialize(unsigned short dim)
 	void datum_free(DATUM *d)
 	void datum_free_everything(DATUM *d)
 	double datum_get_item(DATUM d, char *label)

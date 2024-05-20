@@ -18,16 +18,9 @@ at: https://github.com/giganano/TrackStar.git.
 	dim);
 
 Allocate memory for an return a pointer to a ``DATUM`` object.
-Automatically initializes the diagonal elements of the covariance matrix and
-its inverse to 1 while keeping all off-diagonal elements at zero.
 
 Parameters
 ----------
-arr : ``double *``
-	The input array to treat as a data vector.
-labels : ``char **``
-	String labels to attach to each component of the data vector, matched
-	component-wise.
 dim : ``unsigned short``
 	The dimensionality of the data vector (i.e., the number of entries in
 	``arr``).
@@ -37,18 +30,14 @@ Returns
 d : ``DATUM *``
 	The newly constructed data vector object.
 */
-extern DATUM *datum_initialize(double *arr, char **labels, unsigned short dim) {
+extern DATUM *datum_initialize(unsigned short dim) {
 
 	DATUM *d = (DATUM *) matrix_initialize(1u, dim);
 	d = (DATUM *) realloc (d, sizeof(DATUM));
 	d -> labels = (char **) malloc (dim * sizeof(char *));
-
-	unsigned short i;
-	for (i = 0u; i < dim; i++) {
-		d -> vector[0u][i] = arr[i];
+	for (unsigned short i = 0u; i < dim; i++) {
 		d -> labels[i] = (char *) malloc (MAX_LABEL_SIZE * sizeof(char));
 		memset(d -> labels[i], '\0', MAX_LABEL_SIZE);
-		strcpy(d -> labels[i], labels[i]);
 	}
 	return d;
 
@@ -165,21 +154,21 @@ extern DATUM *datum_specific_quantities(DATUM d, char **labels,
 	Copy their label strings while we're at it.
 	*/
 	unsigned short n_indices = 0u, *indices = NULL;
-	char **copies = NULL;
+	char **label_copies = NULL;
 	for (unsigned short i = 0u; i < n_labels; i++) {
 		signed short idx = strindex(d.labels, labels[i], d.n_cols);
 		if (idx >= 0) {
 			if (indices == NULL) {
 				indices = (unsigned short *) malloc (sizeof(unsigned short));
-				copies = (char **) malloc (sizeof(char *));
+				label_copies = (char **) malloc (sizeof(char *));
 			} else {
 				indices = (unsigned short *) realloc (indices,
 					(n_indices + 1u) * sizeof(unsigned short));
-				copies = (char **) realloc (copies,
+				label_copies = (char **) realloc (label_copies,
 					(n_indices + 1u) * sizeof(char));
 			}
 			indices[n_indices] = (unsigned) idx;
-			copies[n_indices++] = d.labels[idx];
+			label_copies[n_indices++] = d.labels[idx];
 		} else {
 			/*
 			Doing nothing allows ``sample.loglikelihood`` to work as intended,
@@ -196,22 +185,20 @@ extern DATUM *datum_specific_quantities(DATUM d, char **labels,
 	once we've got it, copy the covariance matrix over and invert it.
 	*/
 	if (indices == NULL) return NULL; /* see note in else block above */
-	double *arr = (double *) malloc (n_indices * sizeof(double));
+	DATUM *sub = datum_initialize(n_indices);
 	for (unsigned short i = 0u; i < n_indices; i++) {
-		arr[i] = d.vector[0][indices[i]];
+		sub -> vector[0][i] = d.vector[0][indices[i]];
+		strcpy(sub -> labels[i], label_copies[i]);
 	}
-	DATUM *sub = datum_initialize(arr, copies, n_indices);
-	sub -> cov = (COVARIANCE_MATRIX *) matrix_initialize(n_indices, n_indices);
-	sub -> cov = (COVARIANCE_MATRIX *) realloc (sub -> cov,
-		sizeof(COVARIANCE_MATRIX));
+	sub -> cov = covariance_matrix_initialize(n_indices);
+
 	for (unsigned short i = 0u; i < n_indices; i++) {
 		for (unsigned short j = 0u; j < n_indices; j++) {
 			sub -> cov -> matrix[i][j] = (*d.cov).matrix[indices[i]][indices[j]];
 		}
 	}
 	sub -> cov -> inv = matrix_invert( *((MATRIX *) (*sub).cov), NULL );
-	free(arr);
-	free(copies);
+	free(label_copies);
 	free(indices);
 
 	return sub;

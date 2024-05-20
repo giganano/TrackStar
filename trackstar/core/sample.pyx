@@ -33,9 +33,64 @@ cdef class sample:
 	.. todo:: Allow item assignment according to rule sample[row, col]
 	"""
 
-	def __cinit__(self):
+	def __cinit__(self, *args):
+		if len(args) == 1:
+			arg = args[0]
+			if isinstance(arg, dict):
+				keys = list(arg.keys())
+				for key in keys:
+					if isinstance(key, str):
+						try:
+							copy = copy_array_like_object(arg[key])
+						except TypeError:
+							raise TypeError("""\
+Sample initialization from dictionary requires array-like objects. \
+Got: %s""" % (type(arg[key])))
+						if len(copy) != len(arg[keys[0]]):
+							raise ValueError("""\
+Array-length mismatch: sample initialization from dictionary requires \
+array-like objects of equal length. \
+Got: %d, %d""" % (len(copy), len(arg[keys[0]])))
+						else: pass
+					else:
+						raise TypeError("""\
+Sample initialization from dictionary requires keys of type str. \
+Got: %s""" % (type(key)))
+			else:
+				raise TypeError("""\
+Sample initialization requires either no argument (empty sample) or type
+dict. Got: %s""" % (type(arg)))
+		elif len(args) > 1:
+			raise TypeError("""\
+Sample initialization requires either no argument (empty sample) or a \
+single argument of type dict. Got: %d arguments.""" % (len(args)))
+		else: pass
+
 		self._s = sample_initialize()
 		self._data = []
+
+
+	def __init__(self, *args):
+		if len(args) == 1:
+			err_tag = lambda x: x.startswith("err_") or x.endswith("_err")
+			arg = args[0]
+			keys = list(arg.keys())
+			qtys = list(filter(lambda x: not err_tag(x), keys))
+			for i in range(len(arg[qtys[0]])):
+				this_datum = {}
+				for qty in qtys:
+					if not m.isnan(arg[qty][i]):
+						this_datum[qty] = arg[qty][i]
+						if "%s_err" % (qty) in keys:
+							err = arg["%s_err" % (qty)][i]
+						elif "err_%s" % (qty) in keys:
+							err = arg["err_%s" % (qty)][i]
+						else:
+							err = float("nan")
+						if not m.isnan(err): this_datum["%s_err" % (qty)] = err
+					else: pass
+				self.add_datum(datum(this_datum))
+		else: pass
 
 
 	def __dealloc__(self):

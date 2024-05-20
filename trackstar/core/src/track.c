@@ -23,19 +23,6 @@ in some observed space.
 
 Parameters
 ----------
-predictions : ``double **``
-	The raw input table of the model predictions as a two-dimensional array.
-	The first axis indexes individual vectors while the second indexes
-	individual components of single prediction vectors.
-labels : ``char **``
-	String labels associated with the second axis of indexing in
-	``predictions``. In practice, these labels will be used to match the
-	columns of the ``TRACK`` to the components of individual data vectors.
-weights : ``double *``
-	The weights to attach to individual points along the track. In practice,
-	these weights should scale as the product of the intrinsic density of
-	points expected in the model and the selection function of the data, the
-	latter of which may be difficult to quantify.
 n_vectors : ``unsigned short``
 	The number of prediction vectors (i.e., the number of elements along the
 	*first* axis of indexing in ``predictions``).
@@ -48,32 +35,25 @@ Returns
 t : ``TRACK *``
 	The newly constructed ``TRACK`` object.
 */
-extern TRACK *track_initialize(double **predictions, char **labels,
-	double *weights, unsigned short n_vectors, unsigned short dim) {
+extern TRACK *track_initialize(unsigned short n_vectors, unsigned short dim) {
 
 	TRACK *t = (TRACK *) malloc (sizeof(TRACK));
-	t -> predictions = (double **) malloc (n_vectors * sizeof(double *));
-	t -> n_rows = n_vectors;
-	t -> n_cols = dim;
+	t -> n_vectors = n_vectors;
+	t -> dim = dim;
 	t -> n_threads = 1u;
 	t -> normalize_weights = 1u;
+	t -> use_line_segment_corrections = 0u;
+	t -> predictions = (double **) malloc (n_vectors * sizeof(double *));
 	t -> labels = (char **) malloc (dim * sizeof(char *));
 	t -> weights = (double *) malloc (n_vectors * sizeof(double));
 
-	unsigned short i;
-	for (i = 0u; i < (*t).n_rows; i++) {
-		t -> weights[i] = weights[i];
-		t -> predictions[i] = (double *) malloc ((*t).n_cols * sizeof(double));
-		unsigned short j;
-		for (j = 0u; j < (*t).n_cols; j++) {
-			t -> predictions[i][j] = predictions[i][j];
-		}
+	for (unsigned short i = 0u; i < n_vectors; i++) {
+		t -> predictions[i] = (double *) malloc (dim * sizeof(double));
 	}
 
-	for (i = 0u; i < (*t).n_cols; i++) {
+	for (unsigned short i = 0u; i < dim; i++) {
 		t -> labels[i] = (char *) malloc (MAX_LABEL_SIZE * sizeof(char));
 		memset(t -> labels[i], '\0', MAX_LABEL_SIZE);
-		strcpy(t -> labels[i], labels[i]);
 	}
 
 	return t;
@@ -97,7 +77,7 @@ extern void track_free(TRACK *t) {
 
 		if ((*t).labels != NULL) {
 			unsigned short i;
-			for (i = 0u; i < (*t).n_cols; i++) free(t -> labels[i]);
+			for (i = 0u; i < (*t).dim; i++) free(t -> labels[i]);
 			free(t -> labels);
 		} else {}
 		if ((*t).weights != NULL) free(t -> weights);

@@ -155,6 +155,27 @@ extern MATRIX *matrix_initialize(unsigned short n_rows, unsigned short n_cols);
 extern void matrix_free(MATRIX *m);
 
 /*
+.. c:function:: covariance_matrix_initialize(unsigned short size)
+
+	Allocate memory for and return a pointer to a :c:type:`COVARIANCE_MATRIX`
+	object.
+
+	Parameters
+	----------
+	size : ``unsigned short``
+		The desired number of rows and columns in the matrix.
+
+	Returns
+	-------
+	cov : ``COVARIANCE_MATRIX *``
+		A pointer to the newly constructed ``size`` x ``size`` covariance
+		matrix, with each matrix element assigned an initial value of zero.
+		The struct members ``inv`` and ``labels`` are given initial values
+		of ``NULL``.
+ */
+extern COVARIANCE_MATRIX *covariance_matrix_initialize(unsigned short size);
+
+/*
 .. c:function:: extern void covariance_matrix_free(COVARIANCE_MATRIX *cov);
 
 	Free up the memory associated with a :c:type:`COVARIANCE_MATRIX` object

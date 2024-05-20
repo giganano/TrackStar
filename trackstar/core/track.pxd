@@ -10,16 +10,15 @@ from .matrix cimport MATRIX
 cdef extern from "./src/track.h":
 	ctypedef struct TRACK:
 		double **predictions
-		unsigned short n_rows
-		unsigned short n_cols
+		unsigned short n_vectors
+		unsigned short dim
 		unsigned short n_threads
 		char **labels
 		double *weights
 		unsigned short use_line_segment_corrections
 		unsigned short normalize_weights
 
-	TRACK *track_initialize(double **predictions, char **labels,
-		double *weights, unsigned short n_vectors, unsigned short dim)
+	TRACK *track_initialize(unsigned short n_vectors, unsigned short dim)
 	void track_free(TRACK *t)
 
 

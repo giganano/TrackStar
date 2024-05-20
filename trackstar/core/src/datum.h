@@ -62,16 +62,9 @@ typedef struct datum {
 	dim);
 
 Allocate memory for an return a pointer to a ``DATUM`` object.
-Automatically initializes the diagonal elements of the covariance matrix and
-its inverse to 1 while keeping all off-diagonal elements at zero.
 
 Parameters
 ----------
-arr : ``double *``
-	The input array to treat as a data vector.
-labels : ``char **``
-	String labels to attach to each component of the data vector, matched
-	component-wise.
 dim : ``unsigned short``
 	The dimensionality of the data vector (i.e., the number of entries in
 	``arr``).
@@ -81,7 +74,7 @@ Returns
 d : ``DATUM *``
 	The newly constructed data vector object.
 */
-extern DATUM *datum_initialize(double *arr, char **labels, unsigned short dim);
+extern DATUM *datum_initialize(unsigned short dim);
 
 /*
 .. cpp:function:: extern void datum_free(DATUM *d);

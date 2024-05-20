@@ -20,7 +20,7 @@ class DatumTestBase:
 	@staticmethod
 	@pytest.fixture
 	def case():
-		return datum(**_TEST_DATUM_)
+		return datum(_TEST_DATUM_)
 
 
 class TestDatumFundamentals(DatumTestBase):

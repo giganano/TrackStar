@@ -49,8 +49,8 @@ typedef struct track {
 	*/
 
 	double **predictions;
-	unsigned short n_rows;
-	unsigned short n_cols;
+	unsigned short n_vectors;
+	unsigned short dim;
 	unsigned short n_threads;
 	char **labels;
 	double *weights;
@@ -70,19 +70,6 @@ in some observed space.
 
 Parameters
 ----------
-predictions : ``double **``
-	The raw input table of the model predictions as a two-dimensional array.
-	The first axis indexes individual vectors while the second indexes
-	individual components of single prediction vectors.
-labels : ``char **``
-	String labels associated with the second axis of indexing in
-	``predictions``. In practice, these labels will be used to match the
-	columns of the ``TRACK`` to the components of individual data vectors.
-weights : ``double *``
-	The weights to attach to individual points along the track. In practice,
-	these weights should scale as the product of the intrinsic density of
-	points expected in the model and the selection function of the data, the
-	latter of which may be difficult to quantify.
 n_vectors : ``unsigned short``
 	The number of prediction vectors (i.e., the number of elements along the
 	*first* axis of indexing in ``predictions``).
@@ -95,8 +82,7 @@ Returns
 t : ``TRACK *``
 	The newly constructed ``TRACK`` object.
 */
-extern TRACK *track_initialize(double **predictions, char **labels,
-	double *weights, unsigned short n_vectors, unsigned short dim);
+extern TRACK *track_initialize(unsigned short n_vectors, unsigned short dim);
 
 /*
 .. cpp:function:: extern void track_free(TRACK *t);

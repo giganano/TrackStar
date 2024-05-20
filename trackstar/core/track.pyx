@@ -16,6 +16,7 @@ from . cimport multithread
 from .multithread cimport multithreading_enabled
 from libc.stdlib cimport malloc, free
 from libc.stdint cimport uintptr_t
+from libc.string cimport strcpy
 
 cdef class track:
 
@@ -62,51 +63,49 @@ Array-length mismatch. Got: %d, %d. Must be equal to construct a track.""" % (
 			else:
 				copy[key] = item
 
-
 		if "weights" in keys:
-			if weights is None:
-				weights = copy["weights"]
-			else: raise ValueError(
-				"Received multiple inputs for track weights.")
-		else:
-			if weights is None:
-				weights = len(copy[keys[0]]) * [1.]
+			if weights is not None:
+				raise ValueError("Received multiple inputs for track weights.")
 			else:
-				try:
-					weights = copy_array_like_object(weights)
-				except TypeError:
-					raise TypeError("""\
+				keys.remove("weights")
+		elif weights is not None:
+			try:
+				weights = copy_array_like_object(weights)
+			except TypeError:
+				raise TypeError("""\
 Track weights must be an array-like object. Got: %s""" % (type(weights)))
-				if len(weights) != len(copy[keys[0]]):
-					raise ValueError("""\
-Array-length mismath. Got: %d, %d. Weights must have the same number of \
-elements as the track predictions.""" % (len(weights), len(copy[keys[0]])))
-				else: pass
+			if len(weights) != len(copy[keys[0]]):
+				raise ValueError("""\
+Array-length mismatch. Got: %d, %d. Weights must have the same number of \
+elements as track predictions.""" % (len(weights), len(copy[keys[0]])))
+			else: pass
+		else: pass
 
-		cdef double *w = <double *> malloc (len(weights) * sizeof(double))
-		cdef double **data = <double **> malloc (
-			len(copy[keys[0]]) * sizeof(double *))
-		cdef char **labels = <char **> malloc (len(keys) * sizeof(char *))
-		for i in range(len(keys)):
-			labels[i] = copy_pystring(keys[i])
-		for i in range(len(copy[keys[0]])):
-			w[i] = weights[i]
-			data[i] = <double *> malloc (len(keys) * sizeof(double))
-			for j in range(len(keys)):
-				data[i][j] = copy[keys[j]][i]
-		try:
-			self._t = track_initialize(data, labels, w,
-				len(weights), len(keys))
-			self._m = <MATRIX *> self._t
-		finally:
-			free(w)
-			free(data)
-			for i in range(len(keys)): free(labels[i])
-			free(labels)
+		self._t = track_initialize(len(copy[keys[0]]), len(keys))
 
 
 	def __init__(self, predictions, weights = None, n_threads = 1,
 		use_line_segment_corrections = False):
+		cdef char *labelcopy
+		keys = list(predictions.keys())
+		if "weights" in keys:
+			weights = predictions["weights"]
+			keys.remove("weights")
+		elif weights is None:
+			weights = len(predictions[keys[0]]) * [1.]
+		else: pass
+
+		for i in range(self._t[0].n_vectors):
+			for j in range(len(keys)):
+				self._t[0].predictions[i][j] = predictions[keys[j]][i]
+			self._t[0].weights[i] = weights[i]
+		for j in range(len(keys)):
+			labelcopy = copy_pystring(keys[j])
+			try:
+				strcpy(self._t[0].labels[j], labelcopy)
+			finally:
+				free(labelcopy)
+
 		self.n_threads = n_threads
 		self.use_line_segment_corrections = use_line_segment_corrections
 
@@ -196,29 +195,29 @@ Track indexing accepts 1 or 2 parameters. Got: %d""" % (len(key)))
 		assert isinstance(label, str), "Internal Error."
 		cdef double **copies
 		colidx = self._indexing_handle_str_(label)
-		copies = <double **> malloc (self._t[0].n_rows * sizeof(double *))
-		for i in range(self._t[0].n_rows):
+		copies = <double **> malloc (self._t[0].n_vectors * sizeof(double *))
+		for i in range(self._t[0].n_vectors):
 			if colidx == -2:
 				copies[i] = &self._t[0].weights[i]
 			else:
 				copies[i] = &self._t[0].predictions[i][colidx]
-		return linked_list(<uintptr_t> copies, self._t[0].n_rows)
+		return linked_list(<uintptr_t> copies, self._t[0].n_vectors)
 
 
 	def _getitem_number_(self, number):
 		assert isinstance(number, numbers.Number), "Internal Error."
 		row = self._indexing_handle_number_(number)
 		cdef double **copies = <double **> malloc (
-			(self._t[0].n_cols + 1) * sizeof(double *))
+			(self._t[0].dim + 1) * sizeof(double *))
 		cdef char **keys = <char **> malloc(
-			(self._t[0].n_cols + 1) * sizeof(double *))
-		for i in range(self._t[0].n_cols):
+			(self._t[0].dim + 1) * sizeof(double *))
+		for i in range(self._t[0].dim):
 			copies[i] = &self._t[0].predictions[row][i]
 			keys[i] = self._t[0].labels[i]
-		copies[self._t[0].n_cols] = &self._t[0].weights[row]
-		keys[self._t[0].n_cols] = copy_pystring("weights")
+		copies[self._t[0].dim] = &self._t[0].weights[row]
+		keys[self._t[0].dim] = copy_pystring("weights")
 		return linked_dict(<uintptr_t> copies, <uintptr_t> keys,
-			self._t[0].n_cols)
+			self._t[0].dim)
 
 
 	def _getitem_slice_(self, sl):
@@ -257,15 +256,15 @@ combination of the two. Got: %s""" % (type(key)))
 			raise TypeError("""\
 Item assignment via column label requires an array-like object. Got: %s""" % (
 				type(value)))
-		if len(value) == self._t[0].n_rows:
+		if len(value) == self._t[0].n_vectors:
 			if all([isinstance(_, numbers.Number) for _ in value]):
 				labelcopy = copy_pystring(label)
 				try:
 					colidx = strindex(self._t[0].labels, labelcopy,
-						self._t[0].n_cols)
+						self._t[0].dim)
 				finally:
 					free(labelcopy)
-				for i in range(self._t[0].n_rows):
+				for i in range(self._t[0].n_vectors):
 					if colidx == -2:
 						self._t[0].weights[i] = value[i]
 					else:
@@ -276,7 +275,7 @@ Non-numerical value detected. Track only supports storing numerical data.""")
 		else:
 			raise ValueError("""\
 Array-length mismath. Got: %d for track sampled at %d points.""" % (
-				len(value), self._t[0].n_rows))
+				len(value), self._t[0].n_vectors))
 
 
 	def _setitem_number_(self, row, value):
@@ -293,7 +292,7 @@ Array-length mismath. Got: %d for track sampled at %d points.""" % (
 						labelcopy = copy_pystring(key)
 						try:
 							colidx = strindex(self._t[0].labels, labelcopy,
-								self._t[0].n_cols)
+								self._t[0].dim)
 						finally:
 							free(labelcopy)
 						if colidx >= 0:
@@ -349,7 +348,7 @@ Got: %d""" % (len(key)))
 			labelcopy = copy_pystring(label)
 			try:
 				colidx = strindex(self._t[0].labels, labelcopy,
-					self._t[0].n_cols)
+					self._t[0].dim)
 			finally:
 				free(labelcopy)
 			if colidx != -1:
@@ -362,10 +361,10 @@ Got: %d""" % (len(key)))
 		assert isinstance(number, numbers.Number), "Internal Error."
 		if number % 1 == 0:
 			row = int(number)
-			if -self._t[0].n_rows <= row < 0: row += self._t[0].n_rows
-			if not 0 <= row < self._t[0].n_rows: raise IndexError("""\
+			if -self._t[0].n_vectors <= row < 0: row += self._t[0].n_vectors
+			if not 0 <= row < self._t[0].n_vectors: raise IndexError("""\
 Index %d out of range for track sampled at %d points.""" % (
-				row, self._t[0].n_rows))
+				row, self._t[0].n_vectors))
 			return row
 		else:
 			raise IndexError("""\
@@ -397,7 +396,7 @@ Track stopping index must be an integer, not float.""")
 				raise IndexError("""\
 Track starting index must be an integer. Got: %s""" % (type(sl.stop)))
 		else:
-			stop = self._t[0].n_rows
+			stop = self._t[0].n_vectors
 		if sl.step is not None:
 			if isinstance(sl.step, numbers.Number):
 				if sl.step % 1 == 0:
@@ -414,24 +413,24 @@ Track step-size must be an integer. Got: %s""" % (type(sl.step)))
 
 
 	@property
-	def n_rows(self):
+	def n_vectors(self):
 		r"""
 		Type : ``int`` [positive definite]
 
 		The number of points that the track is sampled along.
 		"""
-		return self._t[0].n_rows
+		return self._t[0].n_vectors
 
 
 	@property
-	def n_cols(self):
+	def dim(self):
 		r"""
 		Type : ``int`` [positive definite]
 
 		The dimensionality of the track (i.e. the number of quantities
 		predicted at each position).
 		"""
-		return self._t[0].n_cols
+		return self._t[0].dim
 
 
 	@property
@@ -507,6 +506,6 @@ Attribute 'use_line_segment_corrections' must be of type bool. Got: %s""" % (
 		along the track (i.e. the "names" of the axes).
 		"""
 		_keys = []
-		for i in range(self._t[0].n_cols): _keys.append(
+		for i in range(self._t[0].dim): _keys.append(
 			copy_cstring(self._t[0].labels[i]))
 		return _keys

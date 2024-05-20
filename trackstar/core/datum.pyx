@@ -5,12 +5,12 @@
 # License: MIT License. See LICENSE in top-level directory
 # at: https://github.com/giganano/trackstar.git.
 
-all = ["datum"]
+__all__ = ["datum"]
 import numbers
 from .utils import copy_array_like_object, copy_cstring
 from .utils cimport copy_pystring, strindex
 from libc.stdlib cimport malloc, free
-from libc.string cimport strlen
+from libc.string cimport strlen, strcpy
 from .track cimport track
 
 
@@ -27,31 +27,59 @@ cdef class datum:
 	.. todo:: round out the documentation on this object.
 	"""
 
-	def __cinit__(self, **kwargs):
-		keys = list(kwargs.keys())
-		for key in keys:
-			if not isinstance(kwargs[key], numbers.Number): raise TypeError("""\
-Datum must contain only numerical values. Got: %s""" % (type(kwargs[key])))
+	def __cinit__(self, vector):
+		if not isinstance(vector, dict):
+			raise TypeError("""\
+Datum initialization requires type dict. Got: %s""" % (type(vector)))
+		elif not all([isinstance(_, str) for _ in vector.keys()]):
+			raise TypeError("""\
+Datum initialization requires all dictionary keys to be of type str.""")
+		elif not all([isinstance(
+			vector[_], numbers.Number) for _ in vector.keys()]):
+			raise TypeError("""\
+Datum initialization requires a dictionary that stores only real numbers.""")
+		else: pass
 
-		cdef double *vector = <double *> malloc (len(keys) * sizeof(double))
-		cdef char **labels = <char **> malloc (len(keys) * sizeof(char *))
-		for i in range(len(keys)):
-			vector[i] = <double> kwargs[keys[i]]
-			labels[i] = copy_pystring(keys[i])
-		try:
-			self._d = datum_initialize(vector, labels, len(keys))
-			self._m = <MATRIX *> self._d
-			self._cov = covariance_matrix.identity(len(keys))
-			self._d[0].cov = self._cov._cov
-			self._d[0].cov[0].labels = self._d[0].labels
-		finally:
-			free(vector)
-			for i in range(len(keys)): free(labels[i])
-			free(labels)
+		err_tag = lambda x: x.startswith("err_") or x.endswith("_err")
+		keys = list(vector.keys())
+		errs = list(filter(err_tag, keys))
+		if len(errs):
+			for err in errs:
+				if err.startswith("err_"):
+					label = err[4:]
+				else:
+					label = err[:-4]
+				if label not in keys:
+					raise ValueError("""\
+Datum initialization received measurement errors for quantity labeled %s, but \
+input vector has no such label.""" % (label))
+		else: pass
+
+		qtys = list(filter(lambda x: not err_tag(x), keys))
+		self._d = datum_initialize(len(qtys))
+		self._m = <MATRIX *> self._d
+		self._cov = covariance_matrix.identity(len(qtys))
+		self._d[0].cov = self._cov._cov
+		self._d[0].cov[0].labels = self._d[0].labels
 
 
-	def __init__(self, **kwargs):
-		pass # need to change the __init__ signature to accept kwargs
+	def __init__(self, vector):
+		cdef char *copy
+		err_tag = lambda x: x.startswith("err_") or x.endswith("_err")
+		keys = list(vector.keys())
+		qtys = list(filter(lambda x: not err_tag(x), keys))
+		for i in range(len(qtys)):
+			copy = copy_pystring(qtys[i])
+			try:
+				strcpy(self._d[0].labels[i], copy)
+			finally:
+				free(copy)
+			self._d[0].vector[0][i] = vector[qtys[i]]
+			if "%s_err" % (qtys[i]) in keys:
+				self._d[0].cov[0].matrix[i][i] = vector["%s_err" % (qtys[i])]**2
+			elif "err_%s" % (qtys[i]) in keys:
+				self._d[0].cov[0].matrix[i][i] = vector["err_%s" % (qtys[i])]**2
+			else: pass
 
 
 	def __dealloc__(self):

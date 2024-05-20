@@ -91,7 +91,7 @@ extern double loglikelihood_sample(SAMPLE s, TRACK *t) {
 	if ((*t).normalize_weights) {
 		unnormalize_weights(t, weight_norm);
 	} else {
-		for (unsigned short i = 0u; i < (*t).n_rows; i++) {
+		for (unsigned short i = 0u; i < (*t).n_vectors; i++) {
 			logl -= (*t).weights[i];
 		}
 	}
@@ -146,7 +146,7 @@ extern double loglikelihood_datum(DATUM d, TRACK *t) {
 		for (unsigned short i = 0u; i < (*t).n_threads; i++) by_thread[i] = 0;
 		#pragma omp parallel for num_threads((*t).n_threads)
 	#endif
-	for (unsigned short i = 0u; i < (*sub).n_rows; i++) {
+	for (unsigned short i = 0u; i < (*sub).n_vectors; i++) {
 		double s = (*sub).weights[i];
 		s *= exp(-0.5 * chi_squared(d, *sub, i));
 		s *= delta_model(*sub, i);
@@ -199,8 +199,8 @@ weight_norm : ``double``
 */
 static double normalize_weights(TRACK *t) {
 
-	double weight_norm = sum((*t).weights, (*t).n_rows);
-	for (unsigned short i = 0u; i < (*t).n_rows; i++) {
+	double weight_norm = sum((*t).weights, (*t).n_vectors);
+	for (unsigned short i = 0u; i < (*t).n_vectors; i++) {
 		t -> weights[i] /= weight_norm;
 	}
 	return weight_norm;
@@ -224,7 +224,7 @@ weight_norm : ``double``
 */
 static void unnormalize_weights(TRACK *t, const double weight_norm) {
 
-	for (unsigned short i = 0u; i < (*t).n_rows; i++) {
+	for (unsigned short i = 0u; i < (*t).n_vectors; i++) {
 		t -> weights[i] *= weight_norm;
 	}
 
@@ -300,7 +300,7 @@ delta : ``double``
 */
 static double delta_model(TRACK t, const unsigned short index) {
 
-	if (index < t.n_rows - 1ul) {
+	if (index < t.n_vectors - 1ul) {
 		MATRIX *current = trackpoint(t, index);
 		MATRIX *next = trackpoint(t, index + 1ul);
 		MATRIX *delta = matrix_subtract(*next, *current, NULL);
@@ -361,7 +361,7 @@ References
 */
 static double corrective_factor(DATUM d, TRACK t, const unsigned short index) {
 
-	if (index < t.n_rows - 1u) {
+	if (index < t.n_vectors - 1u) {
 		/*
 		Determine the values of the a and b coefficients, which define the
 		corrective factor.
@@ -477,14 +477,12 @@ sub : ``TRACK *``
 */
 static TRACK *track_subset(DATUM d, TRACK t) {
 
-	TRACK *sub = (TRACK *) matrix_initialize(t.n_rows, d.n_cols);
-	sub = (TRACK *) realloc (sub, sizeof(TRACK));
+	TRACK *sub = track_initialize(t.n_vectors, d.n_cols);
 	sub -> n_threads = t.n_threads;
 	sub -> use_line_segment_corrections = t.use_line_segment_corrections;
 
-	sub -> labels = (char **) malloc ((*sub).n_cols * sizeof(char *));
-	for (unsigned short i = 0u; i < (*sub).n_cols; i++) {
-		signed short index = strindex(t.labels, d.labels[i], t.n_cols);
+	for (unsigned short i = 0u; i < (*sub).dim; i++) {
+		signed short index = strindex(t.labels, d.labels[i], t.dim);
 		switch(index) {
 
 			case -1:
@@ -492,11 +490,8 @@ static TRACK *track_subset(DATUM d, TRACK t) {
 				return NULL;
 
 			default:
-				sub -> labels[i] = (char *) malloc (
-					MAX_LABEL_SIZE * sizeof(char));
-				memset(sub -> labels[i], '\0', MAX_LABEL_SIZE);
 				strcpy(sub -> labels[i], d.labels[index]);
-				for (unsigned short j = 0u; j < t.n_rows; j++) {
+				for (unsigned short j = 0u; j < t.n_vectors; j++) {
 					sub -> predictions[j][i] = t.predictions[j][index];
 				}
 				break;
@@ -505,8 +500,7 @@ static TRACK *track_subset(DATUM d, TRACK t) {
 
 	}
 
-	sub -> weights = (double *) malloc ((*sub).n_rows * sizeof(double));
-	for (unsigned short i = 0u; i < (*sub).n_rows; i++) {
+	for (unsigned short i = 0u; i < (*sub).n_vectors; i++) {
 		sub -> weights[i] = t.weights[i];
 	}
 	return sub;
@@ -534,8 +528,8 @@ mat : ``MATRIX *``
 */
 static MATRIX *trackpoint(TRACK t, const unsigned short index) {
 
-	MATRIX *point = matrix_initialize(1u, t.n_cols);
-	for (unsigned short i = 0u; i < t.n_cols; i++) {
+	MATRIX *point = matrix_initialize(1u, t.dim);
+	for (unsigned short i = 0u; i < t.dim; i++) {
 		point -> matrix[0][i] = t.predictions[index][i];
 	}
 	return point;
