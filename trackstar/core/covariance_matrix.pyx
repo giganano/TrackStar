@@ -63,11 +63,11 @@ cdef class covariance_matrix(matrix):
 		base = super().__repr__().replace("matrix", "covariance matrix")
 		if self._cov[0].labels is not NULL:
 			lines = base.split("\n")
-			new_line = "    Quantities (in the order of indexing): ["
+			new_line = "    Quantities: ["
 			new_line += "%s" % (copy_cstring(self._cov[0].labels[0]))
 			for i in range(1, self.n_rows):
 				new_line += ", %s" % (copy_cstring(self._cov[0].labels[i]))
-			new_line += "]"
+			new_line += "] (in the order of indexing)"
 			lines.insert(-1, new_line)
 			return "\n".join(lines)
 		else:
