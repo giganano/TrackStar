@@ -33,3 +33,4 @@ cdef class datum:
 	cdef DATUM *_d
 	cdef MATRIX *_m
 	cdef covariance_matrix _cov
+	cdef object _extra

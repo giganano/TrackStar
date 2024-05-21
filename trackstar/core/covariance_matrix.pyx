@@ -60,16 +60,15 @@ cdef class covariance_matrix(matrix):
 
 
 	def __repr__(self):
-		base = super().__repr__().replace("matrix", "covariance_matrix")
+		base = super().__repr__().replace("matrix", "covariance matrix")
 		if self._cov[0].labels is not NULL:
 			lines = base.split("\n")
-			for i in range(1, len(lines) - 1):
-				row = textwrap.dedent(lines[i])
-				line = "    %s " % (copy_cstring(self._cov[0].labels[i - 1]))
-				for j in range(15 - strlen(self._cov[0].labels[i - 1])):
-					line += "-"
-				line += "> %s" % (row)
-				lines[i] = line
+			new_line = "    Quantities (in the order of indexing): ["
+			new_line += "%s" % (copy_cstring(self._cov[0].labels[0]))
+			for i in range(1, self.n_rows):
+				new_line += ", %s" % (copy_cstring(self._cov[0].labels[i]))
+			new_line += "]"
+			lines.insert(-1, new_line)
 			return "\n".join(lines)
 		else:
 			return base

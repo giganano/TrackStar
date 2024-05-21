@@ -27,7 +27,7 @@ cdef class datum:
 	.. todo:: round out the documentation on this object.
 	"""
 
-	def __cinit__(self, vector):
+	def __cinit__(self, vector, extra = {}):
 		if not isinstance(vector, dict):
 			raise TypeError("""\
 Datum initialization requires type dict. Got: %s""" % (type(vector)))
@@ -63,7 +63,7 @@ input vector has no such label.""" % (label))
 		self._d[0].cov[0].labels = self._d[0].labels
 
 
-	def __init__(self, vector):
+	def __init__(self, vector, extra = {}):
 		cdef char *copy
 		err_tag = lambda x: x.startswith("err_") or x.endswith("_err")
 		keys = list(vector.keys())
@@ -80,6 +80,7 @@ input vector has no such label.""" % (label))
 			elif "err_%s" % (qtys[i]) in keys:
 				self._d[0].cov[0].matrix[i][i] = vector["err_%s" % (qtys[i])]**2
 			else: pass
+		self.extra = extra
 
 
 	def __dealloc__(self):
@@ -101,13 +102,19 @@ input vector has no such label.""" % (label))
 
 
 	def __repr__(self):
-		rep = "datum([\n"
+		rep = "datum(\n"
 		keys = self.keys()
 		for i in range(len(keys)):
 			rep += "    %s " % (keys[i])
-			for j in range(15 - len(keys[i])): rep += "-"
+			for _ in range(15 - len(keys[i])): rep += "-"
 			rep += "> %.4e\n" % (self._d[0].vector[0][i])
-		rep += "])"
+		if len(self.extra.keys()):
+			rep += "\n"
+			rep += "    extra\n"
+			rep += "    -----\n"
+			lines = self.extra.__repr__().split("\n")
+			for relevant_line in lines[1:-1]: rep += "%s\n" % (relevant_line)
+		rep += ")"
 		return rep
 
 
@@ -234,6 +241,26 @@ Got: %d, %d.""" % (self._d[0].n_cols, other._d[0].n_cols))
 		return self._cov
 
 
+	@property
+	def extra(self):
+		r"""
+		Type : ``dict``
+
+		Extra information associated with a datum that is not relevant to the
+		fit but is useful nonetheless.
+		"""
+		return self._extra
+
+
+	@extra.setter
+	def extra(self, value):
+		if isinstance(value, dict):
+			self._extra = datum_extra(**value)
+		else:
+			raise TypeError("""\
+Attribte 'extra' must be of type dict. Got: %s""" % (value))
+
+
 	def loglikelihood(self, track t, quantities = None,
 		normalize_weights = True, use_line_segment_corrections = False):
 		cdef DATUM *sub
@@ -283,7 +310,6 @@ Keyword arg 'quantities' must be of type list, tuple, or None. Got: %s""" % (
 				type(quantities)))
 
 
-
 	def keys(self):
 		r"""
 		The keys.
@@ -292,3 +318,19 @@ Keyword arg 'quantities' must be of type list, tuple, or None. Got: %s""" % (
 		for i in range(self._d[0].n_cols): _keys.append(
 			copy_cstring(self._d[0].labels[i]))
 		return _keys
+
+
+class datum_extra(dict):
+
+	# Does nothing more than print the dictionary in the same format as
+	# data vectors.
+
+	def __repr__(self):
+		rep = "extra(\n"
+		keys = self.keys()
+		for key in keys:
+			rep += "    %s " % (key)
+			for _ in range(15 - len(key)): rep += "-"
+			rep += "> %s\n" % (self.__getitem__(key).__repr__())
+		rep += ")"
+		return rep
