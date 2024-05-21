@@ -235,7 +235,7 @@ Got: %d, %d.""" % (self._d[0].n_cols, other._d[0].n_cols))
 
 
 	def loglikelihood(self, track t, quantities = None,
-		normalize_weights = True):
+		normalize_weights = True, use_line_segment_corrections = False):
 		cdef DATUM *sub
 		cdef char **labels
 		if isinstance(normalize_weights, bool):
@@ -244,6 +244,13 @@ Got: %d, %d.""" % (self._d[0].n_cols, other._d[0].n_cols))
 			raise TypeError("""\
 Keyword arg 'normalize_weights' must be of type bool. Got: %s""" % (
 				type(normalize_weights)))
+		if isinstance(use_line_segment_corrections, bool):
+			t._t[0].use_line_segment_corrections = int(
+				use_line_segment_corrections)
+		else:
+			raise TypeError("""\
+Keyword arg 'use_line_segment_corrections' must be of type bool. Got: %s""" % (
+				type(use_line_segment_corrections)))
 		self_keys = self.keys()
 		track_keys = t.keys()
 		if quantities is None:

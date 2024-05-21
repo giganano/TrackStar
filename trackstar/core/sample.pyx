@@ -311,7 +311,7 @@ combination of the two. Got: %s""" % (type(index)))
 
 
 	def loglikelihood(self, track t, quantities = None,
-		normalize_weights = True):
+		normalize_weights = True, use_line_segment_corrections = False):
 		r"""
 		Compute natural logarithm of the likelihood that this sample would be
 		observed by the model predicted track ``t``.
@@ -333,6 +333,13 @@ combination of the two. Got: %s""" % (type(index)))
 			raise TypeError("""\
 Keyword arg 'normalize_weights' must be of type bool. Got: %s""" % (
 				type(normalize_weights)))
+		if isinstance(use_line_segment_corrections, bool):
+			t._t[0].use_line_segment_corrections = int(
+				use_line_segment_corrections)
+		else:
+			raise TypeError("""\
+Keyword arg 'use_line_segment_corrections' must be of type bool. Got: %s""" % (
+				type(use_line_segment_corrections)))
 		self_keys = self.keys()
 		track_keys = t.keys()
 		if quantities is None:

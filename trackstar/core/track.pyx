@@ -34,8 +34,7 @@ cdef class track:
 		the rules `track[label, row]` and `track[row, label]` are required.
 	"""
 
-	def __cinit__(self, predictions, weights = None, n_threads = 1,
-		use_line_segment_corrections = False):
+	def __cinit__(self, predictions, weights = None, n_threads = 1):
 		if not isinstance(predictions, dict): raise TypeError("""\
 Track must be initialized from type dict. Got: %s""" % (type(predictions)))
 		copy = {}
@@ -84,8 +83,7 @@ elements as track predictions.""" % (len(weights), len(copy[keys[0]])))
 		self._t = track_initialize(len(copy[keys[0]]), len(keys))
 
 
-	def __init__(self, predictions, weights = None, n_threads = 1,
-		use_line_segment_corrections = False):
+	def __init__(self, predictions, weights = None, n_threads = 1):
 		cdef char *labelcopy
 		keys = list(predictions.keys())
 		if "weights" in keys:
@@ -107,7 +105,6 @@ elements as track predictions.""" % (len(weights), len(copy[keys[0]])))
 				free(labelcopy)
 
 		self.n_threads = n_threads
-		self.use_line_segment_corrections = use_line_segment_corrections
 
 
 	def __dealloc__(self):
@@ -230,8 +227,7 @@ Track indexing accepts 1 or 2 parameters. Got: %d""" % (len(key)))
 		for label in self.keys():
 			track_subset[label] = self._getitem_str_(label)[start:stop:step]
 		weights = [self._t[0].weights[i] for i in range(start, stop, step)]
-		return track(track_subset, weights = weights,
-			use_line_segment_corrections = self.use_line_segment_corrections)
+		return track(track_subset, weights = weights, n_threads = self.n_threads)
 
 
 	def __setitem__(self, key, value):
@@ -474,29 +470,6 @@ Number of parallel processing threads must be an integer, not float.""")
 		else:
 			raise TypeError("""\
 Number of parallel processing threads must be an integer. Got: %s""" % (
-				type(value)))
-
-
-	@property
-	def use_line_segment_corrections(self):
-		r"""
-		Type : ``bool`` [default : ``False``]
-
-		Compute corrective factors for the length of each line segment
-		connecting the points along the track. In practice, if these corrective
-		factors are large, then it is a sign that the track should be more
-		densely sampled than the current input.
-		"""
-		return bool(self._t[0].use_line_segment_corrections)
-
-
-	@use_line_segment_corrections.setter
-	def use_line_segment_corrections(self, value):
-		if isinstance(value, bool):
-			self._t[0].use_line_segment_corrections = int(value)
-		else:
-			raise TypeError("""\
-Attribute 'use_line_segment_corrections' must be of type bool. Got: %s""" % (
 				type(value)))
 
 
