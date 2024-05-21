@@ -1,11 +1,11 @@
 
-Tutorials
-=========
+Tutorials & Example Codes
+=========================
 
 Here we provide example codes showing different applications of TrackStar's
 features.
 
 .. toctree::
-	:maxdepth: 2
+	:maxdepth: 1
 
 	first
