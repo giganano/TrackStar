@@ -114,6 +114,7 @@ input vector has no such label.""" % (label))
 			rep += "    -----\n"
 			lines = self.extra.__repr__().split("\n")
 			for relevant_line in lines[1:-1]: rep += "%s\n" % (relevant_line)
+		else: pass
 		rep += ")"
 		return rep
 

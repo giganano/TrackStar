@@ -8,6 +8,7 @@
 __all__ = ["sample"]
 import math as m
 import numbers
+from .datum import datum_extra
 from .utils import copy_array_like_object, copy_cstring
 from .utils cimport copy_pystring, strindex, linked_list
 from .matrix cimport matrix_free
@@ -113,14 +114,26 @@ single argument of type dict. Got: %d arguments.""" % (len(args)))
 
 	def __repr__(self):
 		r"""Returns a string representation of the sample."""
-		rep = "sample([\n"
-		rep += "        N = %d\n" % (self.size)
+		rep = "sample(\n"
+		rep += "    N = %d\n" % (self.size)
 		for key in self.keys():
-			rep += "        %s " % (key)
+			rep += "    %s " % (key)
 			for j in range(15 - len(key)): rep += '-'
 			rep += "> %s\n" % (linked_list._repr_format_array_(self[key]))
-		rep += "])"
+		extra = self.extra
+		if len(extra.keys()):
+			rep += "\n"
+			rep += "    extra\n"
+			rep += "    -----\n"
+			lines = extra.__repr__().split("\n")
+			for relevant_line in lines[1:-1]: rep += "%s\n" % (relevant_line)
+		else: pass
+		rep += ")"
 		return rep
+
+
+	def __len__(self):
+		return self._s[0].n_vectors
 
 
 	def __getitem__(self, key):
@@ -161,9 +174,7 @@ Index %d out of range for sample of size N = %d.""" % (key, self.size))
 					# error handling in number instance above will take care of
 					# out of range and floating point IndexError
 					try:
-						# return self.__getitem__(key[1])[key[0]]
-						return self[key[1]].__getitem__(key[0],
-							sample_keys = self.keys())
+						return self.__getitem__(key[1])[key[0]]
 					except KeyError:
 						# Could be a quantity stored by the sample but not
 						# available for this particular data vector
@@ -384,9 +395,137 @@ Keyword arg 'quantities' must be of type list, tuple, or None. Got: %s""" % (
 		return self._s[0].n_vectors
 
 
+	@property
+	def extra(self):
+		return sample_extra([self._data[i].extra for i in range(self.size)])
+
+
 	def keys(self):
 		_keys = []
 		for i in range(self.size):
 			for test in self._data[i].keys():
 				if test not in _keys: _keys.append(test)
+		return _keys
+
+
+
+class sample_extra(list):
+
+	def __init__(self, *args, **kwargs):
+		super().__init__(*args, **kwargs)
+		for item in self: assert isinstance(item, datum_extra), """\
+sample_extra.__init__: Internal Error."""
+
+
+	def __repr__(self):
+		rep = "extra(\n"
+		for key in self.keys():
+			rep += "    %s " % (key)
+			for _ in range(15 - len(key)): rep += "-"
+			rep += "> %s\n" % (self._format_arr_(self.__getitem__(key)))
+		rep += ")"
+		return rep
+
+
+	def __getitem__(self, idx):
+		if isinstance(idx, str):
+			recognized = False
+			for item in self:
+				recognized |= idx in item.keys()
+				if recognized: break
+			if recognized:
+				result = self.__len__() * [None]
+				for i in range(self.__len__()):
+					if idx in item.keys():
+						result[i] = super().__getitem__(i)[idx]
+					else: pass
+				return result
+			else:
+				raise KeyError("\'%s\'" % (idx))
+		elif isinstance(idx, numbers.Number):
+			return super().__getitem__(idx)
+		elif isinstance(idx, tuple):
+			if len(idx) == 2:
+				return self.__getitem__(idx[0])[idx[1]]
+			else:
+				raise KeyError("Too many indices. Expected 1 or 2, got: %d" % (
+					len(idx)))
+		else:
+			raise KeyError("Expected a string or an integer. Got: %s" % (
+				type(idx)))
+
+
+	def __setitem__(self, idx, value):
+		if isinstance(idx, str):
+			try:
+				copy = value[:]
+			except:
+				raise TypeError("Expected an array-like object. Got: %s" % (
+					type(value)))
+			if len(copy) == self.__len__():
+				for i in range(self.__len__()):
+					if value[i] is not None:
+						super().__getitem__(i)[idx] = value[i]
+					else: pass
+			else:
+				raise ValueError("""\
+Array-length mismatch: got %d for a sample of size %d""" % (
+					len(copy), self.__len__()))
+		elif isinstance(idx, numbers.Number):
+			if isinstance(value, dict):
+				super().__setitem__(idx, datum_extra(**value))
+			else:
+				raise TypeError("Expected a dict. Got: %s" % (type(value)))
+		elif isinstance(idx, tuple):
+			if len(idx) == 2:
+				if (isinstance(idx[0], numbers.Number) and
+					isinstance(idx[1], str)):
+					self.__getitem__(idx[0]).__setitem__(idx[1], value)
+				elif (isinstance(idx[1], numbers.Number) and
+					isinstance(idx[0], str)):
+					self.__getitem__(idx[1]).__setitem__(idx[0], value)
+				else:
+					raise KeyError("""\
+Expected an integer and a string. Got: %s, %s""" % (type(idx[0]), type(idx[1])))
+			else:
+				raise KeyError("Too many indices. Expected 1 or 2, got: %d" % (
+					len(idx)))
+		else:
+			raise KeyError("Expected a string or an integer. Got: %s" % (
+				type(idx)))
+
+
+	@staticmethod
+	def _format_arr_(arr):
+		if len(arr) > 10:
+			rep = "[%s, %s, %s, ..., %s, %s, %s]" % (
+				str(sample_extra._format_item_(arr[0])),
+				str(sample_extra._format_item_(arr[1])),
+				str(sample_extra._format_item_(arr[2])),
+				str(sample_extra._format_item_(arr[-3])),
+				str(sample_extra._format_item_(arr[-2])),
+				str(sample_extra._format_item_(arr[-1])))
+		else:
+			rep = "[%s" % (str(sample_extra._format_item_(arr[0])))
+			for i in range(1, len(arr)):
+				rep += ", %s" % (str(sample_extra._format_item_(arr[i])))
+			rep += "]"
+		return rep
+
+
+	@staticmethod
+	def _format_item_(item):
+		assert isinstance(item, str), """\
+sample_extra._format_item_: Internal Error."""
+		if len(item) > 10:
+			return "%s...%s" % (item[:4], item[-4:])
+		else:
+			return item.rjust(11)
+
+
+	def keys(self):
+		_keys = []
+		for i in range(self.__len__()):
+			for key in super().__getitem__(i):
+				if key not in _keys: _keys.append(key)
 		return _keys
