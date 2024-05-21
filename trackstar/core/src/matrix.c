@@ -87,7 +87,8 @@ extern void matrix_free(MATRIX *m) {
 
 
 /*
-.. c:function:: covariance_matrix_initialize(unsigned short size)
+.. c:function:: extern COVARIANCE_MATRIX *covariance_matrix_initialize(unsigned short size);
+
 
 	Allocate memory for and return a pointer to a :c:type:`COVARIANCE_MATRIX`
 	object.
