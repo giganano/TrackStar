@@ -34,7 +34,7 @@ cdef class sample:
 	.. todo:: Allow item assignment according to rule sample[row, col]
 	"""
 
-	def __cinit__(self, *args):
+	def __cinit__(self, *args, extra = {}):
 		if len(args) == 1:
 			arg = args[0]
 			if isinstance(arg, dict):
@@ -71,7 +71,7 @@ single argument of type dict. Got: %d arguments.""" % (len(args)))
 		self._data = []
 
 
-	def __init__(self, *args):
+	def __init__(self, *args, extra = {}):
 		if len(args) == 1:
 			err_tag = lambda x: x.startswith("err_") or x.endswith("_err")
 			arg = args[0]
@@ -92,6 +92,12 @@ single argument of type dict. Got: %d arguments.""" % (len(args)))
 					else: pass
 				self.add_datum(datum(this_datum))
 		else: pass
+		if isinstance(extra, dict):
+			for key in extra.keys():
+				self.extra[key] = extra[key]
+		else:
+			raise TypeError("""\
+Keyword arg \'extra\' must be of type dict. Got: %s""" % (type(extra)))
 
 
 	def __dealloc__(self):
