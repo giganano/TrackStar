@@ -179,17 +179,19 @@ Index %d out of range for sample of size N = %d.""" % (key, self.size))
 					# hand it off to datum.__getitem__
 					# error handling in number instance above will take care of
 					# out of range and floating point IndexError
-					try:
-						return self.__getitem__(key[1])[key[0]]
-					except KeyError:
-						# Could be a quantity stored by the sample but not
-						# available for this particular data vector
-						if (key[0] in self.keys() and
-							key[0] not in self._data[key[1]].keys()):
-							return float("nan")
-						else:
-							# something else
-							raise
+					# datum._shadow_keys should return the necessary NaNs
+					return self.__getitem__(key[1])[key[0]]
+					# try:
+					# 	return self.__getitem__(key[1])[key[0]]
+					# except KeyError:
+					# 	# Could be a quantity stored by the sample but not
+					# 	# available for this particular data vector
+					# 	if (key[0] in self.keys() and
+					# 		key[0] not in self._data[key[1]].keys()):
+					# 		return float("nan")
+					# 	else:
+					# 		# something else
+					# 		raise
 				elif (isinstance(key[1], str) and
 					isinstance(key[0], numbers.Number)):
 					# same as above, just different order
@@ -201,10 +203,66 @@ string. Got: %s, %s""" % (type(key[0]), type(key[1])))
 			else:
 				raise IndexError("""\
 Sample indexing requires at most two parameters. Got: %d""" % (len(key)))
+		elif isinstance(key, slice):
+			sl = linked_list._indexing_handle_slice_(key)
+			vectors = self._data[sl]
+			subset = sample()
+			for v in vectors: subset.add_datum(v)
+			return subset
 		else:
 			raise IndexError("""\
 Sample index must be either a data vector index (int) or a quantity label \
 (str). Got: %s""" % (type(key)))
+
+
+# 	def _indexing_handle_slice_(self, sl):
+# 		assert isinstance(sl, slice), "Internal Error."
+# 		if isinstance(sl.start, numbers.Number):
+# 			if sl.start % 1 == 0:
+# 				start = int(sl.start)
+# 				if -self.size <= start < 0: start += self.size
+# 				if not 0 <= start < self.size: raise IndexError("""\
+# Starting index %d out of bounds for sample of size N = %d.""" % (sl.start,
+# 					self.size))
+# 			else:
+# 				raise IndexError("""\
+# Sample starting index must be an integer, not float.""")
+# 		elif sl.start is None:
+# 			start = None
+# 		else:
+# 			raise IndexError("""\
+# Sample starting index must be an integer. Got: %s""" % (type(sl.start)))
+# 		if isinstance(sl.stop, numbers.Number):
+# 			if sl.stop % 1 == 0:
+# 				stop = int(sl.stop)
+# 				if -self.size <= stop < 0: stop += self.size
+# 				if not 0 <= stop <= self.size: raise IndexError("""\
+# Stopping index %d out of bounds for sample of size N = %d.""" % (sl.stop,
+# 					self.size))
+# 			else:
+# 				raise IndexError("""\
+# Sample stopping index must be an integer, not float.""")
+# 		elif sl.stop is None:
+# 			stop = None
+# 		elif sl.stop is not None:
+# 			raise IndexError("""\
+# Sample stopping index must be an integer. Got: %s""" % (type(sl.stop)))
+# 		if isinstance(sl.step, numbers.Number):
+# 			if sl.step % 1 == 0:
+# 				if sl.step < self.size:
+# 					step = sl.step
+# 				else:
+# 					raise IndexError("""\
+# Step-size %d too large for sample of size %d.""" % (sl.step, self.size))
+# 			else:
+# 				raise IndexError("""\
+# Sample step-size must be an integer, not float.""")
+# 		elif sl.step is None:
+# 			step = None
+# 		else:
+# 			raise IndexError("""\
+# Sample step-size must be an integer. Got: %s""" % (type(sl.step)))
+# 		return [start, stop, step]
 
 
 	def __setitem__(self, index, value):
@@ -270,7 +328,9 @@ memory errors.""" % (i, index))
 					else: # idx == -1 and not m.isnan(value[i])
 						raise ValueError("""\
 Datum at index %d does not have a quantity labeled %s. Item assignment by \
-column label requires a NaN at this position.""" % (i, index))
+column label requires a NaN at this position. Cannot assign this item a real \
+number value as it would change the dimensionality of the data and result in \
+memory errors.""" % (i, index))
 				free(copy)
 			else:
 				raise TypeError("""\
@@ -325,12 +385,11 @@ combination of the two. Got: %s""" % (type(index)))
 		"""
 		sample_add_datum(self._s, measurement._d)
 		self._data.append(measurement)
-		keys = self.keys()
-		for i in range(self.size):
-			for key in keys:
-				if key not in self._data[i]._shadow_keys:
-					self._data[i]._shadow_keys.append(key)
-
+		for key in self.keys():
+			for i in range(self.size):
+				if (key not in self._data[i].keys() and
+					key not in self._data[i]._shadow_keys):
+					self._data[i]._shadow_keys.add(key)
 
 
 	def loglikelihood(self, track t, quantities = None,

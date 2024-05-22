@@ -103,9 +103,53 @@ Index %d is out of bounds for list of length %d.""" % (index, len(self)))
 				return self._arr[index][0]
 			else:
 				raise IndexError("List index should be an int, not float.")
+		elif isinstance(index, slice):
+			sl = self._indexing_handle_slice_(index)
+			indices = list(range(self._length))[sl]
+			return [self._arr[idx][0] for idx in indices]
 		else:
 			raise IndexError("List index should be an int. Got: %s" % (
 				type(index)))
+
+
+	@staticmethod
+	def _indexing_handle_slice_(sl):
+		assert isinstance(sl, slice), "Internal Error."
+		if isinstance(sl.start, numbers.Number):
+			if sl.start % 1 == 0:
+				start = int(sl.start)
+			else:
+				raise IndexError("""\
+Track starting index must be an integer, not float.""")
+		elif sl.start is None:
+			start = None
+		else:
+			raise IndexError("""\
+Track starting index must be an integer. Got: %s""" % (type(sl.start)))
+		if isinstance(sl.stop, numbers.Number):
+			if sl.stop % 1 == 0:
+				stop = int(sl.stop)
+			else:
+				raise IndexError("""\
+Track stopping index must be an integer, not float.""")
+		elif sl.stop is None:
+			stop = None
+		else:
+			raise IndexError("""\
+Track stopping index must be an integer. Got: %s""" % (type(sl.stop)))
+		if isinstance(sl.step, numbers.Number):
+			if sl.step % 1 == 0:
+				step = int(sl.step)
+			else:
+				raise IndexError("""\
+Track step-size must be an integer, not float.""")
+		elif sl.step is None:
+			step = None
+		else:
+			raise IndexError("""\
+Track step-size must be an integer. Got: %s""" % (type(sl.step)))
+		return slice(start, stop, step)
+		# return [start, stop, step]
 
 
 	def __setitem__(self, index, value):
@@ -150,8 +194,8 @@ cdef class linked_dict:
 
 
 	def __dealloc__(self):
-		free(self._arr)
 		free(self._keys)
+		free(self._arr)
 
 
 	def __enter__(self):
@@ -165,11 +209,11 @@ cdef class linked_dict:
 
 
 	def __repr__(self):
-		rep = "linked_dictionary({\n"
+		rep = "linked_dictionary{\n"
 		for i in range(self._n_elements):
 			rep += "  \"%s\": %.4e,\n" % (copy_cstring(self._keys[i]),
 				self._arr[i][0])
-		rep += "})"
+		rep += "}"
 		return rep
 
 

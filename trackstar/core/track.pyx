@@ -137,6 +137,10 @@ elements as track predictions.""" % (len(weights), len(copy[keys[0]])))
 		return rep
 
 
+	def __len__(self):
+		return self._t[0].n_vectors
+
+
 	def __getitem__(self, key):
 		if isinstance(key, str):
 			return self._getitem_str_(key)
@@ -163,16 +167,12 @@ combination of the two. Got: %s""" % (type(key)))
 					else:
 						return self._t[0].predictions[row][col]
 				elif isinstance(key[1], slice):
-					sl = self._indexing_handle_slice_(key[1])
-					start = sl.start
-					stop = sl.stop
-					step = sl.step
+					sl = linked_list._indexing_handle_slice_(key[1])
+					indices = list(range(self._t[0].n_vectors))[sl]
 					if col == -2:
-						return [self._t[0].weights[i] for i in range(
-							start, stop, step)]
+						return [self._t[0].weights[i] for i in indices]
 					else:
-						return [self._t[0].predictions[i][col] for i in range(
-							start, stop, step)]
+						return [self._t[0].predictions[i][col] for i in indices]
 				else:
 					raise IndexError("""\
 Track indexing requires a row number (int), a column label (str), or a \
@@ -207,26 +207,24 @@ Track indexing accepts 1 or 2 parameters. Got: %d""" % (len(key)))
 		cdef double **copies = <double **> malloc (
 			(self._t[0].dim + 1) * sizeof(double *))
 		cdef char **keys = <char **> malloc(
-			(self._t[0].dim + 1) * sizeof(double *))
+			(self._t[0].dim + 1) * sizeof(char *))
 		for i in range(self._t[0].dim):
 			copies[i] = &self._t[0].predictions[row][i]
 			keys[i] = self._t[0].labels[i]
 		copies[self._t[0].dim] = &self._t[0].weights[row]
 		keys[self._t[0].dim] = copy_pystring("weights")
 		return linked_dict(<uintptr_t> copies, <uintptr_t> keys,
-			self._t[0].dim)
+			self._t[0].dim + 1)
 
 
 	def _getitem_slice_(self, sl):
 		assert isinstance(sl, slice), "Internal Error."
-		sl = self._indexing_handle_slice_(sl)
-		start = sl.start
-		stop = sl.stop
-		step = sl.step
+		sl = linked_list._indexing_handle_slice_(sl)
+		indices = list(range(self._t[0].n_vectors))[sl]
 		track_subset = {}
 		for label in self.keys():
-			track_subset[label] = self._getitem_str_(label)[start:stop:step]
-		weights = [self._t[0].weights[i] for i in range(start, stop, step)]
+			track_subset[label] = self._getitem_str_(label)[sl]
+		weights = [self._t[0].weights[i] for i in indices]
 		return track(track_subset, weights = weights, n_threads = self.n_threads)
 
 
@@ -365,47 +363,6 @@ Index %d out of range for track sampled at %d points.""" % (
 		else:
 			raise IndexError("""\
 Track row number must be an integer, not float.""")
-
-
-	def _indexing_handle_slice_(self, sl):
-		assert isinstance(sl, slice), "Internal Error."
-		if sl.start is not None:
-			if isinstance(sl.start, numbers.Number):
-				if sl.start % 1 == 0:
-					start = sl.start
-				else:
-					raise IndexError("""\
-Track starting index must be an integer, not float.""")
-			else:
-				raise IndexError("""\
-Track starting index must be an integer. Got: %s""" % (type(sl.start)))
-		else:
-			start = 0
-		if sl.stop is not None:
-			if isinstance(sl.stop, numbers.Number):
-				if sl.stop % 1 == 0:
-					stop = sl.stop
-				else:
-					raise IndexError("""\
-Track stopping index must be an integer, not float.""")
-			else:
-				raise IndexError("""\
-Track starting index must be an integer. Got: %s""" % (type(sl.stop)))
-		else:
-			stop = self._t[0].n_vectors
-		if sl.step is not None:
-			if isinstance(sl.step, numbers.Number):
-				if sl.step % 1 == 0:
-					step = sl.step
-				else:
-					raise IndexError("""\
-Track step-size must be an integer, not float.""")
-			else:
-				raise IndexError("""\
-Track step-size must be an integer. Got: %s""" % (type(sl.step)))
-		else:
-			step = 1
-		return slice(start, stop, step)
 
 
 	@property

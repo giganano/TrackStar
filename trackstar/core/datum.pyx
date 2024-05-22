@@ -81,7 +81,7 @@ input vector has no such label.""" % (label))
 				self._d[0].cov[0].matrix[i][i] = vector["err_%s" % (qtys[i])]**2
 			else: pass
 		self.extra = extra
-		self._shadow_keys = []
+		self._shadow_keys = set([])
 
 
 	def __dealloc__(self):
@@ -267,7 +267,7 @@ Attribte 'extra' must be of type dict. Got: %s""" % (value))
 	@property
 	def _shadow_keys(self):
 		r"""
-		Type : ``list``
+		Type : ``set``
 
 		.. warning::
 
