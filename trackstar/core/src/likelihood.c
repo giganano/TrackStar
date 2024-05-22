@@ -200,6 +200,7 @@ weight_norm : ``double``
 static double normalize_weights(TRACK *t) {
 
 	double weight_norm = sum((*t).weights, (*t).n_vectors);
+	weight_norm *= 1000.f / (*t).n_vectors;
 	for (unsigned short i = 0u; i < (*t).n_vectors; i++) {
 		t -> weights[i] /= weight_norm;
 	}
