@@ -34,3 +34,4 @@ cdef class datum:
 	cdef MATRIX *_m
 	cdef covariance_matrix _cov
 	cdef object _extra
+	cdef object _shadow_keys

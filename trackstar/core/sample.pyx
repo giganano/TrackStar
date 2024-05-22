@@ -174,7 +174,7 @@ Index %d out of range for sample of size N = %d.""" % (key, self.size))
 					key))
 		elif isinstance(key, tuple):
 			if len(key) == 2:
-				if (isinstance(key[0], str) and 
+				if (isinstance(key[0], str) and
 					isinstance(key[1], numbers.Number)):
 					# hand it off to datum.__getitem__
 					# error handling in number instance above will take care of
@@ -190,7 +190,7 @@ Index %d out of range for sample of size N = %d.""" % (key, self.size))
 						else:
 							# something else
 							raise
-				elif (isinstance(key[1], str) and 
+				elif (isinstance(key[1], str) and
 					isinstance(key[0], numbers.Number)):
 					# same as above, just different order
 					return self[key[1], key[0]]
@@ -325,6 +325,12 @@ combination of the two. Got: %s""" % (type(index)))
 		"""
 		sample_add_datum(self._s, measurement._d)
 		self._data.append(measurement)
+		keys = self.keys()
+		for i in range(self.size):
+			for key in keys:
+				if key not in self._data[i]._shadow_keys:
+					self._data[i]._shadow_keys.append(key)
+
 
 
 	def loglikelihood(self, track t, quantities = None,

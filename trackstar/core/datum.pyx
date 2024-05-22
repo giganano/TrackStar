@@ -81,6 +81,7 @@ input vector has no such label.""" % (label))
 				self._d[0].cov[0].matrix[i][i] = vector["err_%s" % (qtys[i])]**2
 			else: pass
 		self.extra = extra
+		self._shadow_keys = []
 
 
 	def __dealloc__(self):
@@ -122,6 +123,7 @@ input vector has no such label.""" % (label))
 	def __getitem__(self, key):
 		cdef char *copy
 		if isinstance(key, str):
+			if key in self._shadow_keys: return float("nan")
 			copy = copy_pystring(key)
 			try:
 				idx = strindex(self._d[0].labels, copy, self._d[0].n_cols)
@@ -260,6 +262,24 @@ Got: %d, %d.""" % (self._d[0].n_cols, other._d[0].n_cols))
 		else:
 			raise TypeError("""\
 Attribte 'extra' must be of type dict. Got: %s""" % (value))
+
+
+	@property
+	def _shadow_keys(self):
+		r"""
+		Type : ``list``
+
+		.. warning::
+
+			User access or modification of this class attribute is discouraged.
+
+		A list of additional column labels that belong the sample that this
+		datum is embedded within, if applicable. The ``sample`` object keeps
+		track of this attribute automatically every time ``add_datum`` is
+		called. Whenever ``datum.__getitem__`` is called with a string that
+		is an element of this list, a ``nan`` will be returned.
+		"""
+		return self._shadow_keys
 
 
 	def loglikelihood(self, track t, quantities = None,
