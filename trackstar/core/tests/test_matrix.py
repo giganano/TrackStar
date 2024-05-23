@@ -1,4 +1,4 @@
-# cython: language_level = 3, boundscheck = False
+#!/usr/bin/env python
 #
 # This file is part of the TrackStar package.
 # Copyright (C) 2023 James W. Johnson (giganano9@gmail.com)
@@ -77,7 +77,7 @@ class TestMatrixFundamentals(MatrixBaseFixture):
 
 
 	@staticmethod
-	def test_indexing(n_rows, n_cols, case):
+	def test_getitem(n_rows, n_cols, case):
 		r"""tests trackstar.matrix.__getitem__"""
 		for i in range(n_rows):
 			for j in range(n_cols):
@@ -86,7 +86,7 @@ class TestMatrixFundamentals(MatrixBaseFixture):
 
 
 	@staticmethod
-	def test_item_assignment(n_rows, n_cols, case):
+	def test_setitem(n_rows, n_cols, case):
 		r"""tests trackstar.matrix.__setitem__"""
 		for i in range(n_rows):
 			for j in range(n_cols):
