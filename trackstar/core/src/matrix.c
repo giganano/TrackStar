@@ -12,6 +12,10 @@ at: https://github.com/giganano/trackstar.git.
 
 
 /* ---------- Static function comment headers not duplicated here ---------- */
+struct row_column_index;
+static struct row_column_index matrix_determinant_ideal_axis(MATRIX m);
+static unsigned short matrix_zeros_along_axis(MATRIX m,
+	const unsigned short index, const unsigned short along_row);
 static MATRIX *matrix_unary_minus(MATRIX m, MATRIX *result);
 static MATRIX *matrix_adjoint(MATRIX m, MATRIX *result);
 static MATRIX *matrix_cofactors(MATRIX m, MATRIX *result);
@@ -444,6 +448,30 @@ extern MATRIX *matrix_transpose(MATRIX m, MATRIX *result) {
 }
 
 
+struct row_column_index {
+
+	/*
+	.. c:struct:: row_column_index;
+
+		A ``struct`` used to determine which row or column along which it would
+		be ideal to run expansion by minors. The ideal row or column is
+		determined by figuring out which one has the most zeros.
+
+		.. c:member:: unsigned short index;
+
+			A row or column number.
+
+		.. c:member:: along_row;
+
+			1u if ``index`` refers to a row. 0u if it refers to a column.
+	*/
+
+	unsigned short index;
+	unsigned short along_row;
+
+};
+
+
 /*
 .. c:function:: extern double matrix_determinant(MATRIX m);
 
@@ -482,13 +510,30 @@ extern double matrix_determinant(MATRIX m) {
 			);
 		} else {
 			/* The recursive case: an NxN matrix where N > 2 */
-			double result = 0;
-			for (unsigned short i = 0u; i < m.n_cols; i++) {
-				unsigned short axis[2] = {0, i};
-				MATRIX *minor = matrix_minor(m, axis, NULL);
-				result += pow(-1, i) * m.matrix[0][i] * matrix_determinant(
-					*minor);
-				matrix_free(minor);
+			double result = 0.f;
+			struct row_column_index ideal_axis = matrix_determinant_ideal_axis(m);
+			if (ideal_axis.along_row) {
+				for (unsigned short j = 0u; j < m.n_cols; j++) {
+					if (m.matrix[ideal_axis.index][j] != 0) {
+						unsigned short axis[2] = {ideal_axis.index, j};
+						MATRIX *minor = matrix_minor(m, axis, NULL);
+						result += m.matrix[ideal_axis.index][j] * pow(
+							-1, ideal_axis.index + j) * matrix_determinant(
+							*minor);
+						matrix_free(minor);
+					}
+				}
+			} else {
+				for (unsigned short i = 0u; i < m.n_rows; i++) {
+					if (m.matrix[i][ideal_axis.index] != 0) {
+						unsigned short axis[2] = {i, ideal_axis.index};
+						MATRIX *minor = matrix_minor(m, axis, NULL);
+						result += m.matrix[i][ideal_axis.index] * pow(
+							-1, i + ideal_axis.index) * matrix_determinant(
+							*minor);
+						matrix_free(minor);
+					} else {}
+				}
 			}
 			return result;
 		}
@@ -497,6 +542,83 @@ extern double matrix_determinant(MATRIX m) {
 		fatal_print("%s\n",
 			"Cannot compute the determinant of a non-square matrix.");
 	}
+
+}
+
+
+/*
+.. c:function:: static struct row_column_index matrix_determinant_ideal_axis(MATRIX m);
+
+	Determine the ideal axis along which expansion by minors will be most
+	efficient by determining which row or column has the most zeros.
+
+	Parameters
+	----------
+	m : ``MATRIX``
+		The matrix whose determinant is to be computed.
+
+	Returns
+	-------
+	axis : ``struct row_column_index``
+		The ``struct`` containing the index of the row or column and a boolean
+		flag describing whether it is a row or a column.
+*/
+static struct row_column_index matrix_determinant_ideal_axis(MATRIX m) {
+
+	struct row_column_index axis;
+	axis.index = 0u;
+	axis.along_row = 1u;
+	unsigned short current_max = matrix_zeros_along_axis(m,
+		axis.index, axis.along_row);
+	for (unsigned short i = 1u; i < m.n_rows; i++) {
+		if (matrix_zeros_along_axis(m, i, 1u) > current_max) {
+			axis.index = i;
+		} else {}
+	}
+	for (unsigned short j = 0u; j < m.n_cols; j++) {
+		if (matrix_zeros_along_axis(m, j, 0u) > current_max) {
+			axis.index = j;
+			axis.along_row = 0u;
+		} else {}
+	}
+	return axis;
+
+}
+
+
+/*
+.. c:function:: static unsigned short matrix_zeros_along_axis(MATRIX m, const unsigned short index, const unsigned short along_row);
+
+	Determine the number of zeros along a given row or column of a matrix.
+
+	Parameters
+	----------
+	m : ``MATRIX``
+		The matrix in question.
+	index : ``const unsigned short``
+		The row or column number.
+	along_row : ``const unsigned short``
+		1u if ``index`` refers to a row number, 0u if it refers to a column.
+
+	Returns
+	-------
+	n : ``unsigned short``
+		The number of zeros along the given row or column.
+*/
+static unsigned short matrix_zeros_along_axis(MATRIX m,
+	const unsigned short index, const unsigned short along_row) {
+
+	unsigned short n = 0;
+	if (along_row) {
+		for (unsigned short j = 0u; j < m.n_cols; j++) {
+			n += m.matrix[index][j] == 0;
+		}
+	} else {
+		for (unsigned short i = 0u; i < m.n_rows; i++) {
+			n += m.matrix[i][index] == 0;
+		}
+	}
+	return n;
 
 }
 
