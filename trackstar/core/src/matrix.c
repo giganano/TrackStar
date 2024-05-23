@@ -12,11 +12,14 @@ at: https://github.com/giganano/trackstar.git.
 
 
 /* ---------- Static function comment headers not duplicated here ---------- */
-struct row_column_index;
-static struct row_column_index matrix_determinant_ideal_axis(MATRIX m);
-static unsigned short matrix_zeros_along_axis(MATRIX m,
-	const unsigned short index, const unsigned short along_row);
 static MATRIX *matrix_unary_minus(MATRIX m, MATRIX *result);
+static double determinant_LUdecomp(MATRIX m);
+static MATRIX *LUdecomp(MATRIX m);
+static double determinant_expansion_minors(MATRIX m);
+struct row_column_index;
+static struct row_column_index expansion_ideal_axis(MATRIX m);
+static unsigned short zeros_along_axis(MATRIX m,
+	const unsigned short index, const unsigned short along_row);
 static MATRIX *matrix_adjoint(MATRIX m, MATRIX *result);
 static MATRIX *matrix_cofactors(MATRIX m, MATRIX *result);
 static MATRIX *matrix_minor(MATRIX m, unsigned short axis[2], MATRIX *result);
@@ -448,6 +451,186 @@ extern MATRIX *matrix_transpose(MATRIX m, MATRIX *result) {
 }
 
 
+/*
+.. c:function:: extern double matrix_determinant(MATRIX m);
+
+	Compute the determinant of a square matrix.
+
+	Parameters
+	----------
+	m : ``MATRIX``
+		The matrix itself.
+
+	Returns
+	-------
+	det : ``double``
+		:math:`det(m)`. See below for description of algorithm.
+
+	Notes
+	-----
+	If there are no zeros along the diagonal of the input matrix, indicating
+	that no row exchanges would be required, then this function computes the
+	determinant through LU decomposition with Crout's algorithm (see section
+	2.3.1 of Press et al. 2007 [1]_). Since the primary use case of this
+	function is symmetric covariance matrices, this will essentially always
+	be the case for all cases in which optimization is a concern.
+
+	If there instead *are* zeros along the diagonal, then the determinant
+	is computed through expansion by minors implemented recursively within an
+	iterative sum. The solution for a 2x2 matrix is implemented as the base
+	case, with the obvious solution for a 1x1 matrix included as an additional
+	failsafe base case.
+
+	.. [1] Press, Teukolsky, Vetterling & Flannery (2007), Numerical Recipes,
+		Cambridge University Press
+*/
+extern double matrix_determinant(MATRIX m) {
+
+	if (m.n_rows == m.n_cols) {
+
+		unsigned short zero_along_diagonal = 0u;
+		for (unsigned short i = 0u; i < m.n_rows; i++) {
+			zero_along_diagonal |= m.matrix[i][i] == 0.f;
+		}
+		if (!zero_along_diagonal) {
+			return determinant_LUdecomp(m);
+		} else {
+			return determinant_expansion_minors(m);
+		}
+
+	} else {
+		fatal_print("%s\n",
+			"Cannot compute the determinant of a non-square matrix.");
+	}
+
+}
+
+
+/*
+.. c:function:: static double determinant_LUdecomp(MATRIX m);
+
+	Compute the determinant of a matrix through LU decomposition.
+
+	.. note::
+
+		This function assumes that no row exchanges are necessary, which would
+		be the case if there is a zero along the diagonal. In practice, this
+		will never be the case for symmetric covariance matrices, which are
+		the primary use case of TrackStar's ``matrix_determinant`` function
+		anyway.
+
+	Parameters
+	----------
+	m : ``MATRIX``
+		The matrix whose determinant is to be computed.
+
+	Returns
+	-------
+	det : ``double``
+		The determinant of the intput marix, which is equivalent to the
+		product of the diagonal elements of its LU decomposition.
+
+	Notes
+	-----
+	The LU decomposition follows Crout's algorithm (see section 2.3.1 of
+	Press et al. 2007 [1]_).
+
+	.. [1] Press, Teukolsky, Vetterling & Flannery (2007), Numerical Recipes,
+		Cambridge University Press
+
+	.. seealso::
+
+		LUdecomp(MATRIX m);
+		determinant_expansion_minors(MATRIX m);
+*/
+static double determinant_LUdecomp(MATRIX m) {
+
+	if (m.n_rows == m.n_cols) {
+
+		MATRIX *LU = LUdecomp(m);
+		double prod = 1.f;
+		for (unsigned short i = 0u; i < m.n_rows; i++) {
+			prod *= (*LU).matrix[i][i];
+		}
+		matrix_free(LU);
+		return prod;
+
+	} else {
+		fatal_print("%s\n",
+			"Cannot compute the determinant of a non-square matrix.");
+	}
+
+}
+
+
+/*
+.. c:function:: static MATRIX *LUdecomp(MATRIX m);
+
+	Compute the LU decomposition of a square matrix.
+
+	Parameters
+	----------
+	m : ``MATRIX``
+		The input square matrix to decompose.
+
+	Returns
+	-------
+	decomp : ``MATRIX *``
+		A pointer to the decomposed matrix. The decomposition is returned
+		"in place" in that the elements of the upper triangular (U) matrix are
+		along and above the diagonal, and the elements of the lower triangular
+		(L) matrix) are below the diagonal.
+
+	Notes
+	-----
+	This function follows Crout's algorithm for determining an LU decomposition
+	(see section 2.3.1 of Press et al. 2007 [1]_).
+
+	.. [1] Press, Teukolsky, Vetterling & Flannery (2007), Numerical Recipes,
+		Cambridge University Press
+*/
+static MATRIX *LUdecomp(MATRIX m) {
+
+	if (m.n_rows == m.n_cols) {
+
+		MATRIX *decomp = matrix_initialize(m.n_rows, m.n_cols);
+
+		/* start with the identity matrix */
+		for (unsigned short i = 0u; i < m.n_rows; i++) {
+			decomp -> matrix[i][i] = 1.f;
+		}
+
+		for (unsigned short j = 0u; j < m.n_cols; j++) {
+			for (unsigned short i = 0u; i <= j; i++) {
+				decomp -> matrix[i][j] = m.matrix[i][j];
+				for (unsigned short k = 0u; k < i; k++) {
+					decomp -> matrix[i][j] -= (
+						(*decomp).matrix[i][k] * (*decomp).matrix[k][j]
+					);
+				}
+			}
+			for (unsigned short i = j + 1u; i < m.n_rows; i++) {
+				decomp -> matrix[i][j] = m.matrix[i][j];
+				for (unsigned short k = 0u; k < j; k++) {
+					decomp -> matrix[i][j] -= (
+						(*decomp).matrix[i][k] * (*decomp).matrix[k][j]
+					);
+				}
+				decomp -> matrix[i][j] /= (*decomp).matrix[j][j];
+			}
+		}
+
+		return decomp;
+
+
+	} else {
+		fatal_print("%s\n",
+			"Cannot compute the LU decomposition of a non-square matrix.");
+	}
+
+}
+
+
 struct row_column_index {
 
 	/*
@@ -473,9 +656,21 @@ struct row_column_index {
 
 
 /*
-.. c:function:: extern double matrix_determinant(MATRIX m);
+.. c:function:: static double determinant_expansion_minors(MATRIX m);
 
-	Compute the determinant of a square matrix.
+	Compute the determinant of a square matrix through recursive expansion by
+	minors.
+
+	.. note::
+
+		This method for calculating a matrix determinant will only be called
+		when an element along the diagonal is equal to zero, which means that a
+		row exchange would be necessary to compute the determinant. In
+		practice, this will never be the case for symmetric covariance matrices,
+		which are the primary use case of TrackStar's ``matrix_determinant``
+		function. This method, originally implemented in production, remains
+		included as a failsafe, in which case it is fast enough for <10x10
+		matrices anyway.
 
 	Parameters
 	----------
@@ -485,8 +680,8 @@ struct row_column_index {
 	Returns
 	-------
 	det : ``double``
-		:math:`det(m)`, computed via expansion by minors in the first row of
-		the matrix. 
+		:math:`det(m)`, computed via expansion by minors along an optimal
+		axis.
 
 	Notes
 	-----
@@ -494,8 +689,10 @@ struct row_column_index {
 	with the solution for a 2x2 matrix implemented as the base case. As a
 	failsafe, the obvious solution for a 1x1 matrix is implemented as an
 	additional base case.
+
+	.. seealso:: determinant_LUdecomp(MATRIX m);
 */
-extern double matrix_determinant(MATRIX m) {
+static double determinant_expansion_minors(MATRIX m) {
 
 	if (m.n_rows == m.n_cols) {
 
@@ -511,7 +708,7 @@ extern double matrix_determinant(MATRIX m) {
 		} else {
 			/* The recursive case: an NxN matrix where N > 2 */
 			double result = 0.f;
-			struct row_column_index ideal_axis = matrix_determinant_ideal_axis(m);
+			struct row_column_index ideal_axis = expansion_ideal_axis(m);
 			if (ideal_axis.along_row) {
 				for (unsigned short j = 0u; j < m.n_cols; j++) {
 					if (m.matrix[ideal_axis.index][j] != 0) {
@@ -563,20 +760,19 @@ extern double matrix_determinant(MATRIX m) {
 		The ``struct`` containing the index of the row or column and a boolean
 		flag describing whether it is a row or a column.
 */
-static struct row_column_index matrix_determinant_ideal_axis(MATRIX m) {
+static struct row_column_index expansion_ideal_axis(MATRIX m) {
 
 	struct row_column_index axis;
 	axis.index = 0u;
 	axis.along_row = 1u;
-	unsigned short current_max = matrix_zeros_along_axis(m,
-		axis.index, axis.along_row);
+	unsigned short current_max = zeros_along_axis(m,axis.index, axis.along_row);
 	for (unsigned short i = 1u; i < m.n_rows; i++) {
-		if (matrix_zeros_along_axis(m, i, 1u) > current_max) {
+		if (zeros_along_axis(m, i, 1u) > current_max) {
 			axis.index = i;
 		} else {}
 	}
 	for (unsigned short j = 0u; j < m.n_cols; j++) {
-		if (matrix_zeros_along_axis(m, j, 0u) > current_max) {
+		if (zeros_along_axis(m, j, 0u) > current_max) {
 			axis.index = j;
 			axis.along_row = 0u;
 		} else {}
@@ -605,7 +801,7 @@ static struct row_column_index matrix_determinant_ideal_axis(MATRIX m) {
 	n : ``unsigned short``
 		The number of zeros along the given row or column.
 */
-static unsigned short matrix_zeros_along_axis(MATRIX m,
+static unsigned short zeros_along_axis(MATRIX m,
 	const unsigned short index, const unsigned short along_row) {
 
 	unsigned short n = 0;

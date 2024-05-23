@@ -376,15 +376,25 @@ extern MATRIX *matrix_transpose(MATRIX m, MATRIX *result);
 	Returns
 	-------
 	det : ``double``
-		:math:`det(m)`, computed via expansion by minors in the first row of
-		the matrix. 
+		:math:`det(m)`. See below for description of algorithm.
 
 	Notes
 	-----
-	The expansion by minors is implemented recursively within an iterative sum,
-	with the solution for a 2x2 matrix implemented as the base case. As a
-	failsafe, the obvious solution for a 1x1 matrix is implemented as an
-	additional base case.
+	If there are no zeros along the diagonal of the input matrix, indicating
+	that no row exchanges would be required, then this function computes the
+	determinant through LU decomposition with Crout's algorithm (see section
+	2.3.1 of Press et al. 2007 [1]_). Since the primary use case of this
+	function is symmetric covariance matrices, this will essentially always
+	be the case for all cases in which optimization is a concern.
+
+	If there instead *are* zeros along the diagonal, then the determinant
+	is computed through expansion by minors implemented recursively within an
+	iterative sum. The solution for a 2x2 matrix is implemented as the base
+	case, with the obvious solution for a 1x1 matrix included as an additional
+	failsafe base case.
+
+	.. [1] Press, Teukolsky, Vetterling & Flannery (2007), Numerical Recipes,
+		Cambridge University Press
 */
 extern double matrix_determinant(MATRIX m);
 
