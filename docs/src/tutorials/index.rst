@@ -9,3 +9,4 @@ features.
 	:maxdepth: 1
 
 	first
+	samples
