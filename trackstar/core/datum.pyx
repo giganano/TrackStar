@@ -11,13 +11,15 @@ from .utils import copy_array_like_object, copy_cstring
 from .utils cimport copy_pystring, strindex
 from libc.stdlib cimport malloc, free
 from libc.string cimport strlen, strcpy
+from .matrix cimport matrix
 from .track cimport track
+from . cimport datum
 
 
 cdef class datum:
 
 	r"""
-	.. class:: trackstar.datum(**kwargs)
+	.. class:: trackstar.datum(vector)
 
 	A generic datum class for constructing data vectors with descriptive
 	labels attached to each vector component.
@@ -154,7 +156,7 @@ input vector has no such label.""" % (label))
 Unrecognized datum label: %s. If additional vector components are to be added, \
 a new datum object must be created.""" % (key))
 			else:
-				raise ValueError("""\
+				raise TypeError("""\
 Datum vector component must be a real number. Got: %s""" % (type(value)))
 		else:
 			raise TypeError("Datum label must be a string. Got: %s" % (
@@ -188,7 +190,7 @@ Datum vector component must be a real number. Got: %s""" % (type(value)))
 	def __neg__(self):
 		new_vector = {}
 		for key in self.keys(): new_vector[key] = -self[key]
-		return self.__class__(**new_vector)
+		return datum(new_vector)
 
 
 	def __add__(self, datum other):
@@ -207,31 +209,50 @@ Datum vector component must be a real number. Got: %s""" % (type(value)))
 				new_vector[key] += other._d[0].vector[0][i]
 			else:
 				new_vector[key] = other._d[0].vector[0][i]
-		return self.__class__(**new_vector)
+		return datum(new_vector)
 
 
 	def __sub__(self, datum other):
 		return self.__add__(other.__neg__())
 
 
-	def __mul__(self, datum other):
-		if self._d[0].n_cols == other._d[0].n_cols:
-			# vector components may be out of order between the two
-			dotprod = 0
-			for i in range(other._d[0].n_cols):
-				idx = strindex(self._d[0].labels, other._d[0].labels[i],
-					self._d[0].n_cols)
-				if idx != -1:
-					dotprod += self._d[0].vector[0][i] * other._d[0].vector[0][idx]
-				else:
-					raise ValueError("""\
-Vectors must have the same components in order to evaluate dot product. \
-Got: %s, %s.""" % (str(self.keys()), str(other.keys())))
-			return dotprod
+	def __mul__(self, other):
+		if isinstance(other, numbers.Number):
+			return self._mul_prefactor_(other)
+		elif isinstance(other, datum):
+			return self._mul_datum_(other)
+		elif isinstance(other, matrix):
+			return self._mul_matrix_(other)
 		else:
-			raise ValueError("""\
-Vectors must have the same dimensionality in order to evaluate dot product. \
-Got: %d, %d.""" % (self._d[0].n_cols, other._d[0].n_cols))
+			raise TypeError("""\
+Datum multiplication requires either a scalar prefactor or another datum to \
+take the dot product with. Got: %s""" % (type(other)))
+
+
+	def __rmul__(self, other):
+		if isinstance(other, numbers.Number):
+			return self.__mul__(other)
+		else:
+			raise TypeError("""\
+Datum multiplication requires either a scalar prefactor or another datum to \
+take the dot product with. Got: %s""" % (type(other)))
+
+
+	def _mul_prefactor_(self, other):
+		assert isinstance(other, numbers.Number), "Internal Error."
+		new_vector = {}
+		for key in self.keys():
+			new_vector[key] = other * self.__getitem__(key)
+		return datum(new_vector)
+
+
+	def _mul_datum_(self, datum other):
+		assert isinstance(other, datum)
+		result = 0
+		common_keys = list(set(self.keys()) & set(other.keys()))
+		for key in common_keys:
+			result += self.__getitem__(key) * other.__getitem__(key)
+		return result
 
 
 	@property
@@ -339,6 +360,13 @@ Keyword arg 'quantities' must be of type list, tuple, or None. Got: %s""" % (
 		for i in range(self._d[0].n_cols): _keys.append(
 			copy_cstring(self._d[0].labels[i]))
 		return _keys
+
+
+	def tomatrix(self):
+		r"""
+		Get the data vector as a matrix.
+		"""
+		return matrix([[self[key] for key in self.keys()]])
 
 
 class datum_extra(dict):
