@@ -482,7 +482,7 @@ static TRACK *track_subset(DATUM d, TRACK t) {
 	sub -> n_threads = t.n_threads;
 	sub -> use_line_segment_corrections = t.use_line_segment_corrections;
 
-	for (unsigned short i = 0u; i < (*sub).dim; i++) {
+	for (unsigned short i = 0u; i < d.n_cols; i++) {
 		signed short index = strindex(t.labels, d.labels[i], t.dim);
 		switch(index) {
 
@@ -491,7 +491,7 @@ static TRACK *track_subset(DATUM d, TRACK t) {
 				return NULL;
 
 			default:
-				strcpy(sub -> labels[i], d.labels[index]);
+				strcpy(sub -> labels[i], t.labels[index]);
 				for (unsigned short j = 0u; j < t.n_vectors; j++) {
 					sub -> predictions[j][i] = t.predictions[j][index];
 				}
