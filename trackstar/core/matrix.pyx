@@ -15,8 +15,6 @@ cdef class matrix:
 	r"""
 	A generic matrix object for linear algebra operations.
 
-	.. seealso:: ``trackstar.datum``
-
 	.. todo::
 
 		Replace example code outputs with true uses of this class.
