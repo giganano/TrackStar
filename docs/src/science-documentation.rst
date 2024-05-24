@@ -18,6 +18,12 @@ used to generate the mock.
 __ johnson22_
 .. _johnson22: https://ui.adsabs.harvard.edu/abs/2022arXiv221001816J/abstract
 
+.. _science_documentation_synopsis:
+
+Synopsis
+--------
+This section presents an overview of the mathematics behind TrackStar.
+
 
 
 
