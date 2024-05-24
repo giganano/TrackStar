@@ -102,6 +102,18 @@ class TestMatrixFundamentals(MatrixBaseFixture):
 				assert case[i, j] == 0.2
 
 
+	@staticmethod
+	def test_tonumpyarray(n_rows, n_cols, case):
+		r"""tests trackstar.matrix.tonumpyarray"""
+		try:
+			arr = case.tonumpyarray()
+		except:
+			assert False
+		for i in range(n_rows):
+			for j in range(n_cols):
+				assert case[i, j] == arr[i, j]
+
+
 class TestMatrixArithmetic(MatrixBaseFixture):
 
 	r"""
@@ -126,7 +138,8 @@ class TestMatrixArithmetic(MatrixBaseFixture):
 		assert result.n_cols == n_cols
 		for i in range(n_rows):
 			for j in range(n_cols):
-				assert result[i, j] == pytest.approx(case1[i, j] + case2[i, j])
+				assert result[i, j] == pytest.approx(case1[i, j] + case2[i, j],
+					rel = 1e-15)
 
 
 	@staticmethod
@@ -146,7 +159,8 @@ class TestMatrixArithmetic(MatrixBaseFixture):
 		assert result.n_cols == n_cols
 		for i in range(n_rows):
 			for j in range(n_cols):
-				assert result[i, j] == pytest.approx(case1[i, j] - case2[i, j])
+				assert result[i, j] == pytest.approx(case1[i, j] - case2[i, j],
+					rel = 1e-15)
 
 
 	@staticmethod
@@ -183,7 +197,7 @@ class TestMatrixArithmetic(MatrixBaseFixture):
 					s = 0
 					for k in range(case.n_cols):
 						s += case[i, k] * right[k, j]
-					assert result[i, j] == pytest.approx(s)
+					assert result[i, j] == pytest.approx(s, rel = 1e-15)
 
 
 	@staticmethod
@@ -199,14 +213,16 @@ class TestMatrixArithmetic(MatrixBaseFixture):
 			assert False
 		for i in range(n_rows):
 			for j in range(n_cols):
-				assert result[i, j] == pytest.approx(factor * case[i, j])
+				assert result[i, j] == pytest.approx(factor * case[i, j],
+					rel = 1e-15)
 		try:
 			result = factor * case
 		except:
 			return False
 		for i in range(n_rows):
 			for j in range(n_cols):
-				assert result[i, j] == pytest.approx(factor * case[i, j])
+				assert result[i, j] == pytest.approx(factor * case[i, j],
+					rel = 1e-15)
 
 
 	@staticmethod
@@ -274,7 +290,12 @@ class TestSquareMatrix(SquareMatrixBaseFixture):
 		for i in range(size):
 			for j in range(size):
 				case[i, j] = np.random.random()
-		assert case.determinant() != pytest.approx(value**size)
+		try:
+			arr = case.tonumpyarray()
+		except:
+			pytest.skip("NumPy array conversion failed.")
+		assert case.determinant() == pytest.approx(np.linalg.det(arr),
+			rel = 1e-15)
 
 
 	@staticmethod
@@ -301,6 +322,6 @@ class TestSquareMatrix(SquareMatrixBaseFixture):
 			pytest.skip("Matrix multiplication failed.")
 		for i in range(size):
 			for j in range(size):
-				assert left[i, j] == pytest.approx(int(i == j))
-				assert right[i, j] == pytest.approx(int(i == j))
+				assert left[i, j] == pytest.approx(int(i == j), rel = 1e-15)
+				assert right[i, j] == pytest.approx(int(i == j), rel = 1e-15)
 
