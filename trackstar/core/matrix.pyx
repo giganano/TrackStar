@@ -630,3 +630,15 @@ Cannot compute the determinant of a non-square matrix. Dimensions: %dx%d""" % (
 		matrix_transpose(self._m[0], result._m)
 		return result
 
+	def tonumpyarray(self):
+		r"""
+		Convert the matrix to a NumPy array.
+		"""
+		try:
+			import numpy as np
+		except ModuleNotFoundError:
+			raise ModuleNotFoundError("""\
+Cannot convert matrix to NumPy array because NumPy was not found.""")
+		return np.array([[self[i, j] for j in range(
+			self.n_cols)] for i in range(self.n_rows)])
+
