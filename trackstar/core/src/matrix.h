@@ -380,18 +380,23 @@ extern MATRIX *matrix_transpose(MATRIX m, MATRIX *result);
 
 	Notes
 	-----
-	If there are no zeros along the diagonal of the input matrix, indicating
-	that no row exchanges would be required, then this function computes the
-	determinant through LU decomposition with Crout's algorithm (see section
-	2.3.1 of Press et al. 2007 [1]_). Since the primary use case of this
-	function is symmetric covariance matrices, this will essentially always
-	be the case for all cases in which optimization is a concern.
+	The determinant is computed through LU decomposition with Crout's
+	algorithm (see section 2.3.1 of Press et al. 2007 [1]_). If it finds that
+	a row exchange would be required to compute the decomposition, then this
+	function falls back on expansion by minors along an ideal row or column,
+	implemented recursively within an iterative sum. The solution for a 2x2
+	matrix is implemented as the base case, with an additional base case for a
+	1x1 matrix included as a failsafe.
 
-	If there instead *are* zeros along the diagonal, then the determinant
-	is computed through expansion by minors implemented recursively within an
-	iterative sum. The solution for a 2x2 matrix is implemented as the base
-	case, with the obvious solution for a 1x1 matrix included as an additional
-	failsafe base case.
+	Since the primary use case of this function is symmetric covariance
+	matrices, the vast majority of applications in practice will proceed just
+	fine with an LU decomposition, which will more than make up for any
+	slow-downs encurred by the cases where expansion by minors was necessary.
+
+	.. seealso::
+
+		- ``static MATRIX *LUdecomp(MATRIX *m);
+		- ``static double determinant_expansion_minors(MATRIX m);
 
 	.. [1] Press, Teukolsky, Vetterling & Flannery (2007), Numerical Recipes,
 		Cambridge University Press

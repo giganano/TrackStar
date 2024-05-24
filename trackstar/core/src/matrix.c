@@ -13,7 +13,6 @@ at: https://github.com/giganano/trackstar.git.
 
 /* ---------- Static function comment headers not duplicated here ---------- */
 static MATRIX *matrix_unary_minus(MATRIX m, MATRIX *result);
-static double determinant_LUdecomp(MATRIX m);
 static MATRIX *LUdecomp(MATRIX m);
 static double determinant_expansion_minors(MATRIX m);
 struct row_column_index;
@@ -468,18 +467,23 @@ extern MATRIX *matrix_transpose(MATRIX m, MATRIX *result) {
 
 	Notes
 	-----
-	If there are no zeros along the diagonal of the input matrix, indicating
-	that no row exchanges would be required, then this function computes the
-	determinant through LU decomposition with Crout's algorithm (see section
-	2.3.1 of Press et al. 2007 [1]_). Since the primary use case of this
-	function is symmetric covariance matrices, this will essentially always
-	be the case for all cases in which optimization is a concern.
+	The determinant is computed through LU decomposition with Crout's
+	algorithm (see section 2.3.1 of Press et al. 2007 [1]_). If it finds that
+	a row exchange would be required to compute the decomposition, then this
+	function falls back on expansion by minors along an ideal row or column,
+	implemented recursively within an iterative sum. The solution for a 2x2
+	matrix is implemented as the base case, with an additional base case for a
+	1x1 matrix included as a failsafe.
 
-	If there instead *are* zeros along the diagonal, then the determinant
-	is computed through expansion by minors implemented recursively within an
-	iterative sum. The solution for a 2x2 matrix is implemented as the base
-	case, with the obvious solution for a 1x1 matrix included as an additional
-	failsafe base case.
+	Since the primary use case of this function is symmetric covariance
+	matrices, the vast majority of applications in practice will proceed just
+	fine with an LU decomposition, which will more than make up for any
+	slow-downs encurred by the cases where expansion by minors was necessary.
+
+	.. seealso::
+
+		- ``static MATRIX *LUdecomp(MATRIX *m);
+		- ``static double determinant_expansion_minors(MATRIX m);
 
 	.. [1] Press, Teukolsky, Vetterling & Flannery (2007), Numerical Recipes,
 		Cambridge University Press
@@ -488,72 +492,17 @@ extern double matrix_determinant(MATRIX m) {
 
 	if (m.n_rows == m.n_cols) {
 
-		unsigned short zero_along_diagonal = 0u;
-		for (unsigned short i = 0u; i < m.n_rows; i++) {
-			zero_along_diagonal |= m.matrix[i][i] == 0.f;
-		}
-		if (!zero_along_diagonal) {
-			return determinant_LUdecomp(m);
+		MATRIX *LU = LUdecomp(m);
+		if (LU != NULL) {
+			double prod = 1.f;
+			for (unsigned short i = 0u; i < m.n_rows; i++) {
+				prod *= (*LU).matrix[i][i];
+			}
+			matrix_free(LU);
+			return prod;
 		} else {
 			return determinant_expansion_minors(m);
 		}
-
-	} else {
-		fatal_print("%s\n",
-			"Cannot compute the determinant of a non-square matrix.");
-	}
-
-}
-
-
-/*
-.. c:function:: static double determinant_LUdecomp(MATRIX m);
-
-	Compute the determinant of a matrix through LU decomposition.
-
-	.. note::
-
-		This function assumes that no row exchanges are necessary, which would
-		be the case if there is a zero along the diagonal. In practice, this
-		will never be the case for symmetric covariance matrices, which are
-		the primary use case of TrackStar's ``matrix_determinant`` function
-		anyway.
-
-	Parameters
-	----------
-	m : ``MATRIX``
-		The matrix whose determinant is to be computed.
-
-	Returns
-	-------
-	det : ``double``
-		The determinant of the intput marix, which is equivalent to the
-		product of the diagonal elements of its LU decomposition.
-
-	Notes
-	-----
-	The LU decomposition follows Crout's algorithm (see section 2.3.1 of
-	Press et al. 2007 [1]_).
-
-	.. [1] Press, Teukolsky, Vetterling & Flannery (2007), Numerical Recipes,
-		Cambridge University Press
-
-	.. seealso::
-
-		LUdecomp(MATRIX m);
-		determinant_expansion_minors(MATRIX m);
-*/
-static double determinant_LUdecomp(MATRIX m) {
-
-	if (m.n_rows == m.n_cols) {
-
-		MATRIX *LU = LUdecomp(m);
-		double prod = 1.f;
-		for (unsigned short i = 0u; i < m.n_rows; i++) {
-			prod *= (*LU).matrix[i][i];
-		}
-		matrix_free(LU);
-		return prod;
 
 	} else {
 		fatal_print("%s\n",
@@ -580,6 +529,9 @@ static double determinant_LUdecomp(MATRIX m) {
 		"in place" in that the elements of the upper triangular (U) matrix are
 		along and above the diagonal, and the elements of the lower triangular
 		(L) matrix) are below the diagonal.
+
+		``NULL`` if a row exchange would be required to compute the
+		decomposition, in which case the LU decomposition does not exist.
 
 	Notes
 	-----
@@ -616,7 +568,12 @@ static MATRIX *LUdecomp(MATRIX m) {
 						(*decomp).matrix[i][k] * (*decomp).matrix[k][j]
 					);
 				}
-				decomp -> matrix[i][j] /= (*decomp).matrix[j][j];
+				if ((*decomp).matrix[j][j]) {
+					decomp -> matrix[i][j] /= (*decomp).matrix[j][j];
+				} else {
+					matrix_free(decomp);
+					return NULL;
+				}
 			}
 		}
 
@@ -658,19 +615,7 @@ struct row_column_index {
 /*
 .. c:function:: static double determinant_expansion_minors(MATRIX m);
 
-	Compute the determinant of a square matrix through recursive expansion by
-	minors.
-
-	.. note::
-
-		This method for calculating a matrix determinant will only be called
-		when an element along the diagonal is equal to zero, which means that a
-		row exchange would be necessary to compute the determinant. In
-		practice, this will never be the case for symmetric covariance matrices,
-		which are the primary use case of TrackStar's ``matrix_determinant``
-		function. This method, originally implemented in production, remains
-		included as a failsafe, in which case it is fast enough for <10x10
-		matrices anyway.
+	Compute the determinant of a square matrix through expansion by minors.
 
 	Parameters
 	----------
@@ -690,7 +635,15 @@ struct row_column_index {
 	failsafe, the obvious solution for a 1x1 matrix is implemented as an
 	additional base case.
 
-	.. seealso:: determinant_LUdecomp(MATRIX m);
+	This method for calculating a matrix determinant will only be called in the
+	event that an LU decomposition does not exist. In practice, this should
+	rarely if ever happen for symmetric covariance matrices, which are the
+	primary use case of TrackStar's ``matrix_determinant`` function. This
+	method, originally implemented in TrackStar's initial development, remains
+	included as a failsafe. Though expansion by minors does not scale well, it
+	is fast enough for most <10x10 matrices anyway.
+
+	.. seealso:: ``static MATRIX *LUdecomp(MATRIX m);
 */
 static double determinant_expansion_minors(MATRIX m) {
 
