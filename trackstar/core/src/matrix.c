@@ -482,8 +482,8 @@ extern MATRIX *matrix_transpose(MATRIX m, MATRIX *result) {
 
 	.. seealso::
 
-		- ``static MATRIX *LUdecomp(MATRIX *m);
-		- ``static double determinant_expansion_minors(MATRIX m);
+		- ``static MATRIX *LUdecomp(MATRIX *m);``
+		- ``static double determinant_expansion_minors(MATRIX m);``
 
 	.. [1] Press, Teukolsky, Vetterling & Flannery (2007), Numerical Recipes,
 		Cambridge University Press
