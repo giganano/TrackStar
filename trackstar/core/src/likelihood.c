@@ -177,6 +177,7 @@ extern double loglikelihood_datum(DATUM d, TRACK *t) {
 		unnormalize_weights(t, weight_norm);
 	} else {}
 	track_free(sub);
+	result /= sqrt(2 * PI * matrix_determinant( *((MATRIX *) d.cov) ));
 	return log(result);
 
 }
