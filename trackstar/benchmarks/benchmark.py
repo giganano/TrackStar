@@ -6,62 +6,70 @@
 # at: https://github.com/giganano/trackstar.git.
 
 __all__ = ["benchmark"]
-from timeit import repeat
+import timeit
+import functools
 import numpy as np
 DEFAULT_REPEAT = 100
 
-def benchmark(*bench_args,
-	setup = "pass",
-	repeat = DEFAULT_REPEAT):
-	def benchmark_decorator(func):
-		def wrapper(*func_args, **func_kwargs):
-			callables = []
-			if len(bench_args) == 1:
-				args = bench_args[0]
-				if isinstance(args, list):
-					for arg in args:
-						if isinstance(arg, tuple):
-							result = func(*arg, *func_args, **func_kwargs)
-						else:
-							result = func(arg, *func_args, **func_kwargs)
-						if callable(result):
-							callables.append(result)
-						else:
-							raise RuntimeError("""\
-Can only benchmark callable objects. Got: %s""" % (type(result)))
-				else:
-					raise RuntimeError("""\
-Benchmark arguments must be of type list. Got: %s""" % (type(args)))
-			elif len(args) == 0:
-				result = func(*func_args, **func_kwargs)
-				if callable(result):
-					callables.append(result)
-				else:
-					raise RuntimeError("""\
-Can only benchmark callable objects. Got: %s""" % (type(result)))
-			else:
-				raise RuntimeError("""\
-Expected only one set of parameters for benchmarking. Got: %d""" % (len(args)))
-			return [timer(c, setup = setup, repeat = repeat) for c in callables]
-		return wrapper
-	return benchmark_decorator
+
+class benchmark:
+
+	r"""
+	Provides two different functionalities simultaneously:
+
+		- Can be subclassed, and every call to a function that starts with
+		"benchmark_" or ends with "_benchmark" will automatically be turned
+		into a ``timer`` object.
+
+		- Can be used as a decorator that accepts the keyword args "setup"
+		and "repeat", which both get passed to timeit.repeat.
+	"""
+
+	def __init__(self, *args, setup = "pass", repeat = DEFAULT_REPEAT):
+		if len(args) == 1:
+			self.func = args[0]
+		elif len(args) == 0:
+			self.func = None
+		else:
+			raise TypeError("""\
+benchmark.__init__() takes at most 1 position argument, but %d were \
+given.""" % (len(args)))
+		self.setup = setup
+		self.repeat = repeat
+
+	def __call__(self, *args, **kwargs):
+		if self.func is None:
+			func = args[0]
+			def wrapper(*func_args, **func_kwargs):
+				return timer(func)(*func_args,
+					setup = self.setup,
+					repeat = self.repeat,
+					**func_kwargs)
+			return wrapper
+		else:
+			return timer(self.func)(*args,
+				setup = self.setup,
+				repeat = self.repeat,
+				**kwargs)
+
+	def __getattribute__(self, name):
+		attr = super().__getattribute__(name)
+		if callable(attr) and (name.startswith("benchmark_") or 
+			name.endswith("_benchmark")):
+			return timer(attr)
+		else:
+			return attr
 
 
 class timer:
 
-	def __init__(self, func, setup = "pass", repeat = DEFAULT_REPEAT):
+	def __init__(self, func):
 		self.func = func
-		self.setup = setup
-		self.repeat = repeat
 
-	def __repr__(self):
-		summary = self.time()
-		return "%.2e +/- %.2e seconds (%d iterations)" % (
-			summary["mean"], summary["std"], summary["n_iters"])
 
-	def time(self):
-		results = repeat(self.func, setup = self.setup,
-			repeat = self.repeat + 1, number = 1)[1:]
+	def __call__(self, *args, setup = "pass", repeat = DEFAULT_REPEAT, **kwargs):
+		results = timeit.repeat(functools.partial(self.func, *args, **kwargs),
+			setup = setup, repeat = repeat + 1, number = 1)[1:]
 		summary = {
 			"func": self.func,
 			"mean": np.mean(results),
@@ -69,7 +77,7 @@ class timer:
 			"std": np.std(results),
 			"fastest": min(results),
 			"slowest": max(results),
-			"n_iters": self.repeat
+			"n_iters": repeat
 		}
 		return summary
 

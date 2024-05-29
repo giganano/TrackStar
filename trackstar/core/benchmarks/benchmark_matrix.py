@@ -9,14 +9,25 @@ from trackstar.benchmarks import benchmark
 from trackstar import matrix
 import numpy as np
 
-class BenchmarkSquareMatrix:
 
-	@benchmark([2, 3, 4, 5, 6, 7, 8, 9, 10])
-	def benchmark_determinant(size):
-		x = matrix.identity(size)
+class square_matrix(benchmark):
+
+	def __init__(self, size):
+		self.mat = matrix.identity(size)
 		for i in range(size):
 			for j in range(size):
-				x[i, j] = x[j, i] = np.random.random()
-		return x.determinant
+				self.mat[i, j] = self.mat[j, i] = np.random.random()
+
+	def benchmark_determinant(self):
+		return self.mat.determinant()
+
+
+@benchmark(repeat = 1000)
+def benchmark_foo(x):
+	return x + 12
+
+@benchmark
+def bar_benchmark(x):
+	return x + 3
 
 		

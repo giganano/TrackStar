@@ -6,6 +6,7 @@
 # at: https://github.com/giganano/trackstar.git.
 
 import trackstar
+from .benchmark import benchmark
 import importlib
 import inspect
 import os
@@ -14,6 +15,7 @@ def discover_benchmarks(path = trackstar.__path__[0]):
 	benchmarks = []
 	for root, dirs, files in os.walk(path):
 		for file in files:
+			if root.endswith("/trackstar/benchmarks"): continue
 			if ((file.startswith("benchmark_") and file.endswith(".py")) or
 				file.endswith("_benchmark.py")):
 				dirnames = path.split('/')
@@ -27,6 +29,21 @@ def discover_benchmarks(path = trackstar.__path__[0]):
 			else:
 				continue
 			for name, data in inspect.getmembers(mod):
-				print(str(name))
+				# don't append the imported benchmark class
+				if data == benchmark: continue
+				if inspect.isclass(data) and issubclass(data, benchmark):
+					benchmarks.append(data)
+				elif isinstance(data, benchmark):
+					benchmarks.append(data)
+				elif (name.startswith("benchmark_") or
+					name.endswith("_benchmark.py")):
+					benchmarks.append(data)
+				else: pass
+				if file == "benchmark_matrix.py":
+					print(name)
+					print(data)
+				else: pass
+	print(benchmarks)
+
 
 		
