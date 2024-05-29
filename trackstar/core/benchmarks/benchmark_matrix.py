@@ -10,7 +10,8 @@ from trackstar import matrix
 import numpy as np
 
 
-class square_matrix(benchmark):
+@benchmark(repeat = 1000)
+class square_matrix:
 
 	def __init__(self, size):
 		self.mat = matrix.identity(size)
@@ -20,6 +21,9 @@ class square_matrix(benchmark):
 
 	def benchmark_determinant(self):
 		return self.mat.determinant()
+
+	def benchmark_invert(self):
+		return self.mat.invert()
 
 
 @benchmark(repeat = 1000)
