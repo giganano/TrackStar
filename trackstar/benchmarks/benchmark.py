@@ -54,7 +54,7 @@ given.""" % (len(args)))
 
 	def __getattribute__(self, name):
 		attr = super().__getattribute__(name)
-		if callable(attr) and (name.startswith("benchmark_") or 
+		if callable(attr) and (name.startswith("benchmark_") or
 			name.endswith("_benchmark")):
 			return timer(attr)
 		else:
