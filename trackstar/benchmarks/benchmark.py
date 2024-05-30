@@ -61,11 +61,17 @@ class wrapped_object:
 			self._instance = cls(*init_args, **init_kwargs)
 		else:
 			raise TypeError("Expected a class. Got: %s" % (type(cls)))
-		for name in list(self._instance.__dict__.keys()):
+		for name, value in inspect.getmembers(self._instance):
 			if name.startswith("benchmark_") or name.endswith("_benchmark"):
-				attr = getattr(self._instance, name)
-				if callable(attr): setattr(self, name,
-					benchmark_method(attr, setup = setup, repeat = repeat))
+				if callable(value):
+					timer_kwargs = {
+						"setup": setup,
+						"repeat": repeat
+					}
+					if getattr(value, "decorated_as_benchmark", False):
+						for key in value.timer_kwargs.keys():
+							timer_kwargs[key] = value.timer_kwargs[key]
+					setattr(self, name, benchmark_method(value, **timer_kwargs))
 				else: pass
 			else: pass
 
@@ -80,7 +86,7 @@ class wrapped_class:
 		self._timer_kwargs = timer_kwargs.copy()
 
 	def __call__(self, *args, **kwargs):
-		return wrapped_object(*args, **kwargs, **self._timer_kwargs)
+		return wrapped_object(self.cls, *args, **kwargs, **self._timer_kwargs)
 
 	@property
 	def cls(self):
@@ -146,7 +152,6 @@ class benchmark_function(wrapped_callable, timer):
 		timer.__init__(self, **kwargs)
 
 	def __call__(self, *args, **kwargs):
-		print("Hello!")
 		return timer.time(self, self.obj, *args, **kwargs)
 
 
@@ -157,7 +162,6 @@ class benchmark_method(wrapped_method, timer):
 		timer.__init__(self, **kwargs)
 
 	def __call__(self, *args, **kwargs):
-		print("Hello2!")
 		return timer.time(self, self.obj, *args, **kwargs)
 
 
@@ -166,47 +170,50 @@ class benchmark_class(wrapped_class, timer):
 	def __init__(self, cls, **timer_kwargs):
 		wrapped_class.__init__(self, cls, **timer_kwargs)
 		timer.__init__(self, **timer_kwargs)
+		for name, value in inspect.getmembers(cls):
+			if name.startswith("benchmark_") or name.endswith("_benchmark"):
+				value = getattr(cls, name)
+				if callable(value):
+					setattr(self, name,
+						benchmark_function(value, **timer_kwargs))
+				else: pass
+			else: pass
 
-	def __call__(self, *args, **kwargs):
-		return self.cls(*args, **kwargs)
 
 
-class benchmark:
-
-	def __init__(self, *args, **kwargs):
-		if len(args) == 1:
-			if len(kwargs.keys()): raise TypeError("""\
-benchmark.__init__() takes 0 positional arguments when keyword arguments \
-are supplied, but %d were given.""" % (len(args)))
-			if inspect.isclass(args[0]):
-				self._obj = benchmark_class(args[0], **kwargs)
+def benchmark(*args, **timer_kwargs):
+	r"""
+	The @benchmark decorator.
+	"""
+	def benchmark_decorator(obj):
+		if inspect.isclass(obj):
+			# decorate a class
+			return benchmark_class(obj, **timer_kwargs)
+		else:
+			# decorate a function
+			if '.' in obj.__qualname__:
+				# setting these attributes for individual functions allows
+				# instance methods to override the values for timer_kwargs
+				# given to the class as a whole.
+				obj.decorated_as_benchmark = True
+				obj.timer_kwargs = timer_kwargs.copy()
+				return obj
 			else:
-				self._obj = benchmark_function(args[0], **kwargs)
-		elif len(args) == 0:
-			self._obj = None
-			self._timer_kwargs = kwargs.copy()
+				wrapper = benchmark_function(obj, **timer_kwargs)
+				return wrapper
+
+	if len(timer_kwargs.keys()):
+		if len(args): raise TypeError("""\
+@benchmark does not take any positional arguments, but %d were given.""" % (
+			len(args)))
+		return benchmark_decorator
+
+	else:
+
+		if len(args) == 1:
+			return benchmark_decorator(args[0])
 		else:
 			raise TypeError("""\
-benchmark.__init__() takes at most 1 positional argument, but %d were \
-given.""" % (len(args)))
-
-
-	def __call__(self, *args, **kwargs):
-		if self._obj is None:
-			# This will only be the case if keyword args were passed to the
-			# decorator
-			if inspect.isclass(args[0]):
-				self._obj = benchmark_class(args[0], **self._timer_kwargs)
-				def wrapper(*init_args, **init_kwargs):
-					return self._obj(*init_args, **init_kwargs)
-				return wrapper
-			else:
-				self._obj = benchmark_function(args[0], **self._timer_kwargs)
-				def wrapper(*runtime_args, **runtime_kwargs):
-					return self._obj(*runtime_args, **runtime_kwargs)
-			return wrapper
-		elif isinstance(self._obj, benchmark_function):
-			return self._obj(*args, **kwargs)
-		elif isinstance(self._obj, benchmark_class):
-			return self._obj(*args, **kwargs)
+@benchmark does not take any positional arguments, but %d were given.""" % (
+				len(args)))
 

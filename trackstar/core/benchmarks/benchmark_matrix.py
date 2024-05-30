@@ -19,6 +19,7 @@ class square_matrix:
 			for j in range(size):
 				self.mat[i, j] = self.mat[j, i] = np.random.random()
 
+	@benchmark(repeat = 100)
 	def benchmark_determinant(self):
 		return self.mat.determinant()
 
