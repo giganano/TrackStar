@@ -10,7 +10,9 @@ from trackstar import matrix
 import numpy as np
 
 
-@benchmark(repeat = 1000)
+@benchmark(
+	args = [[2], [3], [4], [5], [6], [7], [8], [9], [10]],
+	repeat = 1000)
 class square_matrix:
 
 	def __init__(self, size):
@@ -27,12 +29,14 @@ class square_matrix:
 		return self.mat.invert()
 
 
-@benchmark(repeat = 1000)
+@benchmark(
+	args = [[2], [3], [4], [5], [6], [7], [8], [9], [10]],
+	repeat = 1000)
 def benchmark_foo(x):
 	return x + 12
 
 @benchmark
-def bar_benchmark(x):
-	return x + 3
+def bar_benchmark():
+	return "hello"
 
 		
