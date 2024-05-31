@@ -1,0 +1,41 @@
+
+# Text parameters
+font.family : serif
+text.usetex : True
+mathtext.fontset : custom
+text.latex.preamble : \usepackage{amsmath}
+figure.titlesize : 12
+axes.titlesize : 12
+axes.labelsize : 12
+xtick.labelsize : 12
+ytick.labelsize : 12
+legend.fontsize : 12
+
+# Figure formatting
+figure.figsize : 3.5, 3.5
+figure.facecolor : white
+
+# Error bars and legend formatting
+errorbar.capsize : 3
+legend.numpoints : 1
+legend.scatterpoints : 3
+legend.frameon : False
+legend.handletextpad : 0.3
+
+# Axes and tick formatting
+axes.linewidth : 0.75
+xtick.direction : in
+ytick.direction : in
+ytick.right : True
+xtick.top : True
+xtick.minor.visible : True
+ytick.minor.visible : True
+xtick.major.size : 10
+ytick.major.size : 10
+xtick.minor.size : 5
+ytick.minor.size : 5
+xtick.major.width : 0.5
+ytick.major.width : 0.5
+xtick.minor.width : 0.5
+ytick.minor.width : 0.5
+
