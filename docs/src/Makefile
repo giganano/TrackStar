@@ -24,7 +24,7 @@ help:
 
 .PHONY: api
 api:
-	@ python -m trackstar.docs ./api ./clib
+	@ python -m trackstar.docs ./api ./clib ./developers/contributing
 
 .PHONY: clean
 clean:

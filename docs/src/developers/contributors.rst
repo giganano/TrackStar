@@ -5,8 +5,8 @@
 
 .. _contributors:
 
-Contributors
-============
+Current Contributors
+====================
 
 | **James W. Johnson**
 | *License Owner* (Spring 2023 - Present)
