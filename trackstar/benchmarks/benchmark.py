@@ -8,6 +8,7 @@
 __all__ = ["benchmark"]
 import timeit
 import inspect
+import numbers
 import functools
 import numpy as np
 import types
@@ -15,7 +16,7 @@ import sys
 DEFAULT_REPEAT = 100
 
 
-def benchmark(*item, args = None, **timer_kwargs):
+def benchmark(*item, args = None, tolerance = None, **timer_kwargs):
 	r"""
 	The @benchmark decorator.
 	"""
@@ -33,6 +34,16 @@ Keyword arg \'args\' must be of type list, tuple, or NoneType. Got: %s""" % (
 				type(args)))
 	else: pass
 
+	if tolerance is not None:
+		if not isinstance(tolerance, numbers.Number):
+			raise TypeError("""\
+Keyword arg \'tolerance\' must be NoneType or a real number. Got: %s""" % (
+				type(tolerance)))
+		elif tolerance <= 0:
+			raise ValueError("Keyword arg \'tolerance\' must be positive.")
+		else: pass
+	else: pass
+
 	def benchmark_decorator(obj):
 		if inspect.isclass(obj):
 			# decorate a class
@@ -46,11 +57,12 @@ Keyword arg \'args\' must be of type list, tuple, or NoneType. Got: %s""" % (
 			else:
 				# it's a def statement
 				result = benchmark_function(obj, **timer_kwargs)
+		result.tolerance = tolerance
 		result.args = args
 		result.decorated_as_benchmark = True
 		return result
 
-	if len(timer_kwargs.keys()):
+	if len(timer_kwargs.keys()) or args is not None or tolerance is not None:
 		if len(item): raise TypeError("""\
 @benchmark does not take any positional arguments, but %d were given.""" % (
 			len(item)))
@@ -129,6 +141,11 @@ class wrapped_object:
 					setattr(getattr(self, name), "args", getattr(value, "args"))
 				else:
 					setattr(getattr(self, name), "args", None)
+				if hasattr(value, "tolerance"):
+					setattr(getattr(self, name), "tolerance",
+						getattr(value, "tolerance"))
+				else:
+					setattr(getattr(self, name), "tolerance", None)
 			else: pass
 
 	@property
@@ -256,8 +273,15 @@ class benchmark_method(wrapped_method, timer):
 			self.obj.__qualname__.split('.')[1],
 			benchmark_function.format_args(*args, **kwargs))
 		rep += "\n    "
+		if self.tolerance is not None:
+			if results["mean"] > self.tolerance:
+				rep += "\033[91m"
+			else:
+				rep += "\033[92m"
+		else: pass
 		rep += "%.2e +/- %.2e seconds" % (results["mean"], results["std"])
 		rep += " (mean and standard deviation of %d runs)" % (results["n_iters"])
+		if self.tolerance is not None: rep += "\033[0m"
 		sys.stdout.write("%s\n" % (rep))
 
 
@@ -273,3 +297,12 @@ class benchmark_class(wrapped_class, timer):
 					benchmark_function(value, **timer_kwargs))
 			else: pass
 
+	def __call__(self, *args, **kwargs):
+		result = wrapped_class.__call__(self, *args, **kwargs)
+		for name, value in inspect.getmembers(result):
+			if isinstance(value, benchmark_method):
+				if value.tolerance is None and self.tolerance is not None:
+					value.tolerance = self.tolerance
+				else: pass
+			else: pass
+		return result

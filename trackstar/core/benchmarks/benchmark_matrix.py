@@ -21,10 +21,11 @@ class square_matrix:
 			for j in range(size):
 				self.mat[i, j] = self.mat[j, i] = np.random.random()
 
-	@benchmark(repeat = 100)
+	@benchmark(repeat = 100, tolerance = 1e-6)
 	def benchmark_determinant(self):
 		return self.mat.determinant()
 
+	@benchmark(tolerance = 1.5e-4)
 	def benchmark_invert(self):
 		return self.mat.invert()
 
