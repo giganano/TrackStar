@@ -13,6 +13,12 @@ import sys
 import os
 
 def discover_benchmarks(path = trackstar.__path__[0]):
+	r"""
+	Runs TrackStar's benchmark discovery algorithm. See "Benchmark Discovery"
+	under "Benchmarking New Features" in the "Contributing to TrackStar"
+	section of the developer's documentation for description of the
+	algorithm.
+	"""
 	for root, dirs, files in os.walk(path):
 		for name in files:
 			if root.endswith("/trackstar/benchmarks"): continue
@@ -21,6 +27,17 @@ def discover_benchmarks(path = trackstar.__path__[0]):
 
 class file:
 
+	r"""
+	An object designed to parse a file for benchmark routines. Calling the
+	``run`` method will automatically run all benchmark routines in the file
+	in succession.
+
+	Parameters
+	----------
+	name : ``str``
+		The full or relative path to the file.
+	"""
+
 	def __init__(self, name):
 		self._benchmarks = self.parse_for_benchmarks(name)
 		name = name.split(os.sep)
@@ -28,6 +45,11 @@ class file:
 
 
 	def run(self):
+		r"""
+		Run all benchmark routines in the file in succession. See
+		``benchmark.py`` for description of the implementation of each
+		benchmark.
+		"""
 		for bench in self._benchmarks:
 			if isinstance(bench, benchmark_class):
 				if bench.args is not None:
@@ -84,6 +106,17 @@ Got: %s""" % (type(bench)))
 		r"""
 		Reads a file and returns everything inside of it that has the
 		@benchmark decorator on top.
+
+		Parameters
+		----------
+		name : ``str``
+			The full or relative path to the file.
+
+		Returns
+		-------
+		benchmarks : ``list``
+			A list of all benchmark routines in the file, determined based on
+			those that have the ``@benchmark`` decorator on top of them.
 		"""
 		if os.path.exists(name):
 			if file.tagged_as_benchmark(name):
@@ -110,6 +143,18 @@ Got: %s""" % (type(bench)))
 		r"""
 		Checks to see if a function or class is tagged for benchmarking by
 		seeing if its name begins with "benchmark_" or ends with "_benchmark".
+
+		Parameters
+		----------
+		name : ``str``
+			The full or relative path to the file.
+
+		Returns
+		-------
+		is_benchmark : ``bool``
+			``True`` if the file should be treated as containing benchmarks
+			(i.e. if it starts with "benchmark_" or ends with "_benchmark.py").
+			``False`` otherwise.
 		"""
 		if isinstance(name, str):
 			result = name.endswith(".py")

@@ -63,6 +63,13 @@ The ``@benchmark`` decorator will cause each function call to be repeated the
 number of times specified in the source file, returning a summary of the
 integration times (see below).
 
+.. note::
+
+	For a specified number of iterations :math:`n`, each function will
+	*actually* be called :math:`n + 1` times, with the first call omitted.
+	The first is often slower than subsequent calls due to the processor
+	warming up, making it an unfair benchmark.
+
 .. _decorator:
 
 The ``@benchmark`` Decorator

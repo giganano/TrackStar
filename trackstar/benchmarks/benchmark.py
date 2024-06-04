@@ -263,12 +263,6 @@ def benchmark(*item, args = None, tolerance = None, **timer_kwargs):
 		| "n_iters"  | The number of repeated calls to the functoin (i.e.  |
 		|            | the same value as the keyword arg ``repeat``).      |
 		+------------+-----------------------------------------------------+
-
-	Notes
-	-----
-	Technically, the ``@benchmark`` decorator calls each function ``repeat + 1``
-	times and omits the first call. It is usually slower due to the processor
-	warming up, and therefore it is often not a fair benchmark.
 	"""
 	if args is not None:
 		if isinstance(args, list) or isinstance(args, tuple):
@@ -330,6 +324,17 @@ Keyword arg \'tolerance\' must be NoneType or a real number. Got: %s""" % (
 
 class wrapped_callable:
 
+	r"""
+	A simple wrapper on a callable object. Calling an instance of this class
+	forwards all positional and keyword arguments to the wrapped object.
+
+	Parameters & Attributes
+	-----------------------
+	obj : ``object``
+		Any callable object, either a function or an object with a ``__call__``
+		function.
+	"""
+
 	def __init__(self, obj):
 		self.obj = obj
 
@@ -351,6 +356,17 @@ class wrapped_callable:
 
 class wrapped_method(wrapped_callable):
 
+	r"""
+	A simple wrapper on a callble object method (inherits from
+	``wrapped_callable``). Calling an instance of this class forwards all
+	positional and keyword arguments to the wrapped method.
+
+	Parameters & Attributes
+	-----------------------
+	obj : ``method``
+		The object method to be wrapped.
+	"""
+
 	def __call__(self, *args, **kwargs):
 		return self.obj.__call__(*args, **kwargs)
 
@@ -368,6 +384,29 @@ class wrapped_method(wrapped_callable):
 
 
 class wrapped_object:
+	
+	r"""
+	A simple wrapper on an instance of a class.
+
+	Attributes
+	----------
+	obj : ``object``
+		The instance of the wrapped class.
+
+	Parameters
+	----------
+	cls : ``class``
+		The class that the wrapped object is an instance of.
+	init_args : ``object``
+		Positional arguments to pass to ``cls.__init__``.
+	setup : ``str`` [default : "pass"]
+		A string containing setup code to pass to ``timeit.repeat``, which will
+		be run before timing any of the methods associated with the class.
+	repeat : ``int`` [default : 100]
+		The number of times to repeat the function call. Must be positive.
+	init_kwargs : ``object``
+		Keyword arguments to pass to ``cls.__init__``.
+	"""
 
 	def __init__(self, cls, *init_args, setup = "pass", repeat = DEFAULT_REPEAT,
 		**init_kwargs):
@@ -405,6 +444,20 @@ class wrapped_object:
 
 class wrapped_class:
 
+	r"""
+	A simple wrapper on a class. Calling this class forwards all positional
+	and keyword arguments to the class's ``__init__`` function and returns an
+	instance of the ``wrapped_object`` class.
+
+	Parameters & Attributes
+	-----------------------
+	cls : ``class``
+		The class that is wrapped.
+	**timer_kwargs : ``object``
+		Additional keyword arguments to pass to ``timeit.repeat``. See the
+		``@benchmark`` decorator for which keyword args are accepted.
+	"""
+
 	def __init__(self, cls, **timer_kwargs):
 		if inspect.isclass(cls):
 			self._cls = cls
@@ -422,11 +475,42 @@ class wrapped_class:
 
 class timer:
 
+	r"""
+	An object designed to time how long a given function call takes, a task
+	which is handled by the ``time`` method.
+
+	Parameters
+	----------
+	setup : ``str`` [default : "pass"]
+		A string containing code to run prior to timing the function call.
+	repeat : ``int`` [default: 100]
+		The number of times to call the function. Must be positive.
+	"""
+
 	def __init__(self, setup = "pass", repeat = DEFAULT_REPEAT):
 		self.setup = setup
 		self.repeat = repeat
 
 	def time(self, obj, *args, **kwargs):
+		r"""
+		Time a call to some function.
+
+		Parameters
+		----------
+		obj : ``object``
+			Any callable object.
+		*args : ``object``
+			Position arguments to pass on to ``obj``.
+		**kwargs : ``object``
+			Keyword arguments to pass on to ``obj``.
+
+		Returns
+		-------
+		summary : ``dict``
+			A dictionary summarizing the ``self.repeat`` function calls and how
+			long they took. See the ``@benchmark`` decorator for a summary of
+			the dictionary elements.
+		"""
 		if callable(obj):
 			results = timeit.repeat(
 				functools.partial(obj, *args, **kwargs),
@@ -447,6 +531,7 @@ class timer:
 
 	@property
 	def setup(self):
+		r"""Code to run prior to any function or method call."""
 		return self._setup
 
 	@setup.setter
@@ -458,6 +543,7 @@ class timer:
 
 	@property
 	def repeat(self):
+		r"""The number of times to repeat the function or method call."""
 		return self._repeat
 
 	@repeat.setter
@@ -471,8 +557,26 @@ class timer:
 			raise ValueError("Expected an int. Got: %s" % (type(value)))
 
 
-
 class benchmark_function(wrapped_callable, timer):
+	
+	r"""
+	An object designed to benchmark a function call. Inherits multiply from
+	``wrapped_callable`` and ``timer``. To run the benchmark, simply call an
+	instance of this class or call its ``print`` method with the positional
+	and keyword arguments the function requires.
+
+	Parameters
+	----------
+	obj : ``function``
+		The function to benchmark.
+	**kwargs : ``object``
+		Keyword arguments to pass on to ``timeit.repeat``. See the
+		``@benchmark`` decorator for description of which keyword arguments
+		are accepted.
+
+	Calling this object proceeds similarly to the ``print`` method. See its
+	docstring for direction on calling.
+	"""
 
 	def __init__(self, obj, **kwargs):
 		wrapped_callable.__init__(self, obj)
@@ -482,6 +586,24 @@ class benchmark_function(wrapped_callable, timer):
 		return timer.time(self, self.obj, *args, **kwargs)
 
 	def print(self, *args, **kwargs):
+		r"""
+		Print the mean, standard deviation, and number of function calls.
+		Can be understood to simply run ``obj(*args, **kwargs)`` a specified
+		number of times.
+
+		Parameters
+		----------
+		*args : ``object``
+			Positional arguments to pass onto ``obj``.
+		**kwargs : ``object``
+			Keyword arguments to pass onto ``obj``.
+
+		.. note::
+
+			While this function prints a summary, calling this object returns a
+			dictionary with more information. See the ``@benchmark`` decorator
+			for a summary of those dictionary elements.
+		"""
 		results = self.__call__(*args, **kwargs)
 		rep = "\033[1m%s(%s)\033[0m" % (
 			self.obj.__qualname__,
@@ -493,6 +615,22 @@ class benchmark_function(wrapped_callable, timer):
 
 	@staticmethod
 	def format_args(*args, **kwargs):
+		r"""
+		Format positional and keyword arguments for printing to the console.
+
+		Parameters
+		----------
+		*args : ``object``
+			Positional arguments that were taken by some function or class.
+		**kwargs : ``object``
+			Keyword arguments that were taken by the same function or class.
+
+		Returns
+		-------
+		sig : ``str``
+			A string that can be placed between parentheses to obtain a
+			representation of the function call that was timed.
+		"""
 		rep = ""
 		for i in range(len(args)):
 			if i: rep += ", "
@@ -507,6 +645,25 @@ class benchmark_function(wrapped_callable, timer):
 
 class benchmark_method(wrapped_method, timer):
 
+	r"""
+	An object designed to benchmark a method call. Inherits multiply from
+	``wrapped_method`` and ``timer``. To run the benchmark, simply call an
+	instance of this class or call its ``print`` method with the positional
+	and keyword arguments the method requires.
+
+	Parameters
+	----------
+	obj : ``method``
+		The method to benchmark.
+	**kwargs : ``object``
+		Keyword arguments to pass on to ``timeit.repeat``. See the
+		``@benchmark`` decorator for description of which keyword arguments
+		are accepted.
+
+	Calling this object proceeds similarly to the ``print`` method. See its
+	docstring for direction on calling.
+	"""
+
 	def __init__(self, obj, **kwargs):
 		wrapped_method.__init__(self, obj)
 		timer.__init__(self, **kwargs)
@@ -515,6 +672,24 @@ class benchmark_method(wrapped_method, timer):
 		return timer.time(self, self.obj, *args, **kwargs)
 
 	def print(self, *args, **kwargs):
+		r"""
+		Print the mean, standard deviation, and number of method calls.
+		Can be understood to simply run ``obj(*args, **kwargs)`` a specified
+		number of times.
+
+		Parameters
+		----------
+		*args : ``object``
+			Positional arguments to pass onto ``obj``.
+		**kwargs : ``object``
+			Keyword arguments to pass onto ``obj``.
+
+		.. note::
+
+			While this function prints a summary, calling this object returns a
+			dictionary with more information. See the ``@benchmark`` decorator
+			for a summary of those dictionary elements.
+		"""
 		results = self.__call__(*args, **kwargs)
 		rep = "\033[1m%s(%s).%s(%s)\033[0m" % (
 			self.obj.__qualname__.split('.')[0],
@@ -537,6 +712,23 @@ class benchmark_method(wrapped_method, timer):
 
 class benchmark_class(wrapped_class, timer):
 
+	r"""
+	An object designed to benchmark a class and all of its associated methods.
+	Inherits multiply from ``wrapped_class`` and ``timer``. To run the
+	benchmarks, simply call this object to obtain an instance of the class,
+	after which any calls to the associated methods will be automatically
+	benchmarked.
+
+	Parameters
+	----------
+	cls : ``class``
+		The class to benchmark.
+	**timer_kwargs : ``object``
+		Keyword arguments to pass on to ``timeit.repeat``. See the
+		``@benchmark`` decorator for a description of which arguments are
+		accepted.
+	"""
+
 	def __init__(self, cls, **timer_kwargs):
 		wrapped_class.__init__(self, cls, **timer_kwargs)
 		timer.__init__(self, **timer_kwargs)
@@ -548,8 +740,11 @@ class benchmark_class(wrapped_class, timer):
 			else: pass
 
 	def __call__(self, *args, **kwargs):
+		r"""Create an instance of the class to be benchmarked."""
 		result = wrapped_class.__call__(self, *args, **kwargs)
 		for name, value in inspect.getmembers(result):
+			# copy over the tolerances for each individual method, which may
+			# override the values given to the class as a whole.
 			if isinstance(value, benchmark_method):
 				if value.tolerance is None and self.tolerance is not None:
 					value.tolerance = self.tolerance
