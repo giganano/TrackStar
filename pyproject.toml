@@ -49,7 +49,8 @@ dev = ["pytest >= 7.0", "numpy >= 1.21.0"]
 docs = [ # see also docs/src/conf.py
 	"sphinx >= 6.0",
 	"sphinx-rtd-theme >= 2.0",
-	"nbsphinx >= 0.8"
+	"nbsphinx >= 0.8",
+	"matplotlib >= 3.0"
 ]
 
 [project.urls]

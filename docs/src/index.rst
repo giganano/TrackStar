@@ -39,17 +39,19 @@ Useful Links
 
 .. toctree::
 	:maxdepth: 2
-	:caption: User's Guide
+	:caption: Reference
 	:hidden:
 
 	science-documentation
 	api/index
+	benchmarks/index
 
 .. toctree::
 	:maxdepth: 1
 	:caption: Developer's Documentation
 	:hidden:
 
+	developers/contributing/index
 	developers/contributors
 	developers/license
 	developers/bug_reports

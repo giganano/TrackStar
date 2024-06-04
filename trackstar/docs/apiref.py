@@ -12,19 +12,20 @@ import os
 
 class apiref:
 
-	def __init__(self):
+	def __init__(self, config = _CONFIG_):
 		self._docpages = []
-		for item in _CONFIG_.keys():
+		self._config = config
+		for item in self._config.keys():
 			kwargs = {}
-			if "name" in _CONFIG_[item].keys():
-				kwargs["name"] = _CONFIG_[item]["name"]
-			if "title" in _CONFIG_[item].keys():
-				kwargs["title"] = _CONFIG_[item]["title"]
-			if "designation" in _CONFIG_[item].keys():
-				kwargs["designation"] = _CONFIG_[item]["designation"]
-			if "subs" in _CONFIG_[item].keys():
-				kwargs["subs"] = _CONFIG_[item]["subs"]
-			self._docpages.append(docpage(item, **kwargs))
+			if "name" in self._config[item].keys():
+				kwargs["name"] = self._config[item]["name"]
+			if "title" in self._config[item].keys():
+				kwargs["title"] = self._config[item]["title"]
+			if "designation" in self._config[item].keys():
+				kwargs["designation"] = self._config[item]["designation"]
+			if "subs" in self._config[item].keys():
+				kwargs["subs"] = self._config[item]["subs"]
+			self._docpages.append(docpage(item, config = self._config, **kwargs))
 
 	@property
 	def docpages(self):
@@ -46,7 +47,8 @@ class apiref:
 class docpage:
 
 	def __init__(self, obj, name = None, designation = None, title = None,
-		subs = []):
+		subs = [], config = _CONFIG_):
+		self._config = config
 		self.obj = obj
 		self.name = name
 		self.designation = designation
@@ -66,7 +68,6 @@ class docpage:
 			sig = None
 		if self.designation is not None:
 			for i in range(self.get_doc_indentation_level() - 1): rep += "\t"
-			# if self.is_sub(): rep += "\t"
 			rep += ".. py:%s:: %s" % (self.designation, self.name)
 		else: pass
 		if sig is not None:
@@ -77,16 +78,14 @@ class docpage:
 			else:
 				start = 0
 			for i in range(start, len(params)):
-				if i == start:
-					rep += "%s" % (params[i])
-				else:
-					rep += ", %s" % (params[i])
+				if i > start: rep += ", "
+				rep += str(sig.parameters[params[i]])
 			rep += ")\n\n"
 		elif hasattr(self.obj, "__signature__"):
 			rep += "%s\n\n" % (self.obj.__signature__)
 		else:
 			rep += "\n\n"
-		rep += self.obj.__doc__
+		if self.obj.__doc__ is not None: rep += self.obj.__doc__
 		rep += "\n\n"
 		return rep
 
@@ -179,16 +178,16 @@ class docpage:
 		if isinstance(value, list):
 			self._subs = []
 			for i in range(len(value)):
-				if value[i] in _CONFIG_.keys():
+				if value[i] in self._config.keys():
 					kwargs = {}
-					if "name" in _CONFIG_[value[i]].keys():
-						kwargs["name"] = _CONFIG_[value[i]]["name"]
-					if "title" in _CONFIG_[value[i]].keys():
-						kwargs["title"] = _CONFIG_[value[i]]["title"]
-					if "designation" in _CONFIG_[value[i]].keys():
-						kwargs["designation"] = _CONFIG_[value[i]]["designation"]
-					if "subs" in _CONFIG_[value[i]].keys():
-						kwargs["subs"] = _CONFIG_[value[i]]["subs"]
+					if "name" in self._config[value[i]].keys():
+						kwargs["name"] = self._config[value[i]]["name"]
+					if "title" in self._config[value[i]].keys():
+						kwargs["title"] = self._config[value[i]]["title"]
+					if "designation" in self._config[value[i]].keys():
+						kwargs["designation"] = self._config[value[i]]["designation"]
+					if "subs" in self._config[value[i]].keys():
+						kwargs["subs"] = self._config[value[i]]["subs"]
 					self._subs.append(docpage(value[i], **kwargs))
 				else:
 					raise ValueError("Object not in config file: %s" % (
@@ -198,7 +197,11 @@ class docpage:
 
 	def save(self, path = os.getcwd()):
 		if not self.is_sub():
-			with open("%s/%s.rst" % (path, self.name), 'w') as f:
+			if self.name.endswith(".inc"):
+				name = self.name
+			else:
+				name = "%s.rst" % (self.name)
+			with open("%s/%s" % (path, name), 'w') as f:
 				f.write(str(self))
 				for sub in self.subs:
 					f.write(str(sub))
@@ -208,8 +211,8 @@ class docpage:
 
 	def is_sub(self):
 		sub = False
-		for key in _CONFIG_.keys():
-			sub |= self.obj in _CONFIG_[key]["subs"]
+		for key in self._config.keys():
+			sub |= self.obj in self._config[key]["subs"]
 			if sub: break
 		return sub
 
