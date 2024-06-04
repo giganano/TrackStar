@@ -18,10 +18,15 @@ DEFAULT_REPEAT = 100
 
 def benchmark(*item, args = None, tolerance = None, **timer_kwargs):
 	r"""
-	The workhorse for benchmarking in TrackStar. This decorator can go atop any
-	function or class (see parameter description below).
+	This decorator is the workhorse for benchmarking in TrackStar. It can go
+	atop any function or class (see parameter description below). Add the
+	following line to your code to import it:
 
-	The simplest application is to place it atop some function to be timed:
+	.. code-block:: python
+
+		from trackstar.benchmarks import benchmark
+
+	The simplest use case is to place it atop some function to be timed:
 
 	.. code-block:: python
 
@@ -232,6 +237,38 @@ def benchmark(*item, args = None, tolerance = None, **timer_kwargs):
 		| ``setup``  | A string containing code to run prior to timing the |
 		|            | function itself.                                    |
 		+------------+-----------------------------------------------------+
+
+	Return Values
+	-------------
+	summary : ``dict``
+		A summary of the integration times required to call the function
+		``repeat`` number of times. All functions and methods decorated with
+		``@benchmark`` will return a similar dictionary, regardless of the
+		benchmarking parameters.
+
+		+------------+-----------------------------------------------------+
+		| "callable" | A string representation of the function or object   |
+		|            | that was called.                                    |
+		+------------+-----------------------------------------------------+
+		| "mean"     | The arithmetic mean of all integration times.       |
+		+------------+-----------------------------------------------------+
+		| "median"   | The median integration time.                        |
+		+------------+-----------------------------------------------------+
+		| "std"      | The standard deviation of the integration times.    |
+		+------------+-----------------------------------------------------+
+		| "fastest"  | The lowest integration time achieved.               |
+		+------------+-----------------------------------------------------+
+		| "slowest"  | The highest integration time achieved.              |
+		+------------+-----------------------------------------------------+
+		| "n_iters"  | The number of repeated calls to the functoin (i.e.  |
+		|            | the same value as the keyword arg ``repeat``).      |
+		+------------+-----------------------------------------------------+
+
+	Notes
+	-----
+	Technically, the ``@benchmark`` decorator calls each function ``repeat + 1``
+	times and omits the first call. It is usually slower due to the processor
+	warming up, and therefore it is often not a fair benchmark.
 	"""
 	if args is not None:
 		if isinstance(args, list) or isinstance(args, tuple):
