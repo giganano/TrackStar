@@ -9,15 +9,15 @@ from trackstar import benchmarks
 
 config = {
 	benchmarks: {
-		"name": "trackstar.benchmarks",
+		"name": "trackstar.benchmarks.inc",
 		"designation": None,
-		"title": "Benchmarking API",
+		"title": None,
 		"subs": [
 			benchmarks.benchmark
 		]
 	},
 	benchmarks.benchmark: {
-		"name": "@benchmark",
+		"name": "benchmark",
 		"designation": "decorator",
 		"title": None,
 		"subs": []

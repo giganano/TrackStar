@@ -18,7 +18,220 @@ DEFAULT_REPEAT = 100
 
 def benchmark(*item, args = None, tolerance = None, **timer_kwargs):
 	r"""
-	The @benchmark decorator.
+	The workhorse for benchmarking in TrackStar. This decorator can go atop any
+	function or class (see parameter description below).
+
+	The simplest application is to place it atop some function to be timed:
+
+	.. code-block:: python
+
+		@benchmark
+		def somefunction():
+			# function body to be timed
+
+	For functions that take arguments, values can be given to ``@benchmark``
+	with the keyword arg ``args`` according to
+
+	.. code-block:: python
+
+		@benchmark(args = [[2], [3], [4], [5]])
+		def somefunction(x):
+			return x**2 # or perhaps something more interesting?
+
+	The values of ``args`` are used *only* when running the full benchmark
+	suite with ``python -m trackstar.benchmarks``. It is still possible to
+	run the above function with
+
+	>>> somefunction(6)
+	>>> somefunction(12)
+
+	even though ``6``, and ``12`` do not exist as entries in ``args``.
+
+	Functions that take multiple arguments should have the appropriate number
+	of values placed in each element of ``args``. For example:
+
+	.. code-block:: python
+
+		@benchmark(args = [[2, 3], [3, 4], [4, 5]])
+		def somefunction(x, y):
+			return x * y
+
+	When calling any of these functions, TrackStar will repeat the call 100
+	times by default and report the mean integration time. To change the number
+	of calls, simply give ``@benchmark`` the keyword arg ``repeat``:
+
+	.. code-block:: python
+
+		@benchmark(
+			args = [[2, 3], [3, 4], [4, 5]],
+			repeat = 1000)
+		def somefunction(x, y):
+			return x * y
+
+	It is also good practice to specify some tolerance for the mean integration
+	time. ``@benchmark`` accepts this value in seconds as another keyword
+	argument. For example:
+
+	.. code-block:: python
+
+		@benchmark(
+			args = [[2, 3], [3, 4], [4, 5]],
+			repeat = 1000,
+			tolerance = 1e-6)
+		def somefunction(x, y):
+			return x * y
+
+	When running the full suite of benchmarks with ``python -m
+	trackstar.benchmarks``, values that pass the imposed tolerance will print
+	their integration time in green. Those that fail will print in red.
+
+	Code to run prior to timing the function body can also be specified as a
+	keyword argument to ``@benchmark``. For example:
+
+	.. code-block:: python
+
+		@benchmark(
+			args = [[2], [3], [4]],
+			repeat = 1000,
+			tolerance = 1e-6,
+			setup = "y = 3")
+		def somefunction(x):
+			return x * y # y will be initialized by ``setup`` to a value of 3
+
+	The ``@benchmark`` decorator can also be placed atop a ``class`` to time
+	a whole suite of object methods. For example:
+
+	.. code-block:: python
+
+		@benchmark(
+			args = [[2, 3], [3, 4], [4, 5]],
+			repeat = 1000,
+			tolerance = 1e-6)
+		class mytimer:
+
+			def __init__(self, x, y):
+				self.x = x
+				self.y = y
+
+			def somefunction(self):
+				return self.x * self.y
+
+			def some_other_function(self):
+				return 2 * self.x * self.y
+
+	In these cases, the parameters of ``args`` will be used to call the
+	``__init__`` function of the decorated class. Both ``somefunction`` and
+	``some_other_function`` will adopt the benchmarking parameters passed to
+	``mytimer``, with the exception of ``args``. The values can be overridden
+	by placing an additional ``@benchmark`` decorator on the individual
+	functions:
+
+	.. code-block:: python
+
+		@benchmark(
+			args = [[2, 3], [3, 4], [4, 5]],
+			repeat = 1000,
+			tolerance = 1e-6)
+		class mytimer:
+
+			def __init__(self, x, y):
+				self.x = x
+				self.y = y
+
+			@benchmark(tolerance = 1e-3)
+			def somefunction(self):
+				return self.x * self.y
+
+			@benchmark(repeat = 100)
+			def some_other_function(self):
+				return 2 * self.x * self.y
+
+	Object methods that take additional parameters can take the keyword argument
+	``args`` according to:
+
+	.. code-block:: python
+
+		@benchmark(
+			args = [[2, 3], [3, 4], [4, 5]],
+			repeat = 1000,
+			tolerance = 1e-6)
+		class mytimer:
+
+			def __init__(self, x, y):
+				self.x = x
+				self.y = y
+
+			@benchmark(tolerance = 1e-3)
+			def somefunction(self):
+				return self.x * self.y
+
+			@benchmark(
+				args = [[2], [3], [4], [5]]
+				repeat = 100)
+			def some_other_function(self, a):
+				return a * self.x
+
+	In this case, the values ``2``, ``3``, ``4``, and ``5`` will be passed for
+	the parameter ``a`` taken by ``some_other_function``.
+
+	The ``@benchmark`` decorator will automatically put a timer on all functions
+	associated with the class, except for those whose names are preceded by an
+	underscore. For example:
+
+	.. code-block:: python
+
+		@benchmark(
+			args = [[2, 3], [3, 4], [4, 5]],
+			repeat = 1000,
+			tolerance = 1e-6)
+		class mytimer:
+
+			def __init__(self, x, y):
+				self.x = x
+				self.y = y
+
+			@benchmark(tolerance = 1e-3)
+			def somefunction(self):
+				return self.x * self.y
+
+			@benchmark(
+				args = [[2], [3], [4], [5]]
+				repeat = 100)
+			def some_other_function(self, a):
+				return a * self.x
+
+			def _skipped(self):
+				# do something here, it won't be timed
+
+	The function ``_skipped`` will not be benchmarked and will instead behave
+	as an otherwise normally declared function.
+
+	Parameters
+	----------
+	\*item : ``callable`` or ``class``
+		At most one callable object or class. An object appears in this
+		parameter only when the bare ``@benchmark`` decorator is placed atop
+		a function or class with no keyword arguments.
+	args : ``list``, ``tuple``, or ``None``
+		Parameters to pass to the function when running benchmarks automatically
+		with ``python -m trackstar.benchmarks``. Must be 2-d, with each set of
+		arguments placed in their own ``list`` or ``tuple`` as individual
+		elements.
+	tolerance : real number or ``None``
+		A maximum allowed integration time. When running benchmarks
+		automatically with ``python -m trackstar.benchmarks``, those that pass
+		this constraint will show the integration time in green, and those
+		that fail will print in red.
+	timer_kwargs : varying types
+		Additional keyword arguments to pass to Python's ``timeit.repeat``
+		function:
+
+		+------------+-----------------------------------------------------+
+		| ``repeat`` | The number of times to call the function            |
+		+------------+-----------------------------------------------------+
+		| ``setup``  | A string containing code to run prior to timing the |
+		|            | function itself.                                    |
+		+------------+-----------------------------------------------------+
 	"""
 	if args is not None:
 		if isinstance(args, list) or isinstance(args, tuple):

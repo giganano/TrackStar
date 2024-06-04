@@ -5,4 +5,4 @@
 
 .PHONY: clean
 clean:
-	@ rm -f trackstar.benchmarks.rst
+	@ rm -f trackstar.benchmarks.inc

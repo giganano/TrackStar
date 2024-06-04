@@ -197,7 +197,11 @@ class docpage:
 
 	def save(self, path = os.getcwd()):
 		if not self.is_sub():
-			with open("%s/%s.rst" % (path, self.name), 'w') as f:
+			if self.name.endswith(".inc"):
+				name = self.name
+			else:
+				name = "%s.rst" % (self.name)
+			with open("%s/%s" % (path, name), 'w') as f:
 				f.write(str(self))
 				for sub in self.subs:
 					f.write(str(sub))

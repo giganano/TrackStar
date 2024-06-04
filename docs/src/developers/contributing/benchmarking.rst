@@ -9,6 +9,9 @@ Benchmarking New Features
 Once your contribution has been implemented and tested, the developers kindly
 request that any new user-facing features be benchmarked where appropriate.
 
-.. include:: trackstar.benchmarks.rst
+Benchmarking API
+================
+
+.. include:: trackstar.benchmarks.inc
 
 
