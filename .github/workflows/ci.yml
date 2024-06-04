@@ -60,7 +60,7 @@ jobs:
       - name: Run Tests
         shell: bash
         run: |
-          make tests
+          python -m trackstar.tests
 
       - name: Run Benchmarks
         shell: bash
