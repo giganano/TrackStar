@@ -247,6 +247,7 @@ by calling the above directly from the command line:
 .. code-block:: bash
 
 	$ python -c "import trackstar ; trackstar.test()"
+	$ python -m trackstar.tests
 
 or from the ``Makefile`` in the top-level directory:
 
