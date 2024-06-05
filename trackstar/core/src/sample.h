@@ -3,6 +3,8 @@ This file is part of the TrackStar package.
 Copyright (C) 2023 James W. Johnson (giganano9@gmail.com)
 License: MIT License. See LICENSE in top-level directory
 at: https://github.com/giganano/TrackStar.git.
+
+**Source File**: ``trackstar/core/src/sample.c``
 */
 
 #ifndef SAMPLE_H
