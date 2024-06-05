@@ -8,7 +8,6 @@
 from trackstar.benchmarks import benchmark
 from trackstar.core.tests.test_datum import _TEST_DATUM_
 from trackstar import datum
-import numpy as np
 
 @benchmark(repeat = 1000, args = [[_TEST_DATUM_]], tolerance = 5e-7)
 class simple_datum:
