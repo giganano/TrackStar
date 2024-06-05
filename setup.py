@@ -3,7 +3,7 @@
 # This file is part of the TrackStar package.
 # Copyright (C) 2023 James W. Johnson (giganano9@gmail.com)
 # License: MIT License. See LICENSE in top-level directory
-# at: https://github.com/giganano/trackstar.git.
+# at: https://github.com/giganano/TrackStar.git.
 #
 # TrackStar adopts the PEP 517 standard procedure for distribution, which is
 # based on the project.toml file in this directory. This setup file compiles
