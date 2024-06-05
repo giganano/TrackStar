@@ -11,7 +11,8 @@ import numpy as np
 
 @benchmark(
 	args = [[2], [3], [4], [5], [6], [7], [8], [9], [10]],
-	repeat = 1000)
+	repeat = 1000,
+	tolerance = 2.5e-5)
 class square_matrix:
 
 	def __init__(self, size):
@@ -28,15 +29,12 @@ class square_matrix:
 	def benchmark_setitem(self):
 		self.mat[0, 0] = 1
 
-	@benchmark(tolerance = 2.5e-5)
 	def benchmark_add(self):
 		return self.mat + self.mat
 
-	@benchmark(tolerance = 2.5e-5)
 	def benchmark_subtract(self):
 		return self.mat - self.mat
 
-	@benchmark(tolerance = 2.5e-5)
 	def benchmark_multiply(self):
 		return self.mat * self.mat
 
@@ -48,7 +46,6 @@ class square_matrix:
 	def benchmark_invert(self):
 		return self.mat.invert()
 
-	@benchmark(tolerance = 2.5e-5)
 	def benchmark_transpose(self):
 		return self.mat.transpose()
 
