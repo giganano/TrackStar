@@ -29,3 +29,4 @@ followed by the error message, after which a system exit call is made.
 
 	matrix.h
 	datum.h
+	likelihood.h

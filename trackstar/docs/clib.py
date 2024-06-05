@@ -16,7 +16,8 @@ class clib:
 		# headers = glob.glob("%s/core/src/*.h" % (trackstar.__path__[0]))
 		headers = [
 			"%s/core/src/matrix.h" % (trackstar.__path__[0]),
-			"%s/core/src/datum.h" % (trackstar.__path__[0])
+			"%s/core/src/datum.h" % (trackstar.__path__[0]),
+			"%s/core/src/likelihood.h" % (trackstar.__path__[0])
 		]
 		self._headers = [header_file(_) for _ in headers]
 
@@ -83,7 +84,9 @@ class header_file:
 				elif line == "/*\n":
 					block = self.read_comment_block(f)
 					line = f.readline()
-					if line.startswith("extern") or line == "\n":
+					if (line.startswith("extern") or
+						line.startswith("#define") or
+						line == "\n"):
 						comment_blocks.append(block)
 					else: pass
 				elif line == "": break
