@@ -28,3 +28,4 @@ followed by the error message, after which a system exit call is made.
 	:maxdepth: 1
 
 	matrix.h
+	datum.h

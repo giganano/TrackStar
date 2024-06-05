@@ -14,7 +14,10 @@ class clib:
 
 	def __init__(self):
 		# headers = glob.glob("%s/core/src/*.h" % (trackstar.__path__[0]))
-		headers = ["%s/core/src/matrix.h" % (trackstar.__path__[0])]
+		headers = [
+			"%s/core/src/matrix.h" % (trackstar.__path__[0]),
+			"%s/core/src/datum.h" % (trackstar.__path__[0])
+		]
 		self._headers = [header_file(_) for _ in headers]
 
 
@@ -103,9 +106,6 @@ class header_file:
 This file is part of the TrackStar package.
 Copyright (C) 2023 James W. Johnson (giganano9@gmail.com)
 License: MIT License. See LICENSE in top-level directory
-at: https://github.com/giganano/trackstar.git."""
+at: https://github.com/giganano/TrackStar.git."""
 		return block.replace(copyright_block, "")
-
-
-
 

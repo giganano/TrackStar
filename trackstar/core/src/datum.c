@@ -14,21 +14,20 @@ at: https://github.com/giganano/TrackStar.git.
 
 
 /*
-.. cpp:function:: extern DATUM *datum_initialize(double *arr, unsigned short
-	dim);
+.. c:function:: extern DATUM *datum_initialize(double *arr, unsigned short dim);
 
-Allocate memory for an return a pointer to a ``DATUM`` object.
+	Allocate memory for an return a pointer to a :c:type:`DATUM` object.
 
-Parameters
-----------
-dim : ``unsigned short``
-	The dimensionality of the data vector (i.e., the number of entries in
-	``arr``).
+	Parameters
+	----------
+	dim : ``unsigned short``
+		The dimensionality of the data vector (i.e., the number of entries in
+		``arr``).
 
-Returns
--------
-d : ``DATUM *``
-	The newly constructed data vector object.
+	Returns
+	-------
+	d : ``DATUM *``
+		The newly constructed data vector.
 */
 extern DATUM *datum_initialize(unsigned short dim) {
 
@@ -45,28 +44,29 @@ extern DATUM *datum_initialize(unsigned short dim) {
 
 
 /*
-.. cpp:function:: extern void datum_free(DATUM *d);
+.. c:function:: extern void datum_free(DATUM *d);
 
-Free up the memory associated with a ``DATUM`` object that is user-facing.
+	Free up the memory associated with a :c:type:`DATUM` object that is
+	user-facing.
 
-Parameters
-----------
-d : ``DATUM *``
-	The datum to be freed.
+	Parameters
+	----------
+	d : ``DATUM *``
+		The datum to be freed.
 
-Notes
------
-In practice, this function should only be called upon exiting the python
-interpreter, or when a user calls ``del`` on their ``DATUM`` object.
+	Notes
+	-----
+	In practice, this function should only be called upon exiting the python
+	interpreter, or when a user calls ``del`` on their ``DATUM`` object.
 
-The important difference between this function and ``datum_free_everything``
-is that this function does not free *every* block of memory stored by a
-``DATUM``. Doing so causes memory errors because Cython automatically calls
-the necessary ``__dealloc__`` functions that do free up the required blocks of
-memory. Namely, this function does not call
-``covariance_matrix_free(d -> cov))`` or ``matrix_free( (MATRIX *) d)``,
-because Cython calls ``matrix.__dealloc__`` with the same address as
-``datum._d``.
+	The important difference between this function and ``datum_free_everything``
+	is that this function does not free *every* block of memory stored by a
+	``DATUM``. Doing so causes memory errors because Cython automatically calls
+	the necessary ``__dealloc__`` functions that do free up the required blocks
+	of memory. Namely, this function does not call
+	``covariance_matrix_free(d -> cov))`` or ``matrix_free( (MATRIX *) d)``,
+	because Cython calls ``matrix.__dealloc__`` with the same address as
+	``datum._d``.
 */
 extern void datum_free(DATUM *d) {
 
@@ -86,25 +86,26 @@ extern void datum_free(DATUM *d) {
 
 
 /*
-.. cpp:function:: extern void datum_free_everything(DATUM *d);
+.. c:function:: extern void datum_free_everything(DATUM *d);
 
-Free up the memory associated with a ``DATUM`` object that is *not* user-facing.
+	Free up the memory associated with a :c:type:`DATUM` object that is *not*
+	user-facing.
 
-Parameters
-----------
-d : ``DATUM *``
-	The datum to be freed.
+	Parameters
+	----------
+	d : ``DATUM *``
+		The data vector to be freed.
 
-Notes
------
-In practice, this function should only be called for ``DATUM`` objects created
-in TrackStar's C library or cdef'ed instances created in Cython that are not
-returned to the user.
+	Notes
+	-----
+	In practice, this function should only be called for ``DATUM`` objects
+	created in TrackStar's C library or cdef'ed instances created in Cython
+	that are not returned to the user.
 
-.. seealso::
+	.. seealso::
 
-	See "Notes" under function ``datum_free`` for details on the differences
-	between the two functions.
+		See "Notes" under function ``datum_free`` for details on the
+		differences between the two functions.
 */
 extern void datum_free_everything(DATUM *d) {
 
@@ -123,28 +124,28 @@ extern void datum_free_everything(DATUM *d) {
 
 
 /*
-.. cpp:function:: extern DATUM *datum_specific_quantities(DATUM d,
-	char **labels, unsigned short n_labels);
+.. c:function:: extern DATUM *datum_specific_quantities(DATUM d, char **labels, unsigned short n_labels);
 
-Obtain a pointer to a ``DATUM`` object containing the relevant information for
-only *some* of the quantities stored in a given ``DATUM``.
+	Obtain a pointer to a :c:type:`DATUM` object containing the relevant
+	information for only *some* of the quantities stored in a given
+	:c:type:`DATUM`.
 
-Parameters
-----------
-d : ``DATUM``
-	The input data vector.
-labels : ``char **``
-	The column labels to pull from the datum object.
-n_labels : ``unsigned short``
-	The number of elements in ``labels``.
+	Parameters
+	----------
+	d : ``DATUM``
+		The input data vector.
+	labels : ``char **``
+		The column labels to pull from the datum object.
+	n_labels : ``unsigned short``
+		The number of elements in ``labels``.
 
-Returns
--------
-sub : ``DATUM *``
-	A new ``DATUM`` object, containing only the labels, vector components, and
-	covariance matrix entries associated with particular measurements.
-	``NULL`` if none of the the elements of ``labels`` match the vector
-	components of ``d``.
+	Returns
+	-------
+	sub : ``DATUM *``
+		A new :c:type:`DATUM`, containing only the labels, vector components,
+		and covariance matrix entries associated with particular measurements.
+		``NULL`` if none of the the elements of ``labels`` match the vector
+		components of ``d``.
 */
 extern DATUM *datum_specific_quantities(DATUM d, char **labels,
 	unsigned short n_labels) {
