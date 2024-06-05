@@ -29,4 +29,10 @@ followed by the error message, after which a system exit call is made.
 
 	matrix.h
 	datum.h
+	sample.h
+	track.h
 	likelihood.h
+	quadrature.h
+	utils.h
+	multithread.h
+	debug.h

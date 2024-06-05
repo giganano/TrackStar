@@ -2,31 +2,26 @@
 This file is part of the TrackStar package.
 Copyright (C) 2023 James W. Johnson (giganano9@gmail.com)
 License: MIT License. See LICENSE in top-level directory
-at https://github.com/giganano/TrackStar.git.
+at: https://github.com/giganano/TrackStar.git.
 
 Handles logging from TrackStar's backend for development and debugging purposes.
-TrackStar adopts a conventional format in which there are six different levels
+TrackStar adopts a conventional format in which there are a few different levels
 of verbosity for logging:
 
 	1. *info*
-		General information regrading the executed process.
+		Prints general information regrading the executed process.
 	2. *trace*
-		Individual function calls and the files in which they are implemented.
+		Pints individual function calls and the files in which they are
+		implemented.
 	3. *debug*
 		Prints the functions being called, the files in which they are
 		implemented, the line numbers calling the logging print statement,
 		and variable states.
-	4. *warning*
-		Prints regardless of the user's logging level and whether or not
-		they have ignored warnings in Python. Does not stop the program.
-	5. *error*
-		A state is reached in which TrackStar cannot continue the calculation.
-		This exits the Python interpreter always.
-	6. *fatal*
-		A state is reached in which TrackStar cannot *safely* continue the
-		calculation. This exits the Python interpreter always.
 
 Verbose output from function in this header print to ``stderr``.
+
+The logging value can be set by assigning the environment variable
+``TRACKSTAR_LOGGING_LEVEL``.
 */
 
 #ifndef DEBUG_H
@@ -59,13 +54,11 @@ maximum portability.
 #define RESET "\033[0m"
 
 /*
-.. cpp:function:: logging_level();
+.. c:macro:: logging_level()
 
-Determine the depth of TrackStar's verbose logging by obtaining the integer
-value of the environment variable ``TRACKSTAR_LOGGING_LEVEL``: 1 for *info*,
-2 for *trace*, and *3* for debug.
-
-.. note:: This function is ``#define``'d as a compile-time macro.
+	Determine the depth of TrackStar's verbose logging by obtaining the integer
+	value of the environment variable ``TRACKSTAR_LOGGING_LEVEL``: 1 for *info*,
+	2 for *trace*, and *3* for debug.
 */
 #define logging_level() ({ \
 	char *_loglevel = getenv("TRACKSTAR_LOGGING_LEVEL"); \
@@ -74,21 +67,19 @@ value of the environment variable ``TRACKSTAR_LOGGING_LEVEL``: 1 for *info*,
 
 
 /*
-.. cpp:function:: info_print(fmt, ...);
+.. c:macro:: info_print(fmt, ...)
 
-Prints a statement to ``stderr`` if and only if the logging level is equal to
-1 (*info*).
+	Prints a statement to ``stderr`` if and only if the logging level is equal
+	to 1 (*info*).
 
-.. note:: This function is ``#define``'d as a compile-time macro.
+	Parameters
+	----------
+	fmt : ``char *``
+		A string formatter.
+	... : ``char *``
+		Substrings for formatting into ``fmt``.
 
-Parameters
-----------
-fmt : ``char *``
-	A string formatter.
-... : ``char *``
-	Substrings for formatting into ``fmt``.
-
-Usage: ``info_print("%s\n", "Some message to print.");``
+	Usage: ``info_print("%s\n", "Some message to print.");``
 */
 #define info_print(fmt, ...) \
 	do { \
@@ -99,14 +90,12 @@ Usage: ``info_print("%s\n", "Some message to print.");``
 
 
 /*
-.. cpp:function:: trace_print()
+.. c:macro:: trace_print()
 
-Prints the name of the file and function that is being executed to stderr if
-and only if the logging level is equal to 2 (*trace*).
+	Prints the name of the file and function that is being executed to stderr if
+	and only if the logging level is equal to 2 (*trace*).
 
-.. note:: This function is ``#define``'d as a compile-time macro.
-
-Usage: ``trace_print();``
+	Usage: ``trace_print();``
 */
 #define trace_print() \
 	do { \
@@ -117,19 +106,19 @@ Usage: ``trace_print();``
 
 
 /*
-Print the value of variables to stderr if and only if the logging level is
-equal to 3 (*debug*).
+.. c:macro:: debug_print(fmt, ...)
 
-.. note:: This function is ``#define``'d as a compile-time macro.
+	Print the function being called, source file, line numbers, and variable
+	states if and only if the logging level is equal to 3 (*debug*).
 
-Parameters
-----------
-fmt : ``char *``
-	A string formatter.
-... : ``char *``
-	Substrings for formatting into ``fmt``.
+	Parameters
+	----------
+	fmt : ``char *``
+		A string formatter.
+	... : ``char *``
+		Substrings for formatting into ``fmt``.
 
-Usage: ``debug_print("x = %e ; y = %e\n", x, y);``
+	Usage: ``debug_print("x = %e ; y = %e\n", x, y);``
 */
 #define debug_print(fmt, ...) \
 	do { \
@@ -141,27 +130,25 @@ Usage: ``debug_print("x = %e ; y = %e\n", x, y);``
 
 
 /*
-.. cpp:function:: warning_print(fmt, ...);
+.. c:macro:: warning_print(fmt, ...)
 
-Prints a warning message to the console and exits the current process, quitting
-the Python interpreter. This runs regardless of the logging level and whether
-or not the user has turned off Python warnings.
+	Prints a warning message to the console and continues with the current
+	process. This runs regardless of the logging level and whether or not the
+	user has turned off Python warnings.
 
-.. note:: This function is ``#define``'d as a compile-time macro.
+	.. attention::
 
-.. attention::
+		This message is intended for developers, so if this is raised in an end
+		user's system, it should be interpreted as an issue within TrackStar.
 
-	This message is intended for developers, so if this is raised in an end
-	user's system, it should be interpreted as an issue within TrackStar.
+	Parameters
+	----------
+	fmt : ``char *``
+		A string formatter.
+	... : ``char *``
+		Substrings for formatting into ``fmt``.
 
-Parameters
-----------
-fmt : ``char *``
-	A string formatter.
-... : ``char *``
-	Substrings for formatting into ``fmt``.
-
-Usage: ``warning_print("%s\n", "Some message to print.");``
+	Usage: ``warning_print("%s\n", "Some message to print.");``
 */
 #define warning_print(fmt, ...) \
 	do { \
@@ -170,27 +157,25 @@ Usage: ``warning_print("%s\n", "Some message to print.");``
 
 
 /*
-.. cpp:function:: error_print(fmt, ...);
+.. c:macro:: error_print(fmt, ...)
 
-Prints an error message to the console and exits the current process, quitting
-the Python interpreter. This runs regardless of the logging level and whether
-or not the user has turned off Python warnings.
+	Prints an error message to the console and exits the current process,
+	quitting the Python interpreter. This runs regardless of the logging level
+	and whether or not the user has turned off Python warnings.
 
-.. note:: This function is ``#define``'d as a compile-time macro.
+	.. attention::
 
-.. attention::
+		This message is intended for developers, so if this is raised in an end
+		user's system, it should be interpreted as an issue within TrackStar.
 
-	This message is intended for developers, so if this is raised in an end
-	user's system, it should be interpreted as an issue within TrackStar.
+	Parameters
+	----------
+	fmt : ``char *``
+		A string formatter.
+	... : ``char *``
+		Substrings for formatting into ``fmt``.
 
-Parameters
-----------
-fmt : ``char *``
-	A string formatter.
-... : ``char *``
-	Substrings for formatting into ``fmt``.
-
-Usage: ``error_print("%s\n", "Some message to print.");``
+	Usage: ``error_print("%s\n", "Some message to print.");``
 */
 #define error_print(fmt, ...) \
 	do { \
@@ -201,27 +186,25 @@ Usage: ``error_print("%s\n", "Some message to print.");``
 
 
 /*
-.. cpp:function:: fatal_print(fmt, ...);
+.. c:macro:: fatal_print(fmt, ...)
 
-Prints a fatal message to the console and exits the current process, quitting
-the Python interpreter. This runs regardless of the logging level and whether
-or not the user has turned off Python warnings.
+	Prints a fatal message to the console and exits the current process,
+	quitting the Python interpreter. This runs regardless of the logging level
+	and whether or not the user has turned off Python warnings.
 
-.. note:: This function is ``#define``'d as a compile-time macro.
+	.. attention::
 
-.. attention::
+		This message is intended for developers, so if this is raised in an end
+		user's system, it should be interpreted as an issue within TrackStar.
 
-	This message is intended for developers, so if this is raised in an end
-	user's system, it should be interpreted as an issue within TrackStar.
+	Parameters
+	----------
+	fmt : ``char *``
+		A string formatter.
+	... : ``char *``
+		Substrings for formatting into ``fmt``.
 
-Parameters
-----------
-fmt : ``char *``
-	A string formatter.
-... : ``char *``
-	Substrings for formatting into ``fmt``.
-
-Usage: ``fatal_print("%s\n", "Some message to print.");``
+	Usage: ``fatal_print("%s\n", "Some message to print.");``
 */
 #define fatal_print(fmt, ...) \
 	do { \

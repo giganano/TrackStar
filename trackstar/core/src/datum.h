@@ -19,6 +19,16 @@ extern "C" {
 
 #include "matrix.h"
 
+#ifndef MAX_LABEL_SIZE
+/*
+.. c:macro:: MAX_LABEL_SIZE
+
+	``100u``. The maximum number of characters allowed for each elements of
+	:c:member:`labels` in a :c:type:`DATUM`.
+*/
+#define MAX_LABEL_SIZE 100u
+#endif /* MAX_LABEL_SIZE */
+
 typedef struct datum {
 
 	/*

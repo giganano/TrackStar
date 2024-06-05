@@ -13,27 +13,25 @@ at https://github.com/giganano/TrackStar.git.
 #include "utils.h"
 
 /*
-.. cpp:function:: extern TRACK *track_initialize(double **predictions,
-	char **labels, double *weights, unsigned short n_vectors,
-	unsigned short dim);
+.. c:function:: extern TRACK *track_initialize(double **predictions, char **labels, double *weights, unsigned short n_vectors, unsigned short dim);
 
-Allocate memory for and return a pointer to a ``TRACK`` object, containing the
-data vectors assocaited with model predictions along an infinitely thin line
-in some observed space.
+	Allocate memory for and return a pointer to a :c:type::`TRACK` object,
+	containing the data vectors assocaited with model predictions along an
+	infinitely thin line in some observed space.
 
-Parameters
-----------
-n_vectors : ``unsigned short``
-	The number of prediction vectors (i.e., the number of elements along the
-	*first* axis of indexing in ``predictions``).
-dim : ``unsigned short``
-	The dimensionality of the predictions (i.e., the number of elements along
-	the *second* axis of indexing in ``predictions``).
+	Parameters
+	----------
+	n_vectors : ``unsigned short``
+		The number of prediction vectors (i.e., the number of elements along
+		the *first* axis of indexing in :c:member:`predictions`).
+	dim : ``unsigned short``
+		The dimensionality of the predictions (i.e., the number of elements
+		along the *second* axis of indexing in :c:member:`predictions`).
 
-Returns
--------
-t : ``TRACK *``
-	The newly constructed ``TRACK`` object.
+	Returns
+	-------
+	t : ``TRACK *``
+		The newly constructed :c:type:`TRACK` object.
 */
 extern TRACK *track_initialize(unsigned short n_vectors, unsigned short dim) {
 
@@ -62,14 +60,14 @@ extern TRACK *track_initialize(unsigned short n_vectors, unsigned short dim) {
 
 
 /*
-.. cpp:function:: extern void track_free(TRACK *t);
+.. c:function:: extern void track_free(TRACK *t);
 
-Free up the memory stored by a ``TRACK`` object.
+	Free up the memory stored by a :c:type:`TRACK` object.
 
-Parameters
-----------
-t : ``TRACK *``
-	The track object to be freed.
+	Parameters
+	----------
+	t : ``TRACK *``
+		The :c:type:`TRACK` object to be freed.
 */
 extern void track_free(TRACK *t) {
 

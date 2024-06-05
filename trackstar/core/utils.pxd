@@ -8,6 +8,8 @@
 cdef extern from "./src/utils.h":
 	signed short strindex(char **strlist, char *test,
 		unsigned short strlistlength)
+
+cdef extern from "./src/datum.h":
 	unsigned short MAX_LABEL_SIZE
 
 cdef class linked_list:
