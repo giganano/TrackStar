@@ -47,7 +47,7 @@ extern signed short strindex(char **strlist, char *test,
 
 	Parameters
 	----------
-	arr : ``double *``
+	arr : ``const double *``
 		The array to be summed.
 	lentgth : ``const unsigned long``
 		The number of elements in ``arr``.
