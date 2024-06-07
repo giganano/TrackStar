@@ -8,6 +8,7 @@ at: https://github.com/giganano/TrackStar.git.
 #include <stdlib.h>
 #include "sample.h"
 #include "datum.h"
+#include "utils.h"
 
 
 /*
@@ -166,5 +167,129 @@ extern SAMPLE *sample_specific_quantities(SAMPLE s, char **labels,
 		if (d != NULL) sample_add_datum(sub, d);
 	}
 	return sub;
+
+}
+
+
+/*
+.. c:function:: extern unsigned long *sample_filter_indices(SAMPLE s, char *label, unsigned short condition_indicator, double value, unsigned short keep_missing_measurements);
+
+	Determine the indices of data vectors that pass some filter condition.
+
+	Parameters
+	----------
+	s : ``SAMPLE``
+		The sample to filter data from.
+	label : ``char *``
+		The label of the quantity to filter based on.
+	condition_indicator : ``unsigned short``
+		An integer index indicating the condition to apply. The conditions each
+		value corresponds to are given by
+
+		+-----------+-------+
+		| Condition | Value |
+		+-----------+-------+
+		| ==        | 1     |
+		+-----------+-------+
+		| <         | 2     |
+		+-----------+-------+
+		| <=        | 3     |
+		+-----------+-------+
+		| >         | 4     |
+		+-----------+-------+
+		| >=        | 5     |
+		+-----------+-------+
+
+	value : ``double``
+		The value to condition based on.
+	keep_missing_measurements : ``unsigned short``
+		If nonzero, all data vectors that do not have a measurement for the
+		quantity being filtered based on will *remain* in the sample. If zero,
+		they will be removed. Defaults to 0u from the python API.
+
+	Returns
+	-------
+	idx : ``unsigned long *``
+		A pointer to the number of data vectors that pass the filter and their
+		indices in ``s.data``. That is, ``idx[0]`` is the number of elements of
+		``s.data`` that satisfy the filter condition, and those data vectors
+		can be found at ``s.data[idx[0]]``, ``s.data[idx[1]]``,
+		``s.data[idx[2]]``, and so on.
+
+	Example Code
+	------------
+	To filter a :c:type:`SAMPLE` ``s`` for all values of ``"foo"`` that are
+	less than 1, discarding those without measurements of ``"foo"``:
+
+	.. code-block:: c
+
+		sample_filter_indices(s, "foo", 1u, 0u);
+
+	To filter a :c:type:`SAMPLE` ``s`` for all values of ``"bar"`` that are
+	greater than or equal to than 0, keeping those without a measurement of
+	``"bar"``:
+
+	.. code-block:: c
+
+		sample_filter_indices(s, "bar", 5u, 1u);
+*/
+extern unsigned long *sample_filter_indices(SAMPLE s, char *label,
+	unsigned short condition_indicator, double value,
+	unsigned short keep_missing_measurements) {
+
+	unsigned long *indices = (unsigned long *) malloc (sizeof(unsigned long));
+	indices[0] = 0ul;
+
+	for (unsigned long i = 0ul; i < s.n_vectors; i++) {
+
+		unsigned short pass;
+		signed short colidx = strindex((*s.data[i]).labels, label,
+			(*s.data[i]).n_cols);
+
+		if (colidx == -1) {
+			pass = keep_missing_measurements;
+		} else {
+			switch (condition_indicator) {
+
+				case 1:
+					/* == */
+					pass = (*s.data[i]).vector[0][colidx] == value;
+					break;
+
+				case 2:
+					/* < */
+					pass = (*s.data[i]).vector[0][colidx] < value;
+					break;
+
+				case 3:
+					/* <= */
+					pass = (*s.data[i]).vector[0][colidx] <= value;
+					break;
+
+				case 4:
+					/* > */
+					pass = (*s.data[i]).vector[0][colidx] > value;
+					break;
+
+				case 5:
+					/* >= */
+					pass = (*s.data[i]).vector[0][colidx] >= value;
+					break;
+
+				default:
+					if (indices != NULL) free(indices);
+					return NULL;
+			}
+		}
+
+		if (pass) {
+			indices = (unsigned long *) realloc (indices,
+				(indices[0] + 2ul) * sizeof(unsigned long));
+			indices[++indices[0]] = i;
+		} else {}
+
+	}
+
+	return indices;
 
 }

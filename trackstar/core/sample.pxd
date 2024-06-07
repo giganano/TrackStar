@@ -19,6 +19,9 @@ cdef extern from "./src/sample.h":
 	void sample_add_datum(SAMPLE *s, DATUM *d)
 	SAMPLE *sample_specific_quantities(SAMPLE s, char **labels,
 		unsigned short n_labels)
+	unsigned long *sample_filter_indices(SAMPLE s, char *label,
+		unsigned short condition_indicator, double value,
+		unsigned short keep_missing_measurements)
 
 
 cdef extern from "./src/likelihood.h":
