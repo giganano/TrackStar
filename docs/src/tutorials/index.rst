@@ -13,7 +13,7 @@ synopsis of our `science documentation`__.
 
 __ first_
 .. _first: first.ipynb
-__ ../science-documentation.rst
+__ ../science-documentation/index.rst
 
 .. toctree::
 	:maxdepth: 1

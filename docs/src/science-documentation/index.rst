@@ -7,12 +7,21 @@
 
 Science Documentation
 =====================
-TrackStar implements a generic likelihood function applicable to any analytic
-or numerical model that predicts tracks through some observed hypervolume.
-Johnson et al. (2022) [1]_ present a derivation of this likelihood function
-from first principles and validated its functional form by generating mock
-data samples and recovering the known input parameters of the underlying model
-used to generate the mock.
+
+The scientific problem that TrackStar solves is a data-model comparison in
+which the model is a curve in some N-dimensional space and the data have
+errors in all quantities.
+The curve may be an evolutionary track, a sequence of position at a given time,
+or some other interpretation, but it is a curve in the geometric sense in that
+it is infinitely thin as opposed to some distribution with finite width.
+If measurement uncertainties were zero, all data vectors would lie perfectly
+along the curve.
+The distribution of points along the curve, however, may or may not be uniform
+due to sampling bias, intrinsic variations in the density, or a combination of
+the two.
+
+This section of the documentation presents a derivation and summary of the
+likelihood function, which was derived in Johnson et al. (2022 [1]_).
 
 .. [1] `J.W. Johnson et al., 2022`__, arxiv:2210.01816
 __ johnson22_
@@ -20,10 +29,7 @@ __ johnson22_
 
 .. _science_documentation_synopsis:
 
-Synopsis
---------
-This section presents an overview of the mathematics behind TrackStar.
+.. include:: synopsis.inc
 
-
-
+.. include:: derivation.inc
 

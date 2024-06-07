@@ -25,7 +25,7 @@ Useful Links
 :doc:`install`
 	For newcomers. Welcome!
 
-:doc:`science-documentation`
+:doc:`science-documentation/index`
 	Mathematical details on TrackStar's calculations.
 
 :doc:`api/index`
@@ -44,7 +44,7 @@ Useful Links
 	:caption: Reference
 	:hidden:
 
-	science-documentation
+	science-documentation/index
 	api/index
 	benchmarks/index
 
