@@ -31,7 +31,7 @@ def test(*args, **kwargs):
 	Notes
 	-----
 	This function does nothing more than invoke
-	``pytest.main(\*args, \*\*kwargs)``.
+	``pytest.main(["--pyargs", "trackstar"], \*args, \*\*kwargs)``.
 	"""
-	return pytest.main(*args, **kwargs)
+	return pytest.main(["--pyargs", "trackstar"], *args, **kwargs)
 
