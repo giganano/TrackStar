@@ -1,0 +1,46 @@
+# This file is part of the TrackStar package.
+# Copyright (C) 2023 James W. Johnson (giganano9@gmail.com)
+# License: MIT License. See LICENSE in top-level directory
+# at: https://github.com/giganano/TrackStar.git.
+#
+# This workflow creates a source distribution for uploading to PyPI, uploading
+# the .tar.gz file to GitHub actions as an artifact. We upload the source
+# distribution to PyPI manually.
+
+name: Source Distribution
+
+on:
+  workflow_dispatch:
+
+jobs:
+  sdist:
+    name: Source Distribution
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Distribution Requirements
+        shell: bash
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install build>=1.0.0
+          python -m pip install wheel>=0.33.0
+
+      - name: Create Source Distribution
+        shell: bash
+        run: |
+          python -m build --sdist
+
+      - name: Upload Source Distribution
+        uses: actions/upload-artifact@v4
+        with:
+            name: sdist
+            path: ./dist/*.tar.gz
+            retention-days: 1
