@@ -56,3 +56,6 @@ docs = [ # see also docs/src/conf.py
 [project.urls]
 Repository = "https://github.com/giganano/TrackStar"
 Issues = "https://github.com/giganano/TrackStar/issues"
+
+[tool.pytest.ini_options]
+addopts = ["--import-mode=importlib"]
