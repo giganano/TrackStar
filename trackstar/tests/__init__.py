@@ -2,13 +2,11 @@
 try:
 	import pytest
 except ModuleNotFoundError:
-	raise RuntimeError("""\
-pytest is required to run TrackStar's unit tests (https://docs.pytest.org/).""")
+	pass
 try:
 	import numpy as np
 except:
-	raise RuntimeError("""\
-NumPy is required to run TrackStar's unit tests (https://numpy.org/).""")
+	pass
 
 
 def test(*args, **kwargs):
@@ -33,5 +31,9 @@ def test(*args, **kwargs):
 	This function does nothing more than invoke
 	``pytest.main(["--pyargs", "trackstar"], \*args, \*\*kwargs)``.
 	"""
+	if "pytest" not in sys.modules: raise RuntimeError("""\
+pytest is required to run TrackStar's unit tests (https://docs/pytest.org/).""")
+	if "numpy" not in sys.modules: raise RuntimeError("""\
+NumPy is required to run TrackStar's unit tests (https://numpy.org/).""")
 	return pytest.main(["--pyargs", "trackstar"], *args, **kwargs)
 
