@@ -7,10 +7,15 @@
 
 from trackstar import datum, covariance_matrix
 from trackstar.core.datum import datum_extra
-from trackstar.core.tests.test_datum import _TEST_DATUM_
 import numpy as np
 import numbers
 import pytest
+
+_TEST_DATUM_ = {
+	"x": np.random.random(),
+	"y": np.random.random(),
+	"z": np.random.random()
+}
 
 class TestCovarianceMatrix:
 

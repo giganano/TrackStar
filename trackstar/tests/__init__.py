@@ -7,6 +7,7 @@ try:
 	import numpy as np
 except:
 	pass
+import sys
 
 
 def test(*args, **kwargs):
