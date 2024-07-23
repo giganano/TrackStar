@@ -18,11 +18,11 @@ extern "C" {
 #include <unistd.h>
 
 /*
-.. cpp:function:: inline unsigned short multithreading_enabled();
+.. c:function:: inline unsigned short multithreading_enabled();
 
-Returns 1 if multithreading is enabled and 0 otherwise. Used in TrackStar's
-python wrapping to determine whether or not multithreading is enabled by
-linking with the OpenMP library at compile time.
+	Returns 1 if multithreading is enabled and 0 otherwise. Used in TrackStar's
+	python wrapping to determine whether or not multithreading is enabled by
+	linking with the OpenMP library at compile time.
 */
 inline unsigned short multithreading_enabled(void) {
 	#if defined(_OPENMP)

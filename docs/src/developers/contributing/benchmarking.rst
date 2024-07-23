@@ -1,7 +1,7 @@
 .. This file is part of the TrackStar package.
 .. Copyright (C) 2023 James W. Johnson (giganano9@gmail.com)
 .. License: MIT License. See LICENSE in top-level directory
-.. at https://github.com/giganano/trackstar.git.
+.. at https://github.com/giganano/TrackStar.git.
 
 Benchmarking New Features
 +++++++++++++++++++++++++
@@ -29,8 +29,7 @@ as being marked for benchmarking.
 It starts at the root directory and parses all subdirectories looking for
 these files.
 When it finds one, it imports all of the functions and classes in the file that
-are `decorated as a benchmark`__.
-It then runs each of them in succession.
+are `decorated as a benchmark`__ and runs them all.
 
 .. _pytest: https://docs.pytest.org
 __ pytest_discovery_

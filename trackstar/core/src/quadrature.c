@@ -23,33 +23,35 @@ static signed short sign(double x);
 
 
 /*
-.. cpp:function:: extern unsigned short quad(INTEGRAL *intgrl);
+.. c:function:: extern unsigned short quad(INTEGRAL *intgrl);
 
-Evaluate an integral numerically.
+	Evaluate an integral numerically.
 
-Parameters
-----------
-intgrl : ``INTEGRAL *``
-	A pointer to the integral struct to run the quadrature routine over
-	(see definition in quadrature.h).
+	Parameters
+	----------
+	intgrl : ``INTEGRAL *``
+		A pointer to the :c:type:`INTEGRAL` struct to run the quadrature
+		routine over.
 
-Returns
--------
-0u if the integral has converged. 1u if the maximum number of iterations was
-reached before the error converged within the specified tolerance. The result,
-numerical error, and number of iterations will be stored within ``intgrl``.
+	Returns
+	-------
+	0u if the integral has converged. 1u if the maximum number of iterations
+	was reached before the error converged within the specified tolerance. The
+	result, numerical error, and number of iterations will be stored within
+	``intgrl``.
 
-Notes
------
-In the current version of TrackStar, this function is called for only one
-purpose: evaluating corrective factors for the lengths of each individual
-line segment that make up a track. Therefore, in practice, the functional
-form of the integrand is known, and it is smooth. Although it does have
-analytic solution, it is an example of the rare case where the analytic form is
-not numerically stable while the numerical integral is. In this instance, the
-issue arises because the solution involves the product of an extremely large
-number and an extremely small number. See TrackStar's science documentation for
-further details.
+	Notes
+	-----
+	In the current version of TrackStar, this function is called for only one
+	purpose: evaluating corrective factors for the lengths of each individual
+	line segment that make up a track (see science documentation for further
+	details). Therefore, in practice, the functional form of the integrand is
+	known, and it is smooth. Although it does have an analytic solution, it is
+	an example of the rare case where the analytic form is not numerically
+	stable while the numerical integral is. In this instance, the issue arises
+	because the solution involves the product of an extremely large number and
+	an extremely small number, both of which challenge the limits of double
+	floating point precision.
 */
 extern unsigned short quad(INTEGRAL *intgrl) {
 
@@ -80,38 +82,36 @@ extern unsigned short quad(INTEGRAL *intgrl) {
 
 
 /*
-.. cpp:function:: static double simpsons_rule(double (*func)(double *),
-	const double lower, const double upper, const unsigned long n_bins,
-	const double *extra_args, const unsigned long n_extra_args);
+.. c:function:: static double simpsons_rule(double (*func)(double *), const double lower, const double upper, const unsigned long n_bins, const double *extra_args, const unsigned long n_extra_args);
 
-Evaluate a Reimann sum according to Simpson's Rule (see Chapter 4 of Press et
-al. 2007 [1]_).
+	Evaluate a Reimann sum according to Simpson's Rule (see Chapter 4 of Press
+	et al. 2007 [1]_).
 
-Parameters
-----------
-func : ``double (*func)(double *)``
-	A pointer to a function that accepts a double pointer as its only
-	argument. The first argument should be the one over which the integral
-	is being evaluated.
-lower : ``double``
-	The lower bound of the integral.
-upper : ``double``
-	The upper bound of the integral.
-n_bins : ``unsigned long``
-	The number of quadrature bins in the Reimann sum.
-extra_args : ``double *``
-	Any extra values to be passed to the integrand function.
-n_extra_args : ``unsigned short``
-	The number of elements in ``extra_args``.
+	Parameters
+	----------
+	func : ``double (*)(double *)``
+		A pointer to a function that accepts a double pointer as its only
+		argument. The first argument should be the one over which the integral
+		is being evaluated.
+	lower : ``double``
+		The lower bound of the integral.
+	upper : ``double``
+		The upper bound of the integral.
+	n_bins : ``unsigned long``
+		The number of quadrature bins in the Reimann sum.
+	extra_args : ``double *``
+		Any extra values to be passed to the integrand function.
+	n_extra_args : ``unsigned short``
+		The number of elements in ``extra_args``.
 
-Returns
--------
-s : ``double``
-	The value of the Reimann sum according to Simpson's Rule, which can be
-	understood as an extension of Trapezoid Rule.
+	Returns
+	-------
+	s : ``double``
+		The value of the Reimann sum according to Simpson's Rule, which can be
+		understood as an extension of Trapezoid Rule.
 
-.. [1] Press, Teukolsky, Vetterling, Flannery, 2007, Numerical Recipes,
-	Cambridge University Press
+	.. [1] Press, Teukolsky, Vetterling, Flannery, 2007, Numerical Recipes,
+		Cambridge University Press
 */
 static double simpsons_rule(double (*func)(double *), const double lower,
 	const double upper, const unsigned long n_bins, const double *extra_args,
@@ -128,39 +128,37 @@ static double simpsons_rule(double (*func)(double *), const double lower,
 
 
 /*
-.. cpp:function:: static double trapezoid_rule(double (*func)(double *),
-	const double lower, const double upper, const unsigned long n_bins,
-	const double *extra_args, const unsigned long n_extra_args);
+.. c:function:: static double trapezoid_rule(double (*func)(double *), const double lower, const double upper, const unsigned long n_bins, const double *extra_args, const unsigned long n_extra_args);
 
-Evaluate a Reimann sum according to Trapezoid Rule (see Chapter 4 of Press et
-al. 2007 [1]_).
+	Evaluate a Reimann sum according to Trapezoid Rule (see Chapter 4 of Press
+	et al. 2007 [1]_).
 
-Parameters
-----------
-func : ``double (*func)(double *)``
-	A pointer to a function that accepts a double pointer as its only
-	argument. The first argument should be the one over which the integral
-	is being evaluated.
-lower : ``double``
-	The lower bound of the integral.
-upper : ``double``
-	The upper bound of the integral.
-n_bins : ``unsigned long``
-	The number of quadrature bins in the Reimann sum.
-extra_args : ``double *``
-	Any extra values to be passed to the integrand function.
-n_extra_args : ``unsigned short``
-	The number of elements in ``extra_args``.
+	Parameters
+	----------
+	func : ``double (*)(double *)``
+		A pointer to a function that accepts a double pointer as its only
+		argument. The first argument should be the one over which the integral
+		is being evaluated.
+	lower : ``double``
+		The lower bound of the integral.
+	upper : ``double``
+		The upper bound of the integral.
+	n_bins : ``unsigned long``
+		The number of quadrature bins in the Reimann sum.
+	extra_args : ``double *``
+		Any extra values to be passed to the integrand function.
+	n_extra_args : ``unsigned short``
+		The number of elements in ``extra_args``.
 
-Returns
--------
-s : ``double``
-	The value of the Reimann sum according to Trapezoid rule, defined by
-	connecting each (x, y) point the function is sampled along, which
-	allows the integral to be approximated as a series of trapezoids.
+	Returns
+	-------
+	s : ``double``
+		The value of the Reimann sum according to Trapezoid rule, defined by
+		connecting each (x, y) point the function is sampled along, which
+		allows the integral to be approximated as a series of trapezoids.
 
-.. [1] Press, Teukolsky, Vetterling, Flannery, 2007, Numerical Recipes,
-	Cambridge University Press
+	.. [1] Press, Teukolsky, Vetterling, Flannery, 2007, Numerical Recipes,
+		Cambridge University Press
 */
 static double trapezoid_rule(double (*func)(double *), const double lower,
 	const double upper, const unsigned long n_bins, const double *extra_args,
@@ -188,27 +186,26 @@ static double trapezoid_rule(double (*func)(double *), const double lower,
 
 
 /*
-.. cpp:function:: static double bin_edges(const double start, const double stop,
-	const unsigned long n_bins);
+.. c:function:: static double bin_edges(const double start, const double stop, const unsigned long n_bins);
 
-Compute the desired bin edges for some known range of values and known number
-of bins.
+	Compute the desired bin edges for some known range of values and known
+	number of bins.
 
-Parameters
-----------
-start : ``double``
-	The bottom-most edge of the bins.
-stop : ``double``
-	The upper-most edge of the bins.
-n_bins : ``unsigned long``
-	The number of bins to separate the range between ``start`` and ``stop``
-	into.
+	Parameters
+	----------
+	start : ``double``
+		The bottom-most edge of the bins.
+	stop : ``double``
+		The upper-most edge of the bins.
+	n_bins : ``unsigned long``
+		The number of bins to separate the range between ``start`` and ``stop``
+		into.
 
-Returns
--------
-arr : ``double *``
-	A pointer to the array of bin edges, in ascending order.
-	Has length ``n_bins + 1``.
+	Returns
+	-------
+	arr : ``double *``
+		A pointer to the array of bin edges, in ascending order.
+		Has length ``n_bins + 1``.
 */
 static double *bin_edges(const double start, const double stop, 
 	const unsigned long n_bins) {
@@ -222,9 +219,9 @@ static double *bin_edges(const double start, const double stop,
 
 
 /*
-.. cpp:function:: static double absval(double x);
+.. c:function:: static double absval(double x);
 
-Compute the absolute value of ``x``..
+	Compute the absolute value of ``x``..
 */
 static double absval(double x) {
 
@@ -234,10 +231,10 @@ static double absval(double x) {
 
 
 /*
-.. cpp:function:: static signed short sign(double x);
+.. c:function:: static signed short sign(double x);
 
-Determine the sign of ``x``. ``+1`` if ``x > 0``, ``-1`` if ``x < 0``, and
-``0`` if ``x == 0``.
+	Determine the sign of ``x``. ``+1`` if ``x > 0``, ``-1`` if ``x < 0``, and
+	``0`` if ``x == 0``.
 */
 static signed short sign(double x) {
 

@@ -29,35 +29,36 @@ static unsigned short CALLING_FUNCTION = 0u;
 
 
 /*
-.. cpp:function:: extern double loglikelihood_sample(SAMPLE *s, TRACK *t);
+.. c:function:: extern double loglikelihood_sample(SAMPLE *s, TRACK *t);
 
-Compute the natural logarithm of the likelihood that some sample of data vectors
-would be observed given some model-predicted track through the observed space.
-Not every datum need have a measurement for every quantity (i.e., some
-difficult-to-measure quantities may not be available for every datum; this will
-be taken care of automatically).
+	Compute the natural logarithm of the likelihood that some sample of data
+	vectors would be observed given some model-predicted track through the
+	observed space. Not every datum need have a measurement for every quantity
+	(i.e., some difficult-to-measure quantities may not be available for every
+	datum; this will be taken care of automatically).
 
-The exact functional form of the likelihood function is described in section 3
-of Johnson et al. (2022) [1]_ and derived in detail in their Appendix A. See
-the TrackStar Science Documentation for discussion and further details.
+	The exact functional form of the likelihood function is described in
+	section 3 of Johnson et al. (2022) [1]_ and derived in detail in their
+	Appendix A. See the TrackStar Science Documentation for discussion and
+	further details.
 
-Parameters
-----------
-s : ``SAMPLE *``
-	The sample to fit the model to.
-t : ``TRACK *``
-	The model-predicted track through the observed space.
+	Parameters
+	----------
+	s : ``SAMPLE *``
+		The sample to fit the model to.
+	t : ``TRACK *``
+		The model-predicted track through the observed space.
 
-Returns
--------
-logl : ``double``
-	The natural logarithm of the likelihood of observation, marginalized over
-	the full length of the track and weighted according to the predicted observed
-	density along the track.
+	Returns
+	-------
+	logl : ``double``
+		The natural logarithm of the likelihood of observation, marginalized
+		over the full length of the track and weighted according to the
+		predicted observed density along the track.
 
-References
-----------
-.. [1] Johnson J.W., et al., 2022, MNRAS, 526, 5084
+	References
+	----------
+	.. [1] Johnson J.W., et al., 2022, MNRAS, 526, 5084
 */
 extern double loglikelihood_sample(SAMPLE s, TRACK *t) {
 
@@ -102,35 +103,35 @@ extern double loglikelihood_sample(SAMPLE s, TRACK *t) {
 
 
 /*
-.. cpp:function:: extern double loglikelihood_datum_backen(DATUM *d, TRACK *t);
+.. c:function:: extern double loglikelihood_datum(DATUM *d, TRACK *t);
 
-Compute the natural logarithm of the likelihood that an individual datum would
-be observed from its vector and the model-predicted track in the observed
-space. The track may contain predictions for observables that are not available
-for the present datum ``d``; this possibility is taken into account
-automatically.
+	Compute the natural logarithm of the likelihood that an individual datum
+	will be observed from its vector and the model-predicted track in the
+	observed space. The track may contain predictions for observables that are
+	not available for the present datum ``d``; this possibility is taken into
+	account automatically.
 
-The exact functional form of the likelihood function is described in section 3
-of Johnson et al. (2022) [1]_ and derived in detail in their Appendix A. See
-the TrackStar Science Documentation for discussion and further details.
+	The exact functional form of the likelihood function is described in
+	section 3 of Johnson et al. (2022) [2]_ and derived in detail in their
+	Appendix A.
 
-Parameters
-----------
-d : ``DATUM``
-	The datum to compute the likelihood of observation.
-t : ``TRACK *``
-	The model-predicted track through the observed space.
+	Parameters
+	----------
+	d : ``DATUM``
+		The datum to compute the likelihood of observation.
+	t : ``TRACK *``
+		The model-predicted track through the observed space.
 
-Returns
--------
-logl : ``double``
-	The natural logarithm of the likelihood of observation, marginalized over
-	the full length of the track and weighted according to the predicted observed
-	density along the track.
+	Returns
+	-------
+	logl : ``double``
+		The natural log of the likelihood of observation, marginalized over the
+		full length of the track and weighted according to the predicted
+		observed density along the track.
 
-References
-----------
-.. [1] Johnson J.W., et al., 2022, MNRAS, 526, 5084
+	References
+	----------
+	.. [2] Johnson J.W., et al., 2022, MNRAS, 526, 5084
 */
 extern double loglikelihood_datum(DATUM d, TRACK *t) {
 
@@ -184,19 +185,20 @@ extern double loglikelihood_datum(DATUM d, TRACK *t) {
 
 
 /*
-.. cpp:function:: static double normalize_weights(TRACK *t);
+.. c:function:: static double normalize_weights(TRACK *t);
 
-Normalize the weights stored by a ``TRACK`` object such that they add up to 1.
+	Normalize the weights stored by a :c:type:`TRACK` object such that they add
+	up to 1.
 
-Parameters
-----------
-t : ``TRACK *``
-	A pointer to the input track itself
+	Parameters
+	----------
+	t : ``TRACK *``
+		A pointer to the input track itself
 
-Returns
--------
-weight_norm : ``double``
-	The sum of the weights prior to normalization.
+	Returns
+	-------
+	weight_norm : ``double``
+		The sum of the weights prior to normalization.
 */
 static double normalize_weights(TRACK *t) {
 
@@ -211,18 +213,17 @@ static double normalize_weights(TRACK *t) {
 
 
 /*
-.. cpp:function:: static void unnormalize_weights(TRACK *t,
-	const double weight_norm);
+.. c:function:: static void unnormalize_weights(TRACK *t, const double weight_norm);
 
-Undo the action of ``normalize_weights``, restting the track weights to their
-original values.
+	Undo the action of :c:function:`normalize_weights``, restting the track
+	weights to their original values.
 
-Parameters
-----------
-t : ``TRACK *``
-	A pointer to the input track itself.
-weight_norm : ``double``
-	The value returned by ``normalize_weights``.
+	Parameters
+	----------
+	t : ``TRACK *``
+		A pointer to the input track itself.
+	weight_norm : ``double``
+		The value returned by :c:type:`normalize_weights`.
 */
 static void unnormalize_weights(TRACK *t, const double weight_norm) {
 
@@ -234,30 +235,30 @@ static void unnormalize_weights(TRACK *t, const double weight_norm) {
 
 
 /*
-.. cpp:function:: static double chi_squared(DATUM t, TRACK t,
-	const unsigned short index);
+.. c:function:: static double chi_squared(DATUM t, TRACK t, const unsigned short index);
 
-Compute the value of :math:`\chi^2` for one specific datum and one specific
-point along a model-predicted track.
+	Compute the value of :math:`\chi^2` for one specific datum and one specific
+	point along a model-predicted track.
 
-Parameters
-----------
-d : ``DATUM``
-	The input datum vector.
-t : ``TRACK``
-	The model-predicted track, containing each predicted vector.
-index : ``const unsigned short``
-	The index of the point along the track to take in computing a value of
-	:math:`\chi^2`.
+	Parameters
+	----------
+	d : ``DATUM``
+		The input datum vector.
+	t : ``TRACK``
+		The model-predicted track, containing each predicted vector.
+	index : ``const unsigned short``
+		The index of the point along the track to take in computing a value of
+		:math:`\chi^2`.
 
-Returns
--------
-chisq : ``double``
-	The computed value of :math:`\chi^2`, defined according to
-	:math:`\chi^2 = \Delta C^{-1} \Delta^T`, where
-	:math:`C^{-1}` is the datum's covariance matrix describing its measurement
-	uncertainties and :math:`\Delta = d - t_{index}` is the vector difference
-	between the datum and the ``index``'th vector along the track.
+	Returns
+	-------
+	chisq : ``double``
+		The computed value of :math:`\chi^2`, defined according to
+		:math:`\chi^2 = \Delta C^{-1} \Delta^T`, where
+		:math:`C^{-1}` is the datum's covariance matrix describing its
+		measurement uncertainties and :math:`\Delta = d - t_{index}` is the
+		vector difference between the datum and the ``index``'th vector along
+		the track.
 */
 static double chi_squared(DATUM d, TRACK t, const unsigned short index) {
 
@@ -283,22 +284,23 @@ static double chi_squared(DATUM d, TRACK t, const unsigned short index) {
 
 
 /*
-.. cpp:function:: static delta delta_model(TRACK t, const unsigned short index);
+.. c:function:: static delta delta_model(TRACK t, const unsigned short index);
 
-Computes the magnitude of the vector displacement between neighboring points on
-the track.
+	Computes the magnitude of the vector displacement between neighboring points
+	on the track.
 
-Parameters
-----------
-t : ``TRACK``
-	The track itself, containing all vectors.
-index : ``unsigned short``
-	The index of the vector along the track to compute the :math:`\Delta M` at.
+	Parameters
+	----------
+	t : ``TRACK``
+		The track itself, containing all vectors.
+	index : ``unsigned short``
+		The index of the vector along the track to compute the :math:`\Delta M`
+		at.
 
-Returns
--------
-delta : ``double``
-	The magnitude of the :math:`\Delta M_j = M_{j + 1} - M_j` vector.
+	Returns
+	-------
+	delta : ``double``
+		The magnitude of the :math:`\Delta M_j = M_{j + 1} - M_j` vector.
 */
 static double delta_model(TRACK t, const unsigned short index) {
 
@@ -324,42 +326,42 @@ static double delta_model(TRACK t, const unsigned short index) {
 
 
 /*
-.. cpp:function:: static double corrective_factor(DATUM d, TRACK t,
-	const unsigned short index);
+.. c:function:: static double corrective_factor(DATUM d, TRACK t, const unsigned short index);
 
-Compute the corrective factor in the likelihood estimate that accounts for the
-finite length of the line segment connecting two consecutive vectors in the
-model-predicted track.
+	Compute the corrective factor in the likelihood estimate that accounts for
+	the finite length of the line segment connecting two consecutive vectors in
+	the model-predicted track.
 
-Parameters
-----------
-d : ``DATUM``
-	The datum whose likelihood of observation is being computed.
-t : ``TRACK``
-	The model-predicted track.
-index : ``const unsigned short``
-	The index of the vector along the track to compute the corrective factor
-	for (i.e. which line segment).
+	Parameters
+	----------
+	d : ``DATUM``
+		The datum whose likelihood of observation is being computed.
+	t : ``TRACK``
+		The model-predicted track.
+	index : ``const unsigned short``
+		The index of the vector along the track to compute the corrective
+		factor for (i.e. which line segment).
 
-Returns
--------
-correction : ``double``
-	:math:`\beta_{ij}`, defined according to equation A12 in Johnson et al.
-	(2022) [1]_.
+	Returns
+	-------
+	correction : ``double``
+		:math:`\beta_{ij}`, defined according to equation A12 in Johnson et al.
+		(2022) [1]_.
 
-Notes
------
-Although the exact form of :math:`\beta_{ij}` is known, it is a rare case in
-which the analytic solution is not numerically stable while the numerical
-solution is. In this case, the instability arises because :math:`\beta_{ij}` is
-the product of an extremely large number and an extremely small number, which
-challenge the limits of double floating point precision. Once the values of
-:math:`a` and :math:`b` are known, which define the value of :math:`beta` (see
-science documentation), its value is computed through quadrature.
+	Notes
+	-----
+	Although the exact form of :math:`\beta_{ij}` is known, it is a rare case in
+	 which the analytic solution is not numerically stable while the numerical
+	solution is. In this case, the instability arises because :math:`\beta_{ij}`
+	is the product of an extremely large number and an extremely small number,
+	which challenge the limits of double floating point precision. Once the
+	values of :math:`a` and :math:`b` are known, which define the value of
+	:math:`beta` (see science documentation), its value is computed through
+	quadrature.
 
-References
-----------
-.. [1] Johnson J.W., et al., 2022, MNRAS, 526, 5084
+	References
+	----------
+	.. [1] Johnson J.W., et al., 2022, MNRAS, 526, 5084
 */
 static double corrective_factor(DATUM d, TRACK t, const unsigned short index) {
 
@@ -427,24 +429,23 @@ static double corrective_factor(DATUM d, TRACK t, const unsigned short index) {
 
 
 /*
-.. cpp:function:: static double corrective_factor_marginalization_integrand(
-	double *args);
+.. c:function:: static double corrective_factor_marginalization_integrand(double *args);
 
-The integrand for computing line segment length corrections along the track.
+	The integrand for computing line segment length corrections along the track.
 
-Parameters
-----------
-args : ``double *``
-	The integration parameters, :math:`q`, :math:`a`, and :math:`b`.
+	Parameters
+	----------
+	args : ``double *``
+		The integration parameters, :math:`q`, :math:`a`, and :math:`b`.
 
-Returns
--------
-value : ``double``
-	The integrand, defined as
+	Returns
+	-------
+	value : ``double``
+		The integrand, defined as
 
-	.. math::
+		.. math:: \exp(\frac{-1}{2} (aq^2 - 2bq)),
 
-		\exp(\frac{-1}{2} (aq^2 - 2bq))
+		where ``q = args[0]``, ``a = args[1]``, and ``b = args[2]``.
 */
 static double corrective_factor_marginalization_integrand(double *args) {
 
@@ -455,27 +456,27 @@ static double corrective_factor_marginalization_integrand(double *args) {
 
 
 /*
-.. cpp:function:: static TRACK *track_subset(DATUM d, TRACK t);
+.. c:function:: static TRACK *track_subset(DATUM d, TRACK t);
 
-Obtain a track object containing only the quantities present in a particular
-datum by comparing their column labels.
+	Obtain a :c:type:`TRACK` object containing only the quantities present in a
+	particular :c:type:`DATUM` by comparing their column labels.
 
-Parameters
-----------
-d : ``DATUM``
-	The datum vector itself.
-t : ``TRACK``
-	The model-predicted track through the observed space, which may contain
-	predictions for some number of quantities that are not measured for the
-	present datum ``d``. Those quantities may however be measured for other
-	data vectors in the sample.
+	Parameters
+	----------
+	d : ``DATUM``
+		The datum vector itself.
+	t : ``TRACK``
+		The model-predicted track through the observed space, which may contain
+		predictions for some number of quantities that are not measured for the
+		present datum ``d``. Those quantities may however be measured for other
+		data vectors in the sample.
 
-Returns
--------
-sub : ``TRACK *``
-	A new ``TRACK`` object whose columns occur in the same order as they do
-	for the datum ``d``, expediting the matrix multiplications that compute
-	the likelihood of observing the datum.
+	Returns
+	-------
+	sub : ``TRACK *``
+		A new ``TRACK`` object whose columns occur in the same order as they do
+		for the datum ``d``, expediting the matrix multiplications that compute
+		the likelihood of observing the datum.
 */
 static TRACK *track_subset(DATUM d, TRACK t) {
 
@@ -511,22 +512,23 @@ static TRACK *track_subset(DATUM d, TRACK t) {
 
 
 /*
-.. cpp:function:: static MATRIX *trackpoint(TRACK t, const unsigned short index);
+.. c:function:: static MATRIX *trackpoint(TRACK t, const unsigned short index);
 
-Obtain the vector for a specific point along the model predicted track.
+	Obtain the vector for a specific point along the model predicted track.
 
-Parameters
-----------
-t : ``TRACK``
-	The input track itself, containing some arbitrary number of vectors.
-index : ``const unsigned short``
-	The index of the vector along the track to capture as a stand-alone matrix.
+	Parameters
+	----------
+	t : ``TRACK``
+		The input track itself, containing some arbitrary number of vectors.
+	index : ``const unsigned short``
+		The index of the vector along the track to capture as a stand-alone
+		matrix.
 
-Returns
--------
-mat : ``MATRIX *``
-	A pointer to matrix object containing only one row, whose elements are a
-	component-wise match to ``t.predictions[index]``.
+	Returns
+	-------
+	mat : ``MATRIX *``
+		A pointer to matrix object containing only one row, whose elements are
+		a component-wise match to ``t.predictions[index]``.
 */
 static MATRIX *trackpoint(TRACK t, const unsigned short index) {
 

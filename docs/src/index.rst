@@ -1,14 +1,16 @@
 .. This file is part of the TrackStar package.
 .. Copyright (C) 2023 James W. Johnson (giganano9@gmail.com)
 .. License: MIT License. See LICENSE in top-level directory
-.. at https://github.com/giganano/trackstar.git.
+.. at https://github.com/giganano/TrackStar.git.
 
 .. _frontpage:
 
 TrackStar
 +++++++++
 
-**Version**: 1.0.0.dev0
+.. version number officially defined in pyproject.toml, copied here
+
+**Version**: 1.0.0a0.dev0
 
 TrackStar is a highly optimized, user-friendly library for curve fitting in
 any N-dimensional space when the data have uncertainties in all directions.
@@ -23,7 +25,7 @@ Useful Links
 :doc:`install`
 	For newcomers. Welcome!
 
-:doc:`science-documentation`
+:doc:`science-documentation/index`
 	Mathematical details on TrackStar's calculations.
 
 :doc:`api/index`
@@ -42,7 +44,7 @@ Useful Links
 	:caption: Reference
 	:hidden:
 
-	science-documentation
+	science-documentation/index
 	api/index
 	benchmarks/index
 

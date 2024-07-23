@@ -9,25 +9,24 @@ at: https://github.com/giganano/TrackStar.git.
 #include "utils.h"
 
 /*
-.. cpp:function:: extern signed short strindex(char **strlist, char *test,
-	unsigned short strlistlength);
+.. c:function:: extern signed short strindex(char **strlist, char *test, unsigned short strlistlength);
 
-Determine the index of a string within an array of strings.
+	Determine the index of a string within an array of strings.
 
-Parameters
-----------
-strlist : ``char **``
-	The list of strings to search through
-test : ``char *``
-	The string to search for within ``strlist``.
-strlistlength : ``unsigned short``
-	The number of entries in ``strlist``.
+	Parameters
+	----------
+	strlist : ``char **``
+		The list of strings to search through
+	test : ``char *``
+		The string to search for within ``strlist``.
+	strlistlength : ``unsigned short``
+		The number of entries in ``strlist``.
 
-Returns
--------
-idx : ``signed short``
-	If >= 0, then ``strlist[idx]`` is a character-by-character match to
-	``test``. -1 if there is no such element within ``strlist``.
+	Returns
+	-------
+	idx : ``signed short``
+		If >= 0, then ``strlist[idx]`` is a character-by-character match to
+		``test``. -1 if there is no such element within ``strlist``.
 */
 extern signed short strindex(char **strlist, char *test,
 	unsigned short strlistlength) {
@@ -42,23 +41,22 @@ extern signed short strindex(char **strlist, char *test,
 
 
 /*
-.. cpp:function:: extern double sum(const double *arr,
-	const unsigned long length);
+.. c:function:: extern double sum(const double *arr, const unsigned long length);
 
-Compute the sum of an array of real numbers.
+	Compute the sum of an array of real numbers.
 
-Parameters
-----------
-arr : ``double *``
-	The array to be summed.
-lentgth : ``const unsigned long``
-	The number of elements in ``arr``.
+	Parameters
+	----------
+	arr : ``const double *``
+		The array to be summed.
+	lentgth : ``const unsigned long``
+		The number of elements in ``arr``.
 
-Returns
--------
-s : ``double``
-	``arr[0]`` + ``arr[1]`` + ``arr[2]`` + ... + ``arr[length - 3]`` +
-	``arr[length - 2]`` + `arr[length - 1]``.
+	Returns
+	-------
+	s : ``double``
+		``arr[0]`` + ``arr[1]`` + ``arr[2]`` + ... + ``arr[length - 3]`` +
+		``arr[length - 2]`` + `arr[length - 1]``.
 */
 extern double sum(const double *arr, const unsigned long length) {
 

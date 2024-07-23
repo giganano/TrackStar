@@ -3,10 +3,11 @@
 # This file is part of the TrackStar package.
 # Copyright (C) 2023 James W. Johnson (giganano9@gmail.com)
 # License: MIT License. See LICENSE in top-level directory
-# at: https://github.com/giganano/trackstar.git.
+# at: https://github.com/giganano/TrackStar.git.
 
 __all__ = ["sample"]
 import math as m
+import warnings
 import numbers
 from .datum import datum_extra
 from .utils import copy_array_like_object, copy_cstring
@@ -417,6 +418,57 @@ Keyword arg 'quantities' must be of type list, tuple, or None. Got: %s""" % (
 				if test not in _keys: _keys.append(test)
 		return _keys
 
+
+	def filter(self, label, condition, value,
+		keep_missing_measurements = False):
+		r"""
+		Filter the sample based on some condition applied to one specific
+		column.
+		"""
+		cdef char *copy
+		cdef unsigned long *indices
+		if isinstance(label, str):
+			if isinstance(condition, str):
+				if isinstance(value, numbers.Number):
+					if isinstance(keep_missing_measurements, bool):
+						indicators = {
+							"=":   1,
+							"==":  1,
+							"<":   2,
+							"<=":  3,
+							">":   4,
+							">=":  5
+						}
+						if condition in indicators.keys():
+							copy = copy_pystring(label)
+							indices = sample_filter_indices(self._s[0],
+								copy, indicators[condition], value,
+								int(keep_missing_measurements))
+							assert indices is not NULL, "Internal Error."
+						else:
+							raise ValueError("""\
+Argument \'condition\' must be either \'=\', \'==\', \'<\', \'<=\', \'>\', \
+or \'>=\'. Got: %s""" % (condition))
+						sub = sample()
+						for i in range(1, indices[0]):
+							sub.add_datum(self._data[indices[i]])
+						if not sub.size: warnings.warn(
+							"Filter resulted in an empty sample.",
+							UserWarning)
+						return sub
+					else:
+						raise TypeError("""\
+Keyword arg \'keep_missing_measurements\' must be a boolean. Got: %s""" % (
+							type(keep_missing_measurements)))
+				else:
+					raise TypeError("""\
+Argument \'value\' must be a real number. Got: %s""" % (type(value)))
+			else:
+				raise TypeError("""\
+Argument \'condition\' must be a string. Got: %s""" % (type(condition)))
+		else:
+			raise TypeError("""\
+Argument \'label\' must be a string. Got: %s""" % (type(label)))
 
 
 class sample_extra(list):

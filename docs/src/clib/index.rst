@@ -1,7 +1,7 @@
 .. This file is part of the TrackStar package.
 .. Copyright (C) 2023 James W. Johnson (giganano9@gmail.com)
 .. License: MIT License. See LICENSE in top-level directory
-.. at: https://github.com/giganano/trackstar.git.
+.. at: https://github.com/giganano/TrackStar.git.
 
 C Library
 =========
@@ -28,3 +28,11 @@ followed by the error message, after which a system exit call is made.
 	:maxdepth: 1
 
 	matrix.h
+	datum.h
+	sample.h
+	track.h
+	likelihood.h
+	quadrature.h
+	utils.h
+	multithread.h
+	debug.h
