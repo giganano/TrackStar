@@ -10,7 +10,7 @@ TrackStar
 
 .. version number officially defined in pyproject.toml, copied here
 
-**Version**: 1.0.0a0.dev0
+**Version**: 1.0.0a0.dev1
 
 TrackStar is a highly optimized, user-friendly library for curve fitting in
 any N-dimensional space when the data have uncertainties in all directions.
