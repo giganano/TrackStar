@@ -2,19 +2,30 @@
 # TrackStar
 
 <div align="center">
-	<a href="https://github.com/giganano/TrackStar/actions/workflows/ci.yml"
+	<a href="https://pypi.org/project/trackstar" target="_blank">
+		<img src="https://img.shields.io/pypi/v/trackstar?label=PyPI&logo=PyPI&logoColor=white">
+	</a>
+	<a href="https://python.org" target="_blank">
+		<img src="https://img.shields.io/pypi/pyversions/trackstar?label=Python&logo=Python&logoColor=white">
+	</a>
+	<a href="https://github.com/giganano/TrackStar/blob/main/LICENSE"
 		target="_blank">
-		<img src="https://github.com/giganano/TrackStar/workflows/GitHub%20CI/badge.svg">
-	</a><a
-		href="https://github.com/giganano/TrackStar/issues" target="_blank">
-		<img src="https://img.shields.io/github/issues/giganano/TrackStar.svg">
+		<img src="https://img.shields.io/badge/License-MIT-blue.svg">
 	</a>
 </div>
 
 <div align="center">
-	<a href="https://github.com/giganano/TrackStar/blob/main/LICENSE"
+	<a href="https://github.com/giganano/TrackStar/actions/workflows/ci.yml"
 		target="_blank">
-		<img src="https://img.shields.io/badge/License-MIT-blue.svg">
+		<img src="https://github.com/giganano/TrackStar/workflows/GitHub%20CI/badge.svg">
+	</a>
+	<a href="https://trackstar.readthedocs.io/en/latest/?badge=latest"
+		target="_blank">
+		<img src="https://readthedocs.org/projects/trackstar/badge/?version=latest">
+	</a>
+	<a
+		href="https://github.com/giganano/TrackStar/issues" target="_blank">
+		<img src="https://img.shields.io/github/issues/giganano/TrackStar.svg">
 	</a>
 </div>
 
