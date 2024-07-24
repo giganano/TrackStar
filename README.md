@@ -5,9 +5,11 @@
 	<a href="https://pypi.org/project/trackstar" target="_blank">
 		<img src="https://img.shields.io/pypi/v/trackstar?label=PyPI&logo=PyPI&logoColor=white">
 	</a>
+	&nbsp;
 	<a href="https://python.org" target="_blank">
 		<img src="https://img.shields.io/pypi/pyversions/trackstar?label=Python&logo=Python&logoColor=white">
 	</a>
+	&nbsp;
 	<a href="https://github.com/giganano/TrackStar/blob/main/LICENSE"
 		target="_blank">
 		<img src="https://img.shields.io/badge/License-MIT-blue.svg">
@@ -19,10 +21,12 @@
 		target="_blank">
 		<img src="https://github.com/giganano/TrackStar/workflows/GitHub%20CI/badge.svg">
 	</a>
+	&nbsp;
 	<a href="https://trackstar.readthedocs.io/en/latest/?badge=latest"
 		target="_blank">
 		<img src="https://readthedocs.org/projects/trackstar/badge/?version=latest">
 	</a>
+	&nbsp;
 	<a
 		href="https://github.com/giganano/TrackStar/issues" target="_blank">
 		<img src="https://img.shields.io/github/issues/giganano/TrackStar.svg">
