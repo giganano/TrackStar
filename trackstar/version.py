@@ -9,7 +9,7 @@ from .exceptions import VersionWarning, VersionError
 import importlib.metadata
 import warnings
 import re
-__ISRELEASED__ = True
+__ISRELEASED__ = False
 
 
 class version:
