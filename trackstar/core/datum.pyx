@@ -94,6 +94,12 @@ input vector has no such label.""" % (label))
 		datum_free(self._d)
 
 
+	def __reduce__(self):
+		copy = {}
+		for key in self.keys(): copy[key] = self[key]
+		return (self.__class__, (copy, self.extra, ))
+
+
 	def __enter__(self):
 		r"""Opens a with statement."""
 		return self

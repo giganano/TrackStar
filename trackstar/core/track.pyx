@@ -6,6 +6,7 @@
 # at: https://github.com/giganano/TrackStar.git.
 
 __all__ = ["track"]
+from functools import partial
 import numbers
 import warnings
 import math as m
@@ -113,6 +114,15 @@ elements as track predictions.""" % (len(weights), len(copy[keys[0]])))
 		discouraged.
 		"""
 		track_free(self._t)
+
+
+	def __reduce__(self):
+		copy = {}
+		for key in self.keys(): copy[key] = self[key][:]
+		weights = self["weights"][:]
+		nthreads = self.n_threads
+		return (partial(self.__class__, weights = weights, nthreads = nthreads),
+			(copy, ))
 
 
 	def __enter__(self):

@@ -336,6 +336,15 @@ Matrix or vector must contain only numerical values.""")
 		matrix_free(self._m)
 
 
+	def __reduce__(self):
+		copy = []
+		for i in range(self.n_rows):
+			row = []
+			for j in range(self.n_cols): row.append(self[i, j])
+			copy.append(row)
+		return (self.__class__, (copy, ))
+
+
 	def __enter__(self):
 		r"""Opens a with statement."""
 		return self
