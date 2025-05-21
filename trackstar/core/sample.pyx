@@ -6,6 +6,7 @@
 # at: https://github.com/giganano/TrackStar.git.
 
 __all__ = ["sample"]
+from functools import partial
 import math as m
 import warnings
 import numbers
@@ -107,6 +108,14 @@ Keyword arg \'extra\' must be of type dict. Got: %s""" % (type(extra)))
 		discouraged.
 		"""
 		sample_free(self._s)
+
+
+	def __reduce__(self):
+		copy = {}
+		for key in self.keys(): copy[key] = self[key][:]
+		extra = {}
+		for key in self.extra[0].keys(): extra[key] = self.extra[key][:]
+		return (partial(self.__class__, extra = extra), (copy, ))
 
 
 	def __enter__(self):
